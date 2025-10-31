@@ -105,6 +105,24 @@
       <small>Arraste os cards para classificar por Esforço (colunas) e Impacto (linhas).</small>
     </footer>
 
+    <!-- Modal de Observação Complementar -->
+    <div id="noteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="noteModalTitle">Observação complementar</h3>
+          <button id="noteCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-item-title" id="noteItemTitle"></div>
+          <textarea id="noteTextarea" rows="6" placeholder="Anotações do líder da dinâmica..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button id="noteCancelBtn" type="button">Cancelar</button>
+          <button id="noteSaveBtn" type="button">Salvar</button>
+        </div>
+      </div>
+    </div>
+
     <script src="./app.js"></script>
   </body>
   </html>

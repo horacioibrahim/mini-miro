@@ -4,7 +4,7 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--fg); }
 
-.app-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.app-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; background: var(--bg); }
 .app-header h1 { margin: 0; font-size: 20px; font-weight: 600; }
 
 .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -16,7 +16,7 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helve
 .legend--problema { border-color: #ef4444; }
 .legend--oportunidade { border-color: #3b82f6; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--border); align-items: flex-end; }
+.controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--border); align-items: flex-end; position: sticky; top: 64px; z-index: 95; background: var(--bg); }
 .control-group { display: flex; gap: 8px; align-items: center; }
 label { font-size: 14px; color: var(--muted); }
 select, input[type="file"], button { font: inherit; }
@@ -45,6 +45,7 @@ button:hover { border-color: #cbd5e1; }
 .card-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .pill { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); background: #fff; }
 .pill--invalid { background: oklch(63.7% 0.237 25.331); color: #fff; border-color: transparent; }
+.pill--note { background: #fff3c4; border-color: #facc15; color: #7c6010; }
 
 .backlog { border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #fff; }
 .backlog-header { padding: 8px; border-bottom: 1px solid var(--border); }
@@ -53,6 +54,17 @@ button:hover { border-color: #cbd5e1; }
 .backlog.drag-over { outline: 2px dashed var(--accent); outline-offset: -4px; }
 
 .app-footer { padding: 12px 20px; border-top: 1px solid var(--border); color: var(--muted); }
+
+/* Modal */
+.modal.hidden { display: none; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.modal-dialog { width: min(720px, 90vw); background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.modal-body { padding: 12px 16px; display: grid; gap: 8px; }
+.modal-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+.modal-item-title { font-weight: 600; color: var(--muted); }
+.btn-close { border: 1px solid var(--border); background: #fff; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
+.modal textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
 
 /* Responsive */
 @media (max-width: 1024px) {

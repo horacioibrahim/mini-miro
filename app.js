@@ -1,7 +1,8 @@
 // Data state
 const state = {
-  items: [], // { id, demanda, squad, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
+  items: [], // { id, demanda, squad, observation, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
   filters: { abordagem: 'all', escopo: 'all', squad: 'all' },
+  ui: { isDragging: false, selectedId: null },
 };
 
 // Column header names (exact CSV headers expected)
@@ -247,6 +248,11 @@ function renderCard(item) {
   escopoPill.textContent = `Escopo: ${item.escopoClass || 'Outros'}`;
   const squadPill = el('span', 'pill');
   squadPill.textContent = `Squad: ${item.squad || '—'}`;
+  if (item.observation && String(item.observation).trim() !== '') {
+    const notePill = el('span', 'pill pill--note');
+    notePill.textContent = 'Nota';
+    meta.appendChild(notePill);
+  }
 
   meta.appendChild(effortPill);
   meta.appendChild(impactPill);
@@ -261,6 +267,12 @@ function renderCard(item) {
   card.addEventListener('dragstart', (ev) => {
     ev.dataTransfer.setData('text/plain', String(item.id));
     ev.dataTransfer.effectAllowed = 'move';
+    state.ui.isDragging = true;
+  });
+  card.addEventListener('dragend', () => { state.ui.isDragging = false; });
+  card.addEventListener('click', () => {
+    if (state.ui.isDragging) return;
+    openNoteModal(item.id);
   });
 
   return card;
@@ -332,6 +344,7 @@ async function handleFile(file) {
       impactClass,
       abordagemClass,
       escopoClass,
+      observation: '',
       _original: o,
     };
   });
@@ -367,7 +380,7 @@ function populateSquadFilter() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -384,7 +397,7 @@ function exportCsv() {
   lines.push(headers.map(esc).join(','));
   for (const it of state.items) {
     const base = originalHeaders.map(h => esc(it._original[h] ?? ''));
-    const extras = [it.effortClass, it.impactClass, it.abordagemClass, it.escopoClass].map(esc);
+    const extras = [it.effortClass, it.impactClass, it.abordagemClass, it.escopoClass, it.observation].map(esc);
     lines.push([...base, ...extras].join(','));
   }
 
@@ -432,6 +445,46 @@ window.addEventListener('DOMContentLoaded', () => {
   // Export button
   const exportBtn = document.getElementById('exportCsvBtn');
   exportBtn.addEventListener('click', exportCsv);
+
+  // Modal wiring
+  const modal = document.getElementById('noteModal');
+  const closeBtn = document.getElementById('noteCloseBtn');
+  const cancelBtn = document.getElementById('noteCancelBtn');
+  const saveBtn = document.getElementById('noteSaveBtn');
+  closeBtn.addEventListener('click', closeNoteModal);
+  cancelBtn.addEventListener('click', closeNoteModal);
+  saveBtn.addEventListener('click', saveNoteModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeNoteModal();
+  });
 });
+
+function openNoteModal(itemId) {
+  state.ui.selectedId = itemId;
+  const item = state.items.find(it => it.id === itemId);
+  const modal = document.getElementById('noteModal');
+  const title = document.getElementById('noteItemTitle');
+  const textarea = document.getElementById('noteTextarea');
+  title.textContent = item?.demanda || '(sem título)';
+  textarea.value = item?.observation || '';
+  modal.classList.remove('hidden');
+}
+
+function closeNoteModal() {
+  const modal = document.getElementById('noteModal');
+  modal.classList.add('hidden');
+  state.ui.selectedId = null;
+}
+
+function saveNoteModal() {
+  const textarea = document.getElementById('noteTextarea');
+  const id = state.ui.selectedId;
+  if (id != null) {
+    const item = state.items.find(it => it.id === id);
+    if (item) item.observation = textarea.value;
+  }
+  closeNoteModal();
+  render();
+}
 
 
