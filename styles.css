@@ -36,9 +36,11 @@ button:hover { border-color: #cbd5e1; }
 .board-wrapper { display: grid; grid-template-columns: 1fr 330px; gap: 16px; padding: 16px 20px; align-items: start; }
 
 .board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-template-rows: repeat(4, minmax(120px, 1fr)) 36px; gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; }
-.x-header { display: flex; align-items: center; justify-content: center; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
-.y-label { display: flex; align-items: center; justify-content: center; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
+.x-header { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
+.y-label { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
 .y-label.empty { background: transparent; border: none; }
+
+.hint { font-weight: 400; color: var(--muted); font-size: 12px; }
 
 .cell { border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #fff; min-height: 120px; position: relative; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; }
 .cell.drag-over { outline: 2px dashed var(--accent); outline-offset: -4px; }
