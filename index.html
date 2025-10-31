@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mini Miro - Priorização Esforço x Impacto</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Mini Miro - Priorização Esforço x Impacto</h1>
+    </header>
+
+    <section class="controls">
+      <div class="control-group">
+        <label for="csvFile">Carregar base.csv</label>
+        <input type="file" id="csvFile" accept=".csv" />
+      </div>
+
+      <div class="control-group">
+        <label for="abordagemFilter">Abordagem</label>
+        <select id="abordagemFilter">
+          <option value="all">Todas</option>
+          <option value="Oportunidade">Oportunidade</option>
+          <option value="Problema">Problema</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="escopoFilter">Escopo</label>
+        <select id="escopoFilter">
+          <option value="all">Todos</option>
+          <option value="Inovação">Inovação</option>
+          <option value="Operação">Operação</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <button id="exportCsvBtn" type="button">Exportar CSV (com classificações)</button>
+      </div>
+    </section>
+
+    <main class="board-wrapper">
+      <section class="board" id="board">
+        <!-- Column headers -->
+        <div class="y-label empty"></div>
+        <div class="x-header">Baixo</div>
+        <div class="x-header">Médio</div>
+        <div class="x-header">Alto</div>
+
+        <!-- Row: Altíssimo impacto (top row) -->
+        <div class="y-label">Altíssimo</div>
+        <div class="cell" data-impact="Altíssimo" data-effort="Baixo"></div>
+        <div class="cell" data-impact="Altíssimo" data-effort="Médio"></div>
+        <div class="cell" data-impact="Altíssimo" data-effort="Alto"></div>
+
+        <!-- Row: Alto impacto -->
+        <div class="y-label">Alto</div>
+        <div class="cell" data-impact="Alto" data-effort="Baixo"></div>
+        <div class="cell" data-impact="Alto" data-effort="Médio"></div>
+        <div class="cell" data-impact="Alto" data-effort="Alto"></div>
+
+        <!-- Row: Médio impacto -->
+        <div class="y-label">Médio</div>
+        <div class="cell" data-impact="Médio" data-effort="Baixo"></div>
+        <div class="cell" data-impact="Médio" data-effort="Médio"></div>
+        <div class="cell" data-impact="Médio" data-effort="Alto"></div>
+
+        <!-- Row: Baixo impacto -->
+        <div class="y-label">Baixo</div>
+        <div class="cell" data-impact="Baixo" data-effort="Baixo"></div>
+        <div class="cell" data-impact="Baixo" data-effort="Médio"></div>
+        <div class="cell" data-impact="Baixo" data-effort="Alto"></div>
+      </section>
+
+      <aside class="backlog" id="backlog" aria-label="Backlog (não classificados)">
+        <div class="backlog-header">
+          <h2>Backlog (não classificados)</h2>
+          <p>Arraste para um quadrante para classificar</p>
+        </div>
+        <div class="backlog-list" id="backlogList"></div>
+      </aside>
+    </main>
+
+    <footer class="app-footer">
+      <small>Arraste os cards para classificar por Esforço (colunas) e Impacto (linhas).</small>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>
+
+
