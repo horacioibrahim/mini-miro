@@ -231,6 +231,10 @@ function renderCard(item) {
 
   const effortPill = el('span', 'pill');
   effortPill.textContent = `Esforço: ${item.effortClass || '—'}`;
+  const validEfforts = ['Baixo', 'Médio', 'Alto'];
+  if (!validEfforts.includes(item.effortClass)) {
+    effortPill.classList.add('pill--invalid');
+  }
   const impactPill = el('span', 'pill');
   impactPill.textContent = `Impacto: ${item.impactClass || '—'}`;
   const abordagemPill = el('span', 'pill');
