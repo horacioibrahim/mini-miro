@@ -20,14 +20,16 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helve
 .controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--border); align-items: flex-end; position: sticky; top: 64px; z-index: 95; background: var(--bg); }
 .control-group { display: flex; gap: 8px; align-items: center; }
 label { font-size: 14px; color: var(--muted); }
-select, input[type="file"], button { font: inherit; }
-select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--fg); }
-button { padding: 8px 12px; border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; }
+select, input[type="file"], button, input[type="text"] { font: inherit; }
+/* Controles com altura e cantos consistentes */
+select { height: 36px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--fg); }
+input[type="text"] { height: 36px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--fg); }
+button { height: 36px; padding: 6px 12px; border: 1px solid var(--border); background: #fff; border-radius: 10px; cursor: pointer; }
 button:hover { border-color: #cbd5e1; }
 
 /* Dropdown (Squad) */
 .dropdown { position: relative; }
-.dropdown-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 6px; min-width: 220px; text-align: left; }
+.dropdown-btn { height: 36px; padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 10px; min-width: 220px; text-align: left; }
 .dropdown-panel { position: absolute; top: calc(100% + 6px); left: 0; width: 280px; max-height: 280px; overflow: auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 24px rgba(0,0,0,0.08); padding: 8px; z-index: 120; }
 .dropdown-option { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 6px; }
 .dropdown-option:hover { background: #f8fafc; }
