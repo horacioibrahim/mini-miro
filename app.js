@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
-  filters: { abordagem: 'all', escopo: 'all', squad: 'all' },
+  filters: { abordagem: 'all', escopo: 'all', squad: [] },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -14,6 +14,7 @@ const HEADERS = {
   OBS_ADICIONAIS: 'Observações adicionais',
   PRINCIPAL_IMPACTO:
     'Principal Impacto (pensando em visibilidade a demanda é mais mercado, mais user ou mais plataforma-arquitetura-tecnologia)?',
+  DEMANDA_DESC: 'Demanda descrição',
   ABORDAGEM:
     'Qual o tipo de abordagem (tratar como problema ou oportunidade) [problema = interno e repetido; oportunidade = externo e competição]',
   ESCOPO:
@@ -189,7 +190,9 @@ function render() {
     const s = item.squad || 'Outros';
     const abordagemOk = abordagemFilter === 'all' || a === abordagemFilter;
     const escopoOk = escopoFilter === 'all' || e === escopoFilter;
-    const squadOk = squadFilter === 'all' || s === squadFilter;
+    const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
+      ? true
+      : squadFilter.includes(s);
     return abordagemOk && escopoOk && squadOk;
   };
 
@@ -348,6 +351,7 @@ async function handleFile(file) {
     const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'demanda']);
     const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'squad', 'Squad']);
     const obsAdicionais = valueByPossibleKeys(o, [HEADERS.OBS_ADICIONAIS, 'Observações adicionais']);
+    const demandaDescricao = valueByPossibleKeys(o, [HEADERS.DEMANDA_DESC, 'Demanda descrição']);
     const principalImpacto = valueByPossibleKeys(o, [HEADERS.PRINCIPAL_IMPACTO]);
     const effortClass = classifyEffort(effortRaw);
     const impactClass = classifyImpact(impactRaw);
@@ -362,6 +366,7 @@ async function handleFile(file) {
       abordagemRaw,
       escopoRaw,
       obsAdicionais,
+      demandaDescricao,
       principalImpacto,
       effortClass,
       impactClass,
@@ -447,7 +452,8 @@ function setupFilters() {
     render();
   });
   squadSel.addEventListener('change', () => {
-    state.filters.squad = squadSel.value;
+    const selected = Array.from(squadSel.selectedOptions).map(o => o.value).filter(v => v !== 'all');
+    state.filters.squad = selected;
     render();
   });
 }
@@ -542,6 +548,7 @@ function openDetailSheet(itemId) {
   const item = state.items.find(it => it.id === itemId);
   if (!item) return;
   document.getElementById('sheetTitle').textContent = item.demanda || '(sem título)';
+  document.getElementById('sheetDemandaDesc').textContent = item.demandaDescricao || '—';
   document.getElementById('sheetObsAdd').textContent = item.obsAdicionais || '—';
   document.getElementById('sheetImpacto').textContent = item.impactRaw || item.impactClass || '—';
   document.getElementById('sheetEsforco').textContent = item.effortRaw || item.effortClass || '—';

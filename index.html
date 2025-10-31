@@ -47,7 +47,7 @@
 
       <div class="control-group">
         <label for="squadFilter">Squad</label>
-        <select id="squadFilter">
+        <select id="squadFilter" multiple size="5" aria-label="Selecionar squads (múltipla seleção)">
           <option value="all">Todos</option>
         </select>
       </div>
@@ -147,6 +147,7 @@
         <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
       </div>
       <div class="sheet-body">
+        <div class="sheet-row"><div class="sheet-label">Demanda descrição</div><div class="sheet-value" id="sheetDemandaDesc"></div></div>
         <div class="sheet-row"><div class="sheet-label">Observações adicionais</div><div class="sheet-value" id="sheetObsAdd"></div></div>
         <div class="sheet-row"><div class="sheet-label">Qual o impacto econômico que poderá trazer?</div><div class="sheet-value" id="sheetImpacto"></div></div>
         <div class="sheet-row"><div class="sheet-label">Esforço técnico para entregar em produção</div><div class="sheet-value" id="sheetEsforco"></div></div>
