@@ -1,12 +1,13 @@
 // Data state
 const state = {
-  items: [], // { id, demanda, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
-  filters: { abordagem: 'all', escopo: 'all' },
+  items: [], // { id, demanda, squad, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
+  filters: { abordagem: 'all', escopo: 'all', squad: 'all' },
 };
 
 // Column header names (exact CSV headers expected)
 const HEADERS = {
   DEMANDA: 'Demanda',
+  SQUAD: 'Squad',
   ESFORCO: 'Esforço técnico para entregar em produção',
   IMPACTO: 'Qual o impacto econômico que poderá trazer?',
   ABORDAGEM:
@@ -168,6 +169,7 @@ function clearChildren(node) {
 function render() {
   const abordagemFilter = state.filters.abordagem;
   const escopoFilter = state.filters.escopo;
+  const squadFilter = state.filters.squad;
 
   // Prepare containers
   const board = document.getElementById('board');
@@ -180,9 +182,11 @@ function render() {
   const passFilters = (item) => {
     const a = item.abordagemClass || 'Outros';
     const e = item.escopoClass || 'Outros';
+    const s = item.squad || 'Outros';
     const abordagemOk = abordagemFilter === 'all' || a === abordagemFilter;
     const escopoOk = escopoFilter === 'all' || e === escopoFilter;
-    return abordagemOk && escopoOk;
+    const squadOk = squadFilter === 'all' || s === squadFilter;
+    return abordagemOk && escopoOk && squadOk;
   };
 
   // Place items
@@ -241,11 +245,14 @@ function renderCard(item) {
   abordagemPill.textContent = `Abordagem: ${item.abordagemClass || 'Outros'}`;
   const escopoPill = el('span', 'pill');
   escopoPill.textContent = `Escopo: ${item.escopoClass || 'Outros'}`;
+  const squadPill = el('span', 'pill');
+  squadPill.textContent = `Squad: ${item.squad || '—'}`;
 
   meta.appendChild(effortPill);
   meta.appendChild(impactPill);
   meta.appendChild(abordagemPill);
   meta.appendChild(escopoPill);
+  meta.appendChild(squadPill);
 
   card.appendChild(title);
   card.appendChild(meta);
@@ -308,6 +315,7 @@ async function handleFile(file) {
     const abordagemRaw = valueByPossibleKeys(o, [HEADERS.ABORDAGEM]);
     const escopoRaw = valueByPossibleKeys(o, [HEADERS.ESCOPO]);
     const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'demanda']);
+    const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'squad', 'Squad']);
     const effortClass = classifyEffort(effortRaw);
     const impactClass = classifyImpact(impactRaw);
     const abordagemClass = classifyAbordagem(abordagemRaw);
@@ -315,6 +323,7 @@ async function handleFile(file) {
     return {
       id: idx + 1,
       demanda,
+      squad,
       effortRaw,
       impactRaw,
       abordagemRaw,
@@ -328,7 +337,30 @@ async function handleFile(file) {
   });
 
   state.items = items;
+  populateSquadFilter();
   render();
+}
+
+function populateSquadFilter() {
+  const sel = document.getElementById('squadFilter');
+  if (!sel) return;
+  const current = sel.value || 'all';
+  // clear existing options except first
+  while (sel.options.length > 1) sel.remove(1);
+  const set = new Set();
+  for (const it of state.items) {
+    const name = (it.squad || '').trim();
+    if (name) set.add(name);
+  }
+  const opts = Array.from(set).sort();
+  for (const o of opts) {
+    const opt = document.createElement('option');
+    opt.value = o;
+    opt.textContent = o;
+    sel.appendChild(opt);
+  }
+  // restore selection if still present
+  if ([...sel.options].some(op => op.value === current)) sel.value = current; else sel.value = 'all';
 }
 
 // Export with classification columns appended (does not overwrite originals)
@@ -369,12 +401,17 @@ function exportCsv() {
 function setupFilters() {
   const abordagemSel = document.getElementById('abordagemFilter');
   const escopoSel = document.getElementById('escopoFilter');
+  const squadSel = document.getElementById('squadFilter');
   abordagemSel.addEventListener('change', () => {
     state.filters.abordagem = abordagemSel.value;
     render();
   });
   escopoSel.addEventListener('change', () => {
     state.filters.escopo = escopoSel.value;
+    render();
+  });
+  squadSel.addEventListener('change', () => {
+    state.filters.squad = squadSel.value;
     render();
   });
 }
