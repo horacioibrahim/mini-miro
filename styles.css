@@ -17,7 +17,7 @@ button:hover { border-color: #cbd5e1; }
 
 .board-wrapper { display: grid; grid-template-columns: 1fr 330px; gap: 16px; padding: 16px 20px; align-items: start; }
 
-.board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-template-rows: 36px repeat(4, minmax(120px, 1fr)); gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; }
+.board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-template-rows: repeat(4, minmax(120px, 1fr)) 36px; gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; }
 .x-header { display: flex; align-items: center; justify-content: center; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
 .y-label { display: flex; align-items: center; justify-content: center; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
 .y-label.empty { background: transparent; border: none; }
@@ -29,6 +29,8 @@ button:hover { border-color: #cbd5e1; }
 .card:active { cursor: grabbing; }
 .card--problema { border-color: #ef4444; }
 .card--oportunidade { border-color: #3b82f6; }
+.card--operacao { background: oklch(82.7% 0.119 306.383); }
+.card--inovacao { background: oklch(92.4% 0.12 95.746); }
 .card-title { font-weight: 600; font-size: 14px; }
 .card-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .pill { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); background: #fff; }

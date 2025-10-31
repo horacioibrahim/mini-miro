@@ -222,6 +222,13 @@ function renderCard(item) {
     card.classList.add('card--oportunidade');
   }
 
+  // escopo-based background color
+  if (item.escopoClass === 'Operação') {
+    card.classList.add('card--operacao');
+  } else if (item.escopoClass === 'Inovação') {
+    card.classList.add('card--inovacao');
+  }
+
   const effortPill = el('span', 'pill');
   effortPill.textContent = `Esforço: ${item.effortClass || '—'}`;
   const impactPill = el('span', 'pill');
