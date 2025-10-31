@@ -96,6 +96,9 @@ button:hover { border-color: #cbd5e1; }
 .sheet-row { display: grid; gap: 6px; }
 .sheet-label { font-size: 12px; color: var(--muted); }
 .sheet-value { white-space: pre-wrap; }
+.rel-list { border: 1px solid var(--border); border-radius: 8px; max-height: 220px; overflow: auto; padding: 6px; display: grid; gap: 6px; background: #fff; }
+.rel-option { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; }
+.rel-option:hover { background: #f8fafc; }
 
 /* Responsive */
 @media (max-width: 1024px) {

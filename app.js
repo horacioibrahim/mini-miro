@@ -1,6 +1,6 @@
 // Data state
 const state = {
-  items: [], // { id, demanda, squad, observation, effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, ... }
+  items: [], // { id, demanda, squad, observation, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, ... }
   filters: { abordagem: 'all', escopo: 'all', principal: 'all', squad: [], text: '' },
   ui: { isDragging: false, selectedId: null },
 };
@@ -397,6 +397,7 @@ async function handleFile(file) {
       abordagemClass,
       escopoClass,
       principalImpactClass,
+      relatedIds: [],
       observation: '',
       _original: o,
     };
@@ -468,7 +469,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -485,7 +486,11 @@ function exportCsv() {
   lines.push(headers.map(esc).join(','));
   for (const it of state.items) {
     const base = originalHeaders.map(h => esc(it._original[h] ?? ''));
-    const extras = [it.effortClass, it.impactClass, it.abordagemClass, it.escopoClass, it.observation].map(esc);
+    const relatedNames = (it.relatedIds || []).map(id => {
+      const other = state.items.find(x => x.id === id);
+      return other?.demanda || `#${id}`;
+    }).join('; ');
+    const extras = [it.effortClass, it.impactClass, it.abordagemClass, it.escopoClass, it.principalImpactClass, relatedNames, it.observation].map(esc);
     lines.push([...base, ...extras].join(','));
   }
 
@@ -590,6 +595,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const sheetImpactoSel = document.getElementById('sheetImpactoSel');
   const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
   const sheetObservation = document.getElementById('sheetObservation');
+  const relSearch = document.getElementById('relSearch');
+  const relList = document.getElementById('relList');
   function applyToSelected(updater) {
     const id = state.ui.selectedId;
     if (id == null) return;
@@ -616,6 +623,29 @@ window.addEventListener('DOMContentLoaded', () => {
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
   });
+  if (relSearch && relList) {
+    relSearch.addEventListener('input', () => {
+      const id = state.ui.selectedId;
+      if (id == null) return;
+      const item = state.items.find(it => it.id === id);
+      buildRelationsList(item, relList, relSearch.value);
+    });
+    relList.addEventListener('change', (e) => {
+      const id = state.ui.selectedId;
+      if (id == null) return;
+      const item = state.items.find(it => it.id === id);
+      if (!item) return;
+      const target = e.target;
+      if (target && target.matches('input[type="checkbox"][data-rel]')) {
+        const rid = Number(target.getAttribute('data-rel'));
+        if (target.checked) {
+          if (!item.relatedIds.includes(rid)) item.relatedIds.push(rid);
+        } else {
+          item.relatedIds = item.relatedIds.filter(x => x !== rid);
+        }
+      }
+    });
+  }
 });
 
 function openNoteModal(itemId) {
@@ -679,7 +709,32 @@ function openDetailSheet(itemId) {
   if (sheetImpactoSel) sheetImpactoSel.value = item.impactClass || 'Baixo';
   if (sheetEsforcoSel) sheetEsforcoSel.value = item.effortClass || 'Baixo';
   if (sheetObservation) sheetObservation.value = item.observation || '';
+  const relList = document.getElementById('relList');
+  const relSearch = document.getElementById('relSearch');
+  if (relList) buildRelationsList(item, relList, relSearch?.value || '');
   document.getElementById('detailSheet').classList.remove('hidden');
+}
+
+function buildRelationsList(item, container, query = '') {
+  if (!container || !item) return;
+  clearChildren(container);
+  const q = normalizeString(query || '');
+  const options = state.items.filter(it => it.id !== item.id && (
+    !q || normalizeString(it.demanda).includes(q) || normalizeString(it.demandaDescricao || '').includes(q)
+  ));
+  for (const other of options) {
+    const label = document.createElement('label');
+    label.className = 'rel-option';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.setAttribute('data-rel', String(other.id));
+    cb.checked = item.relatedIds.includes(other.id);
+    const span = document.createElement('span');
+    span.textContent = other.demanda || '(sem título)';
+    label.appendChild(cb);
+    label.appendChild(span);
+    container.appendChild(label);
+  }
 }
 
 function closeDetailSheet() {
