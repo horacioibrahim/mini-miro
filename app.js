@@ -1,7 +1,7 @@
 // Data state
 const state = {
-  items: [], // { id, demanda, squad, observation, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
-  filters: { abordagem: 'all', escopo: 'all', squad: [], text: '' },
+  items: [], // { id, demanda, squad, observation, effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, ... }
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', squad: [], text: '' },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -64,6 +64,15 @@ function classifyEscopo(raw) {
   if (!n) return 'Outros';
   if (n.includes('inovacao')) return 'Inovação';
   if (n.includes('operacao') || n.includes('operacional') || n.includes('core')) return 'Operação';
+  return 'Outros';
+}
+
+function classifyPrincipalImpact(raw) {
+  const n = normalizeString(raw);
+  if (!n) return 'Outros';
+  if (n.includes('mercado') || n.includes('lei') || n.includes('compliance') || n.includes('cliente') || n.includes('competic')) return 'Mercado';
+  if (n.includes('plataforma') || n.includes('tecnolog') || n.includes('escala') || n.includes('disponibilidade') || n.includes('produtividade') || n.includes('arquitetura') || n.includes('barreira')) return 'Plataforma';
+  if (n.includes('experien') || n.includes('jornada') || n.includes('engaj') || n.includes('retenc') || n.includes('usuario') || n.includes('user')) return 'Experiência';
   return 'Outros';
 }
 
@@ -174,6 +183,7 @@ function clearChildren(node) {
 function render() {
   const abordagemFilter = state.filters.abordagem;
   const escopoFilter = state.filters.escopo;
+  const principalFilter = state.filters.principal;
   const squadFilter = state.filters.squad;
   const textFilter = normalizeString(state.filters.text || '');
 
@@ -188,16 +198,18 @@ function render() {
   const passFilters = (item) => {
     const a = item.abordagemClass || 'Outros';
     const e = item.escopoClass || 'Outros';
+    const p = item.principalImpactClass || 'Outros';
     const s = item.squad || 'Outros';
     const abordagemOk = abordagemFilter === 'all' || a === abordagemFilter;
     const escopoOk = escopoFilter === 'all' || e === escopoFilter;
+    const principalOk = principalFilter === 'all' || p === principalFilter;
     const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
       ? true
       : squadFilter.includes(s);
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
-    return abordagemOk && escopoOk && squadOk && textOk;
+    return abordagemOk && escopoOk && principalOk && squadOk && textOk;
   };
 
   // Place items
@@ -274,6 +286,12 @@ function renderCard(item) {
   escopoPill.textContent = `Escopo: ${item.escopoClass || 'Outros'}`;
   const squadPill = el('span', 'pill');
   squadPill.textContent = `Squad: ${item.squad || '—'}`;
+  const principalBadge = el('span', 'badge');
+  const pClass = item.principalImpactClass;
+  if (pClass === 'Experiência') principalBadge.classList.add('badge--experiencia');
+  else if (pClass === 'Mercado') principalBadge.classList.add('badge--mercado');
+  else if (pClass === 'Plataforma') principalBadge.classList.add('badge--plataforma');
+  principalBadge.textContent = pClass || 'Outros';
   if (item.observation && String(item.observation).trim() !== '') {
     const notePill = el('span', 'pill pill--note');
     notePill.textContent = 'Nota';
@@ -285,6 +303,7 @@ function renderCard(item) {
   meta.appendChild(abordagemPill);
   meta.appendChild(escopoPill);
   meta.appendChild(squadPill);
+  meta.appendChild(principalBadge);
 
   card.appendChild(head);
   card.appendChild(meta);
@@ -361,6 +380,7 @@ async function handleFile(file) {
     const impactClass = classifyImpact(impactRaw);
     const abordagemClass = classifyAbordagem(abordagemRaw);
     const escopoClass = classifyEscopo(escopoRaw);
+    const principalImpactClass = classifyPrincipalImpact(principalImpacto);
     return {
       id: idx + 1,
       demanda,
@@ -376,6 +396,7 @@ async function handleFile(file) {
       impactClass,
       abordagemClass,
       escopoClass,
+      principalImpactClass,
       observation: '',
       _original: o,
     };
@@ -481,6 +502,7 @@ function exportCsv() {
 function setupFilters() {
   const abordagemSel = document.getElementById('abordagemFilter');
   const escopoSel = document.getElementById('escopoFilter');
+  const principalSel = document.getElementById('principalFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
   const textInput = document.getElementById('textFilter');
@@ -490,6 +512,10 @@ function setupFilters() {
   });
   escopoSel.addEventListener('change', () => {
     state.filters.escopo = escopoSel.value;
+    render();
+  });
+  principalSel.addEventListener('change', () => {
+    state.filters.principal = principalSel.value;
     render();
   });
   if (textInput) {
