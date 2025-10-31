@@ -123,6 +123,39 @@
       </div>
     </div>
 
+    <!-- Modal de Observações adicionais (somente leitura) -->
+    <div id="obsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="obsModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="obsModalTitle">Observações adicionais</h3>
+          <button id="obsCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-item-title" id="obsItemTitle"></div>
+          <div id="obsContent" class="obs-content"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="obsOkBtn" type="button">Ok</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sheet lateral de detalhes -->
+    <aside id="detailSheet" class="sheet hidden" aria-label="Detalhes da demanda">
+      <div class="sheet-header">
+        <strong id="sheetTitle">Detalhes</strong>
+        <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="sheet-body">
+        <div class="sheet-row"><div class="sheet-label">Observações adicionais</div><div class="sheet-value" id="sheetObsAdd"></div></div>
+        <div class="sheet-row"><div class="sheet-label">Qual o impacto econômico que poderá trazer?</div><div class="sheet-value" id="sheetImpacto"></div></div>
+        <div class="sheet-row"><div class="sheet-label">Esforço técnico para entregar em produção</div><div class="sheet-value" id="sheetEsforco"></div></div>
+        <div class="sheet-row"><div class="sheet-label">Principal Impacto</div><div class="sheet-value" id="sheetPrincipalImpacto"></div></div>
+        <div class="sheet-row"><div class="sheet-label">Qual o tipo de escopo</div><div class="sheet-value" id="sheetEscopo"></div></div>
+        <div class="sheet-row"><div class="sheet-label">Qual o tipo de abordagem</div><div class="sheet-value" id="sheetAbordagem"></div></div>
+      </div>
+    </aside>
+
     <script src="./app.js"></script>
   </body>
   </html>

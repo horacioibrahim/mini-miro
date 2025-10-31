@@ -11,6 +11,9 @@ const HEADERS = {
   SQUAD: 'Squad',
   ESFORCO: 'Esforço técnico para entregar em produção',
   IMPACTO: 'Qual o impacto econômico que poderá trazer?',
+  OBS_ADICIONAIS: 'Observações adicionais',
+  PRINCIPAL_IMPACTO:
+    'Principal Impacto (pensando em visibilidade a demanda é mais mercado, mais user ou mais plataforma-arquitetura-tecnologia)?',
   ABORDAGEM:
     'Qual o tipo de abordagem (tratar como problema ou oportunidade) [problema = interno e repetido; oportunidade = externo e competição]',
   ESCOPO:
@@ -216,8 +219,24 @@ function render() {
 
 function renderCard(item) {
   const card = el('div', 'card', { draggable: 'true', 'data-id': item.id });
+  const head = el('div', 'card-head');
   const title = el('div', 'card-title');
   title.textContent = item.demanda || '(sem título)';
+  const actions = el('div', 'card-actions');
+  const btnDoc = el('button', 'icon-btn', { title: 'Ver detalhes (sheet)' });
+  btnDoc.textContent = '🗎';
+  btnDoc.addEventListener('click', (e) => { e.stopPropagation(); openDetailSheet(item.id); });
+  const btnObs = el('button', 'icon-btn', { title: 'Ver Observações adicionais' });
+  btnObs.textContent = '💬';
+  btnObs.addEventListener('click', (e) => { e.stopPropagation(); openObsModal(item.id); });
+  const btnEdit = el('button', 'icon-btn', { title: 'Editar observação complementar' });
+  btnEdit.textContent = '✎';
+  btnEdit.addEventListener('click', (e) => { e.stopPropagation(); openNoteModal(item.id); });
+  actions.appendChild(btnDoc);
+  actions.appendChild(btnObs);
+  actions.appendChild(btnEdit);
+  head.appendChild(title);
+  head.appendChild(actions);
   const meta = el('div', 'card-meta');
 
   // abordagem-based border color
@@ -260,7 +279,7 @@ function renderCard(item) {
   meta.appendChild(escopoPill);
   meta.appendChild(squadPill);
 
-  card.appendChild(title);
+  card.appendChild(head);
   card.appendChild(meta);
 
   // DnD events
@@ -328,6 +347,8 @@ async function handleFile(file) {
     const escopoRaw = valueByPossibleKeys(o, [HEADERS.ESCOPO]);
     const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'demanda']);
     const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'squad', 'Squad']);
+    const obsAdicionais = valueByPossibleKeys(o, [HEADERS.OBS_ADICIONAIS, 'Observações adicionais']);
+    const principalImpacto = valueByPossibleKeys(o, [HEADERS.PRINCIPAL_IMPACTO]);
     const effortClass = classifyEffort(effortRaw);
     const impactClass = classifyImpact(impactRaw);
     const abordagemClass = classifyAbordagem(abordagemRaw);
@@ -340,6 +361,8 @@ async function handleFile(file) {
       impactRaw,
       abordagemRaw,
       escopoRaw,
+      obsAdicionais,
+      principalImpacto,
       effortClass,
       impactClass,
       abordagemClass,
@@ -457,6 +480,19 @@ window.addEventListener('DOMContentLoaded', () => {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeNoteModal();
   });
+
+  // Obs adicionais modal
+  const obsModal = document.getElementById('obsModal');
+  const obsClose = document.getElementById('obsCloseBtn');
+  const obsOk = document.getElementById('obsOkBtn');
+  obsClose.addEventListener('click', closeObsModal);
+  obsOk.addEventListener('click', closeObsModal);
+  obsModal.addEventListener('click', (e) => { if (e.target === obsModal) closeObsModal(); });
+
+  // Sheet
+  const sheet = document.getElementById('detailSheet');
+  const sheetCloseBtn = document.getElementById('sheetCloseBtn');
+  sheetCloseBtn.addEventListener('click', closeDetailSheet);
 });
 
 function openNoteModal(itemId) {
@@ -485,6 +521,38 @@ function saveNoteModal() {
   }
   closeNoteModal();
   render();
+}
+
+function openObsModal(itemId) {
+  const item = state.items.find(it => it.id === itemId);
+  const modal = document.getElementById('obsModal');
+  const title = document.getElementById('obsItemTitle');
+  const content = document.getElementById('obsContent');
+  title.textContent = item?.demanda || '(sem título)';
+  content.textContent = item?.obsAdicionais || '—';
+  modal.classList.remove('hidden');
+}
+
+function closeObsModal() {
+  const modal = document.getElementById('obsModal');
+  modal.classList.add('hidden');
+}
+
+function openDetailSheet(itemId) {
+  const item = state.items.find(it => it.id === itemId);
+  if (!item) return;
+  document.getElementById('sheetTitle').textContent = item.demanda || '(sem título)';
+  document.getElementById('sheetObsAdd').textContent = item.obsAdicionais || '—';
+  document.getElementById('sheetImpacto').textContent = item.impactRaw || item.impactClass || '—';
+  document.getElementById('sheetEsforco').textContent = item.effortRaw || item.effortClass || '—';
+  document.getElementById('sheetPrincipalImpacto').textContent = item.principalImpacto || '—';
+  document.getElementById('sheetEscopo').textContent = item.escopoRaw || item.escopoClass || '—';
+  document.getElementById('sheetAbordagem').textContent = item.abordagemRaw || item.abordagemClass || '—';
+  document.getElementById('detailSheet').classList.remove('hidden');
+}
+
+function closeDetailSheet() {
+  document.getElementById('detailSheet').classList.add('hidden');
 }
 
 
