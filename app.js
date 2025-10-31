@@ -15,6 +15,9 @@ const HEADERS = {
   PRINCIPAL_IMPACTO:
     'Principal Impacto (pensando em visibilidade a demanda é mais mercado, mais user ou mais plataforma-arquitetura-tecnologia)?',
   DEMANDA_DESC: 'Demanda descrição',
+  ANDAMENTO: 'Andamento',
+  PROGRESSO: 'Progresso',
+  TIPO_ESFORCO: 'Tipo de esforço',
   ABORDAGEM:
     'Qual o tipo de abordagem (tratar como problema ou oportunidade) [problema = interno e repetido; oportunidade = externo e competição]',
   ESCOPO:
@@ -74,6 +77,29 @@ function classifyPrincipalImpact(raw) {
   if (n.includes('plataforma') || n.includes('tecnolog') || n.includes('escala') || n.includes('disponibilidade') || n.includes('produtividade') || n.includes('arquitetura') || n.includes('barreira')) return 'Plataforma';
   if (n.includes('experien') || n.includes('jornada') || n.includes('engaj') || n.includes('retenc') || n.includes('usuario') || n.includes('user')) return 'Experiência';
   return 'Outros';
+}
+
+function parseAndamento(raw) {
+  const n = normalizeString(raw);
+  if (!n) return false;
+  return n.startsWith('sim') || n === 'true' || n === '1';
+}
+
+function parseProgresso(raw) {
+  if (raw == null) return 0;
+  const m = String(raw).match(/\d+/);
+  const v = m ? Number(m[0]) : Number(raw);
+  if (Number.isNaN(v)) return 0;
+  return Math.min(100, Math.max(0, v));
+}
+
+function classifyTipoEsforco(raw) {
+  const n = normalizeString(raw);
+  if (!n) return null;
+  if (n.includes('tarefa')) return 'Tarefa';
+  if (n.includes('iniciat')) return 'Iniciativa';
+  if (n.includes('follow')) return 'Follow-up';
+  return null;
 }
 
 // Basic CSV parser supporting quotes
@@ -292,6 +318,11 @@ function renderCard(item) {
   else if (pClass === 'Mercado') principalBadge.classList.add('badge--mercado');
   else if (pClass === 'Plataforma') principalBadge.classList.add('badge--plataforma');
   principalBadge.textContent = pClass || 'Outros';
+  const tipoBadge = el('span', 'badge');
+  if (item.tipoEsforco === 'Tarefa') tipoBadge.classList.add('badge--tarefa');
+  else if (item.tipoEsforco === 'Iniciativa') tipoBadge.classList.add('badge--iniciativa');
+  else if (item.tipoEsforco === 'Follow-up') tipoBadge.classList.add('badge--follow');
+  tipoBadge.textContent = item.tipoEsforco || '—';
   if (item.observation && String(item.observation).trim() !== '') {
     const notePill = el('span', 'pill pill--note');
     notePill.textContent = 'Nota';
@@ -303,10 +334,29 @@ function renderCard(item) {
   meta.appendChild(abordagemPill);
   meta.appendChild(escopoPill);
   meta.appendChild(squadPill);
-  meta.appendChild(principalBadge);
+  const badgesRow = el('div', 'card-badges');
+  badgesRow.appendChild(principalBadge);
+  badgesRow.appendChild(tipoBadge);
 
   card.appendChild(head);
   card.appendChild(meta);
+  card.appendChild(badgesRow);
+
+  // radar indicator
+  const radar = el('div', 'card-radar' + (item.andamento ? ' on' : ''));
+  card.appendChild(radar);
+
+  // progress footer
+  const footer = el('div', 'card-footer');
+  const progress = el('div', 'progress');
+  const bar = el('div', 'progress-bar');
+  bar.style.width = `${item.progresso ?? 0}%`;
+  progress.appendChild(bar);
+  const label = el('div', 'progress-label');
+  label.textContent = `${item.progresso ?? 0}%`;
+  footer.appendChild(progress);
+  footer.appendChild(label);
+  card.appendChild(footer);
 
   // DnD events
   card.addEventListener('dragstart', (ev) => {
@@ -376,11 +426,17 @@ async function handleFile(file) {
     const obsAdicionais = valueByPossibleKeys(o, [HEADERS.OBS_ADICIONAIS, 'Observações adicionais']);
     const demandaDescricao = valueByPossibleKeys(o, [HEADERS.DEMANDA_DESC, 'Demanda descrição']);
     const principalImpacto = valueByPossibleKeys(o, [HEADERS.PRINCIPAL_IMPACTO]);
+    const andamentoRaw = valueByPossibleKeys(o, [HEADERS.ANDAMENTO, 'Andamento']);
+    const progressoRaw = valueByPossibleKeys(o, [HEADERS.PROGRESSO, 'Progresso']);
+    const tipoEsforcoRaw = valueByPossibleKeys(o, [HEADERS.TIPO_ESFORCO, 'Tipo esforço', 'Tipo']);
     const effortClass = classifyEffort(effortRaw);
     const impactClass = classifyImpact(impactRaw);
     const abordagemClass = classifyAbordagem(abordagemRaw);
     const escopoClass = classifyEscopo(escopoRaw);
     const principalImpactClass = classifyPrincipalImpact(principalImpacto);
+    const andamento = parseAndamento(andamentoRaw);
+    const progresso = parseProgresso(progressoRaw);
+    const tipoEsforco = classifyTipoEsforco(tipoEsforcoRaw);
     return {
       id: idx + 1,
       demanda,
@@ -397,6 +453,9 @@ async function handleFile(file) {
       abordagemClass,
       escopoClass,
       principalImpactClass,
+      andamento,
+      progresso,
+      tipoEsforco,
       relatedIds: [],
       observation: '',
       _original: o,
@@ -469,7 +528,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Relacionamentos', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -490,7 +549,18 @@ function exportCsv() {
       const other = state.items.find(x => x.id === id);
       return other?.demanda || `#${id}`;
     }).join('; ');
-    const extras = [it.effortClass, it.impactClass, it.abordagemClass, it.escopoClass, it.principalImpactClass, relatedNames, it.observation].map(esc);
+    const extras = [
+      it.effortClass,
+      it.impactClass,
+      it.abordagemClass,
+      it.escopoClass,
+      it.principalImpactClass,
+      it.andamento ? 'Sim' : 'Não',
+      `${it.progresso ?? 0}%`,
+      it.tipoEsforco || '',
+      relatedNames,
+      it.observation,
+    ].map(esc);
     lines.push([...base, ...extras].join(','));
   }
 
@@ -597,6 +667,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const sheetObservation = document.getElementById('sheetObservation');
   const relSearch = document.getElementById('relSearch');
   const relList = document.getElementById('relList');
+  const sheetAndamentoSel = document.getElementById('sheetAndamentoSel');
+  const sheetProgressoInput = document.getElementById('sheetProgressoInput');
+  const sheetTipoSel = document.getElementById('sheetTipoSel');
   function applyToSelected(updater) {
     const id = state.ui.selectedId;
     if (id == null) return;
@@ -622,6 +695,21 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
+  });
+  sheetAndamentoSel.addEventListener('change', () => {
+    applyToSelected((it) => { it.andamento = sheetAndamentoSel.value === 'Sim'; });
+    render();
+  });
+  sheetProgressoInput.addEventListener('input', () => {
+    let v = parseInt(sheetProgressoInput.value || '0', 10);
+    if (Number.isNaN(v)) v = 0;
+    v = Math.min(100, Math.max(0, v));
+    applyToSelected((it) => { it.progresso = v; });
+    render();
+  });
+  sheetTipoSel.addEventListener('change', () => {
+    applyToSelected((it) => { it.tipoEsforco = sheetTipoSel.value; });
+    render();
   });
   if (relSearch && relList) {
     relSearch.addEventListener('input', () => {
@@ -709,6 +797,12 @@ function openDetailSheet(itemId) {
   if (sheetImpactoSel) sheetImpactoSel.value = item.impactClass || 'Baixo';
   if (sheetEsforcoSel) sheetEsforcoSel.value = item.effortClass || 'Baixo';
   if (sheetObservation) sheetObservation.value = item.observation || '';
+  const sheetAndamentoSel = document.getElementById('sheetAndamentoSel');
+  const sheetProgressoInput = document.getElementById('sheetProgressoInput');
+  const sheetTipoSel = document.getElementById('sheetTipoSel');
+  if (sheetAndamentoSel) sheetAndamentoSel.value = item.andamento ? 'Sim' : 'Não';
+  if (sheetProgressoInput) sheetProgressoInput.value = String(item.progresso ?? 0);
+  if (sheetTipoSel) sheetTipoSel.value = item.tipoEsforco || 'Tarefa';
   const relList = document.getElementById('relList');
   const relSearch = document.getElementById('relSearch');
   if (relList) buildRelationsList(item, relList, relSearch?.value || '');
