@@ -548,6 +548,37 @@ window.addEventListener('DOMContentLoaded', () => {
   const sheet = document.getElementById('detailSheet');
   const sheetCloseBtn = document.getElementById('sheetCloseBtn');
   sheetCloseBtn.addEventListener('click', closeDetailSheet);
+  const sheetEscopoSel = document.getElementById('sheetEscopoSel');
+  const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
+  const sheetImpactoSel = document.getElementById('sheetImpactoSel');
+  const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
+  const sheetObservation = document.getElementById('sheetObservation');
+  function applyToSelected(updater) {
+    const id = state.ui.selectedId;
+    if (id == null) return;
+    const item = state.items.find(it => it.id === id);
+    if (!item) return;
+    updater(item);
+  }
+  sheetEscopoSel.addEventListener('change', () => {
+    applyToSelected((it) => { it.escopoClass = sheetEscopoSel.value; it.escopoRaw = sheetEscopoSel.value; });
+    render();
+  });
+  sheetAbordagemSel.addEventListener('change', () => {
+    applyToSelected((it) => { it.abordagemClass = sheetAbordagemSel.value; it.abordagemRaw = sheetAbordagemSel.value; });
+    render();
+  });
+  sheetImpactoSel.addEventListener('change', () => {
+    applyToSelected((it) => { it.impactClass = sheetImpactoSel.value; it.impactRaw = sheetImpactoSel.value; });
+    render();
+  });
+  sheetEsforcoSel.addEventListener('change', () => {
+    applyToSelected((it) => { it.effortClass = sheetEsforcoSel.value; it.effortRaw = sheetEsforcoSel.value; });
+    render();
+  });
+  sheetObservation.addEventListener('input', () => {
+    applyToSelected((it) => { it.observation = sheetObservation.value; });
+  });
 });
 
 function openNoteModal(itemId) {
@@ -596,19 +627,27 @@ function closeObsModal() {
 function openDetailSheet(itemId) {
   const item = state.items.find(it => it.id === itemId);
   if (!item) return;
+  state.ui.selectedId = itemId;
   document.getElementById('sheetTitle').textContent = item.demanda || '(sem título)';
   document.getElementById('sheetDemandaDesc').textContent = item.demandaDescricao || '—';
   document.getElementById('sheetObsAdd').textContent = item.obsAdicionais || '—';
-  document.getElementById('sheetImpacto').textContent = item.impactRaw || item.impactClass || '—';
-  document.getElementById('sheetEsforco').textContent = item.effortRaw || item.effortClass || '—';
   document.getElementById('sheetPrincipalImpacto').textContent = item.principalImpacto || '—';
-  document.getElementById('sheetEscopo').textContent = item.escopoRaw || item.escopoClass || '—';
-  document.getElementById('sheetAbordagem').textContent = item.abordagemRaw || item.abordagemClass || '—';
+  const sheetEscopoSel = document.getElementById('sheetEscopoSel');
+  const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
+  const sheetImpactoSel = document.getElementById('sheetImpactoSel');
+  const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
+  const sheetObservation = document.getElementById('sheetObservation');
+  if (sheetEscopoSel) sheetEscopoSel.value = item.escopoClass || 'Outros';
+  if (sheetAbordagemSel) sheetAbordagemSel.value = item.abordagemClass || 'Outros';
+  if (sheetImpactoSel) sheetImpactoSel.value = item.impactClass || 'Baixo';
+  if (sheetEsforcoSel) sheetEsforcoSel.value = item.effortClass || 'Baixo';
+  if (sheetObservation) sheetObservation.value = item.observation || '';
   document.getElementById('detailSheet').classList.remove('hidden');
 }
 
 function closeDetailSheet() {
   document.getElementById('detailSheet').classList.add('hidden');
+  render();
 }
 
 
