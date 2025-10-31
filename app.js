@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, effortRaw, impactRaw, abordagemRaw, escopoRaw, effortClass, impactClass, abordagemClass, escopoClass }
-  filters: { abordagem: 'all', escopo: 'all', squad: [] },
+  filters: { abordagem: 'all', escopo: 'all', squad: [], text: '' },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -175,6 +175,7 @@ function render() {
   const abordagemFilter = state.filters.abordagem;
   const escopoFilter = state.filters.escopo;
   const squadFilter = state.filters.squad;
+  const textFilter = normalizeString(state.filters.text || '');
 
   // Prepare containers
   const board = document.getElementById('board');
@@ -193,7 +194,10 @@ function render() {
     const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
       ? true
       : squadFilter.includes(s);
-    return abordagemOk && escopoOk && squadOk;
+    const textOk = !textFilter
+      || normalizeString(item.demanda).includes(textFilter)
+      || normalizeString(item.demandaDescricao || '').includes(textFilter);
+    return abordagemOk && escopoOk && squadOk && textOk;
   };
 
   // Place items
@@ -479,6 +483,7 @@ function setupFilters() {
   const escopoSel = document.getElementById('escopoFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
+  const textInput = document.getElementById('textFilter');
   abordagemSel.addEventListener('change', () => {
     state.filters.abordagem = abordagemSel.value;
     render();
@@ -487,6 +492,12 @@ function setupFilters() {
     state.filters.escopo = escopoSel.value;
     render();
   });
+  if (textInput) {
+    textInput.addEventListener('input', () => {
+      state.filters.text = textInput.value;
+      render();
+    });
+  }
   if (squadBtn && squadPanel) {
     squadBtn.addEventListener('click', (e) => {
       e.stopPropagation();
