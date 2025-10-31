@@ -35,7 +35,7 @@ button:hover { border-color: #cbd5e1; }
 
 .board-wrapper { display: grid; grid-template-columns: 1fr 330px; gap: 16px; padding: 16px 20px; align-items: start; }
 
-.board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-template-rows: repeat(4, minmax(120px, 1fr)) 36px; gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; }
+.board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-template-rows: repeat(4, auto) 36px; gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; align-content: start; }
 .x-header { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
 .y-label { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
 .y-label.empty { background: transparent; border: none; }
