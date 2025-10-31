@@ -383,25 +383,60 @@ async function handleFile(file) {
 }
 
 function populateSquadFilter() {
-  const sel = document.getElementById('squadFilter');
-  if (!sel) return;
-  const current = sel.value || 'all';
-  // clear existing options except first
-  while (sel.options.length > 1) sel.remove(1);
+  const panel = document.getElementById('squadDropdownPanel');
+  const btn = document.getElementById('squadDropdownBtn');
+  if (!panel || !btn) return;
+  clearChildren(panel);
   const set = new Set();
   for (const it of state.items) {
     const name = (it.squad || '').trim();
     if (name) set.add(name);
   }
-  const opts = Array.from(set).sort();
-  for (const o of opts) {
-    const opt = document.createElement('option');
-    opt.value = o;
-    opt.textContent = o;
-    sel.appendChild(opt);
+  const squads = Array.from(set).sort();
+
+  // Actions row
+  const actions = document.createElement('div');
+  actions.className = 'dropdown-actions';
+  const hint = document.createElement('div');
+  hint.textContent = 'Selecione squads';
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.textContent = 'Limpar';
+  clearBtn.addEventListener('click', () => {
+    state.filters.squad = [];
+    // uncheck all
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    updateSquadButtonLabel();
+    render();
+  });
+  actions.appendChild(hint);
+  actions.appendChild(clearBtn);
+  panel.appendChild(actions);
+
+  // Options
+  for (const s of squads) {
+    const label = document.createElement('label');
+    label.className = 'dropdown-option';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = s;
+    cb.checked = Array.isArray(state.filters.squad) && state.filters.squad.includes(s);
+    const txt = document.createElement('span');
+    txt.textContent = s;
+    label.appendChild(cb);
+    label.appendChild(txt);
+    panel.appendChild(label);
   }
-  // restore selection if still present
-  if ([...sel.options].some(op => op.value === current)) sel.value = current; else sel.value = 'all';
+  updateSquadButtonLabel();
+}
+
+function updateSquadButtonLabel() {
+  const btn = document.getElementById('squadDropdownBtn');
+  if (!btn) return;
+  const sel = state.filters.squad || [];
+  if (sel.length === 0) btn.textContent = 'Squad: Todos';
+  else if (sel.length <= 2) btn.textContent = `Squad: ${sel.join(', ')}`;
+  else btn.textContent = `Squad: ${sel.length} selecionadas`;
 }
 
 // Export with classification columns appended (does not overwrite originals)
@@ -442,7 +477,8 @@ function exportCsv() {
 function setupFilters() {
   const abordagemSel = document.getElementById('abordagemFilter');
   const escopoSel = document.getElementById('escopoFilter');
-  const squadSel = document.getElementById('squadFilter');
+  const squadBtn = document.getElementById('squadDropdownBtn');
+  const squadPanel = document.getElementById('squadDropdownPanel');
   abordagemSel.addEventListener('change', () => {
     state.filters.abordagem = abordagemSel.value;
     render();
@@ -451,11 +487,24 @@ function setupFilters() {
     state.filters.escopo = escopoSel.value;
     render();
   });
-  squadSel.addEventListener('change', () => {
-    const selected = Array.from(squadSel.selectedOptions).map(o => o.value).filter(v => v !== 'all');
-    state.filters.squad = selected;
-    render();
-  });
+  if (squadBtn && squadPanel) {
+    squadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      squadPanel.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!squadPanel.classList.contains('hidden')) {
+        const dropdown = document.getElementById('squadDropdown');
+        if (dropdown && !dropdown.contains(e.target)) squadPanel.classList.add('hidden');
+      }
+    });
+    squadPanel.addEventListener('change', (e) => {
+      const checkboxes = Array.from(squadPanel.querySelectorAll('input[type="checkbox"]'));
+      state.filters.squad = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+      updateSquadButtonLabel();
+      render();
+    });
+  }
 }
 
 // Init

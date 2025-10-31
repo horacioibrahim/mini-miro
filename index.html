@@ -46,10 +46,11 @@
       </div>
 
       <div class="control-group">
-        <label for="squadFilter">Squad</label>
-        <select id="squadFilter" multiple size="5" aria-label="Selecionar squads (múltipla seleção)">
-          <option value="all">Todos</option>
-        </select>
+        <label>Squad</label>
+        <div class="dropdown" id="squadDropdown">
+          <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
+          <div id="squadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar squads"></div>
+        </div>
       </div>
 
       <div class="control-group">
