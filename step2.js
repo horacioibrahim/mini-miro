@@ -77,7 +77,7 @@
 
     const sdata = getSquadData();
     for (let i=1;i<=sdata.weeks;i++){
-      const weekKey = `Sem ${i}`;
+      const weekKey = `Ciclo ${i}`;
       if (!sdata.grid[weekKey]) sdata.grid[weekKey] = { t1: [], t2: [], t3: [] };
       board.appendChild(el('div','y-label')).textContent = weekKey;
       ['t1','t2','t3'].forEach(slot=>{
@@ -123,6 +123,16 @@
           target.appendChild(card(it));
         });
       }
+      // highlight overload: 2 or more efforts 'Alto' in the cycle
+      const altos = ['t1','t2','t3'].reduce((acc,slot)=>{
+        const id = slots[slot]?.[0];
+        const it = id ? state.items.find(x=>x.id===id) : null;
+        return acc + ((it && it.effortClass==='Alto') ? 1 : 0);
+      },0);
+      const rowCells = board.querySelectorAll(`.cell[data-week="${week}"]`);
+      rowCells.forEach(cell => {
+        if (altos >= 2) cell.classList.add('cycle-overload'); else cell.classList.remove('cycle-overload');
+      });
     }
 
     // render backlog
@@ -184,7 +194,7 @@
   }
 
   function exportCsv(){
-    const rows = [['Squad','Semana','Tarefa1','Tarefa2','Tarefa3']];
+    const rows = [['Squad','Ciclo','Tarefa1','Tarefa2','Tarefa3']];
     // export all squads
     const rowsBySquad = [];
     for (const [squad, data] of Object.entries(state.grids)){
@@ -211,7 +221,7 @@
     const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'planejamento_semanas.csv'; a.click();
+    a.href = url; a.download = 'planejamento_ciclos.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 
