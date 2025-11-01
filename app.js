@@ -5,6 +5,27 @@ const state = {
   ui: { isDragging: false, selectedId: null },
 };
 
+// Persistence (Etapa 1): save/load full items to localStorage so both steps share state
+function persistState() {
+  try {
+    const payload = JSON.stringify({ version: 2, items: state.items });
+    localStorage.setItem('priorizacao_state', payload);
+  } catch (e) { /* ignore */ }
+}
+
+function loadPersistedState() {
+  try {
+    const raw = localStorage.getItem('priorizacao_state');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.items)) {
+      state.items = parsed.items.map(it => ({ ...it }));
+      return true;
+    }
+  } catch (e) { /* ignore */ }
+  return false;
+}
+
 // Column header names (exact CSV headers expected)
 const HEADERS = {
   DEMANDA: 'Demanda',
@@ -494,11 +515,13 @@ function setupDropTargets() {
     const impact = target.dataset.impact;
     item.effortClass = effort;
     item.impactClass = impact;
+    persistState();
   }));
 
   attachDropEvents(backlog, (item) => {
     item.effortClass = null;
     item.impactClass = null;
+    persistState();
   });
 }
 
@@ -557,6 +580,7 @@ async function handleFile(file) {
 
   state.items = items;
   populateSquadFilter();
+  persistState();
   render();
 }
 
@@ -741,6 +765,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (f) handleFile(f);
   });
 
+  // Try to load from localStorage if present
+  if (loadPersistedState()) {
+    populateSquadFilter();
+    render();
+  }
+
   // Export button
   const exportBtn = document.getElementById('exportCsvBtn');
   exportBtn.addEventListener('click', exportCsv);
@@ -748,6 +778,18 @@ window.addEventListener('DOMContentLoaded', () => {
   // keep relation lines updated on viewport changes
   window.addEventListener('resize', drawRelations);
   window.addEventListener('scroll', drawRelations, true);
+
+  // Step 2 navigation
+  const goStep2Btn = document.getElementById('goStep2Btn');
+  if (goStep2Btn) {
+    goStep2Btn.addEventListener('click', () => {
+      try {
+        const payload = JSON.stringify({ version: 1, items: state.items });
+        localStorage.setItem('priorizacao_items', payload);
+      } catch (e) { /* ignore */ }
+      window.location.href = 'step2.html';
+    });
+  }
 
   // Modal wiring
   const modal = document.getElementById('noteModal');
@@ -796,6 +838,7 @@ window.addEventListener('DOMContentLoaded', () => {
       item.parentId = pidAttr ? Number(pidAttr) : null;
       updateParentDropdownLabel(parentDropdownBtn, item);
       parentDropdownPanel.classList.add('hidden');
+      persistState();
     });
   }
   if (noteTipoSel) {
@@ -855,10 +898,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
+    persistState();
   });
   sheetAndamentoSel.addEventListener('change', () => {
     applyToSelected((it) => { it.andamento = sheetAndamentoSel.value === 'Sim'; });
     render();
+    persistState();
   });
   sheetProgressoInput.addEventListener('input', () => {
     let v = parseInt(sheetProgressoInput.value || '0', 10);
@@ -866,10 +911,12 @@ window.addEventListener('DOMContentLoaded', () => {
     v = Math.min(100, Math.max(0, v));
     applyToSelected((it) => { it.progresso = v; });
     render();
+    persistState();
   });
   sheetTipoSel.addEventListener('change', () => {
     applyToSelected((it) => { it.tipoEsforco = sheetTipoSel.value; });
     render();
+    persistState();
   });
   if (relSearch && relList) {
     relSearch.addEventListener('input', () => {
