@@ -526,10 +526,27 @@ function setupDropTargets() {
 }
 
 // File handling
-async function handleFile(file) {
+async function handleFile(file, merge = true) {
   const text = await file.text();
   const rows = parseCsv(text);
   const objs = rowsToObjects(rows);
+
+  // Load any persisted items to preserve user edits across reloads/imports
+  let persistedMap = new Map();
+  if (merge) {
+    try {
+      const raw = localStorage.getItem('priorizacao_state');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items)) {
+          for (const it of parsed.items) {
+            const key = normalizeString(it.demanda || '');
+            if (key) persistedMap.set(key, it);
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
+  }
 
   const items = objs.map((o, idx) => {
     const effortRaw = valueByPossibleKeys(o, [HEADERS.ESFORCO]);
@@ -552,7 +569,8 @@ async function handleFile(file) {
     const andamento = parseAndamento(andamentoRaw);
     const progresso = parseProgresso(progressoRaw);
     const tipoEsforco = classifyTipoEsforco(tipoEsforcoRaw);
-    return {
+    // baseline from CSV
+    const base = {
       id: idx + 1,
       demanda,
       squad,
@@ -576,6 +594,25 @@ async function handleFile(file) {
       observation: '',
       _original: o,
     };
+    // merge with persisted (preserve user edits by demanda)
+    const p = persistedMap.get(normalizeString(demanda || ''));
+    if (p) {
+      base.id = p.id ?? base.id;
+      base.tipoEsforco = p.tipoEsforco ?? base.tipoEsforco;
+      base.andamento = p.andamento ?? base.andamento;
+      base.progresso = p.progresso ?? base.progresso;
+      base.parentId = p.parentId ?? base.parentId;
+      base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : base.relatedIds;
+      base.observation = p.observation ?? base.observation;
+      // preserve classifications chosen by user on etapa 1
+      base.effortClass = p.effortClass ?? base.effortClass;
+      base.impactClass = p.impactClass ?? base.impactClass;
+      base.abordagemClass = p.abordagemClass ?? base.abordagemClass;
+      base.escopoClass = p.escopoClass ?? base.escopoClass;
+      base.principalImpactClass = p.principalImpactClass ?? base.principalImpactClass;
+      base.squad = p.squad ?? base.squad;
+    }
+    return base;
   });
 
   state.items = items;
@@ -762,7 +799,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('csvFile');
   fileInput.addEventListener('change', (ev) => {
     const f = ev.target.files?.[0];
-    if (f) handleFile(f);
+    if (f) {
+      let merge = true;
+      try {
+        const raw = localStorage.getItem('priorizacao_state');
+        if (raw) {
+          merge = window.confirm('Encontramos um estado salvo. Clique OK para MERGE com o CSV, ou Cancelar para ZERAR e carregar somente o CSV.');
+        }
+      } catch (e) { /* ignore */ }
+      handleFile(f, merge);
+    }
   });
 
   // Try to load from localStorage if present
@@ -783,10 +829,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const goStep2Btn = document.getElementById('goStep2Btn');
   if (goStep2Btn) {
     goStep2Btn.addEventListener('click', () => {
-      try {
-        const payload = JSON.stringify({ version: 1, items: state.items });
-        localStorage.setItem('priorizacao_items', payload);
-      } catch (e) { /* ignore */ }
+      // Ensure latest state is stored for step 2
+      persistState();
       window.location.href = 'step2.html';
     });
   }
