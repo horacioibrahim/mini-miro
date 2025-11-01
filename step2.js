@@ -99,11 +99,22 @@
       const week = target.getAttribute('data-week');
       const slot = target.getAttribute('data-slot');
       const sdata = getSquadData();
-      // keep one per slot: clear previous items in this slot
+      // move: remove from every slot in all cycles, then set here
+      removeFromAllSlots(sdata, id);
       sdata.grid[week][slot] = [id];
       render();
       persistGrid();
     });
+  }
+
+  function removeFromAllSlots(sdata, id){
+    for (const [w, slots] of Object.entries(sdata.grid)){
+      ['t1','t2','t3'].forEach(sl=>{
+        const arr = slots[sl] || [];
+        const idx = arr.indexOf(id);
+        if (idx !== -1) arr.splice(idx,1);
+      });
+    }
   }
 
   function render(){
@@ -153,6 +164,22 @@
       return iok && eok && sok;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
+
+    // enable dropping back to backlog
+    const backlogAside = document.getElementById('backlog2');
+    if (backlogAside && !backlogAside._dndBound) {
+      backlogAside.addEventListener('dragover', ev=>{ ev.preventDefault(); backlogAside.classList.add('drag-over'); });
+      backlogAside.addEventListener('dragleave', ()=> backlogAside.classList.remove('drag-over'));
+      backlogAside.addEventListener('drop', ev=>{
+        ev.preventDefault(); backlogAside.classList.remove('drag-over');
+        const id = Number(ev.dataTransfer.getData('text/plain'));
+        const sdata = getSquadData();
+        removeFromAllSlots(sdata, id);
+        render();
+        persistGrid();
+      });
+      backlogAside._dndBound = true;
+    }
   }
 
   function card(item){
