@@ -1015,6 +1015,8 @@ function saveNoteModal() {
     const item = state.items.find(it => it.id === id);
     if (item) item.observation = textarea.value;
   }
+  // persist all edits including tipoEsforco possibly changed via dropdown
+  persistState();
   closeNoteModal();
   render();
 }

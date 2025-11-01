@@ -269,7 +269,7 @@
     const squadSel = document.getElementById('squadPlanSel');
     while (squadSel.firstChild) squadSel.removeChild(squadSel.firstChild);
     // Add 'Todas' for reset targeting
-    const allOpt = document.createElement('option'); allOpt.value='__ALL__'; allOpt.textContent='Todas (para reset)'; squadSel.appendChild(allOpt);
+    const allOpt = document.createElement('option'); allOpt.value='__ALL__'; allOpt.textContent='Todas (Squads)'; squadSel.appendChild(allOpt);
     state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadSel.appendChild(o); });
     if (state.currentSquad && state.squads.includes(state.currentSquad)) squadSel.value = state.currentSquad;
     squadSel.addEventListener('change', ()=>{
