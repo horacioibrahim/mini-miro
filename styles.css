@@ -29,11 +29,25 @@ button:hover { border-color: #cbd5e1; }
 
 /* Dropdown (Squad) */
 .dropdown { position: relative; }
-.dropdown-btn { height: 36px; padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 10px; min-width: 220px; text-align: left; }
+.dropdown-btn { height: 36px; padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 10px; min-width: 220px; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dropdown-panel { position: absolute; top: calc(100% + 6px); left: 0; width: 280px; max-height: 280px; overflow: auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 24px rgba(0,0,0,0.08); padding: 8px; z-index: 120; }
 .dropdown-search { width: 100%; height: 32px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
 .dropdown-list { display: grid; gap: 4px; }
 .dropdown-option { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 6px; }
+.dropdown-option { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Parent dropdown in modal: fixed width 70%, two-line items */
+#parentDropdown { width: 100%; }
+#parentDropdown .dropdown-btn { width: 100%; }
+#parentDropdownPanel { width: 100%; }
+#parentDropdownPanel .dropdown-option {
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* show up to two lines */
+  -webkit-box-orient: vertical;
+}
 .dropdown-option:hover { background: #f8fafc; }
 .dropdown-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
 

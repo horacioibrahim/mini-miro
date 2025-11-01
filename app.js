@@ -1027,6 +1027,7 @@ function updateParentDropdownLabel(buttonEl, item) {
     return p?.demanda || 'Selecionar pai';
   })();
   buttonEl.textContent = label;
+  buttonEl.setAttribute('title', label);
 }
 
 function buildParentDropdownList(item, container, query = '') {
