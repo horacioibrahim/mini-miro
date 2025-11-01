@@ -1034,7 +1034,7 @@ function openNoteModal(itemId) {
   title.textContent = item?.demanda || '(sem título)';
   textarea.value = item?.observation || '';
   if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
-  if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 3);
+  if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
   if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
   modal.classList.remove('hidden');
 }
@@ -1097,6 +1097,7 @@ function openDetailSheet(itemId) {
   if (sheetAndamentoSel) sheetAndamentoSel.value = item.andamento ? 'Sim' : 'Não';
   if (sheetProgressoInput) sheetProgressoInput.value = String(item.progresso ?? 0);
   if (sheetTipoSel) sheetTipoSel.value = item.tipoEsforco || 'Tarefa';
+  if (sheetUrgSel) sheetUrgSel.value = String(item.urgencia ?? 0);
   const relList = document.getElementById('relList');
   const relSearch = document.getElementById('relSearch');
   if (relList) buildRelationsList(item, relList, relSearch?.value || '');
