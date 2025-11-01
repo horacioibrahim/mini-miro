@@ -137,7 +137,27 @@
         </div>
         <div class="modal-body">
           <div class="modal-item-title" id="noteItemTitle"></div>
-          <textarea id="noteTextarea" rows="6" placeholder="Anotações do líder da dinâmica..."></textarea>
+          <div class="modal-grid-two">
+            <div class="modal-field">
+              <label class="modal-label">Pai</label>
+              <div class="dropdown" id="parentDropdown">
+                <button id="parentDropdownBtn" type="button" class="dropdown-btn">Selecionar pai</button>
+                <div id="parentDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar pai">
+                  <input id="parentDropdownSearch" type="text" class="dropdown-search" placeholder="Buscar demanda..." />
+                  <div id="parentDropdownList" class="dropdown-list"></div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="noteTipoSel">Tipo de esforço</label>
+              <select id="noteTipoSel">
+                <option>Tarefa</option>
+                <option>Iniciativa</option>
+                <option>Follow-up</option>
+              </select>
+            </div>
+          </div>
+          <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
         </div>
         <div class="modal-footer">
           <button id="noteCancelBtn" type="button">Cancelar</button>
@@ -186,7 +206,7 @@
             <div id="relList" class="rel-list"></div>
           </div>
         </div>
-        <div class="sheet-row"><div class="sheet-label">Observação complementar</div><div class="sheet-value"><textarea id="sheetObservation" rows="4" placeholder="Anotações do líder da dinâmica..."></textarea></div></div>
+        <div class="sheet-row"><div class="sheet-label">Observação complementar</div><div class="sheet-value"><textarea id="sheetObservation" rows="4" placeholder="Anotações do facilitador da dinâmica..."></textarea></div></div>
       </div>
     </aside>
 

@@ -1,6 +1,6 @@
 // Data state
 const state = {
-  items: [], // { id, demanda, squad, observation, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, ... }
+  items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
   filters: { abordagem: 'all', escopo: 'all', principal: 'all', squad: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
@@ -544,6 +544,7 @@ async function handleFile(file) {
       andamento,
       progresso,
       tipoEsforco,
+      parentId: null,
       relatedIds: [],
       observation: '',
       _original: o,
@@ -616,7 +617,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Relacionamentos', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -637,6 +638,7 @@ function exportCsv() {
       const other = state.items.find(x => x.id === id);
       return other?.demanda || `#${id}`;
     }).join('; ');
+    const parentName = (() => { const p = state.items.find(x => x.id === it.parentId); return p?.demanda || ''; })();
     const extras = [
       it.effortClass,
       it.impactClass,
@@ -646,6 +648,7 @@ function exportCsv() {
       it.andamento ? 'Sim' : 'Não',
       `${it.progresso ?? 0}%`,
       it.tipoEsforco || '',
+      parentName,
       relatedNames,
       it.observation,
     ].map(esc);
@@ -740,12 +743,59 @@ window.addEventListener('DOMContentLoaded', () => {
   const closeBtn = document.getElementById('noteCloseBtn');
   const cancelBtn = document.getElementById('noteCancelBtn');
   const saveBtn = document.getElementById('noteSaveBtn');
+  const parentDropdown = document.getElementById('parentDropdown');
+  const parentDropdownBtn = document.getElementById('parentDropdownBtn');
+  const parentDropdownPanel = document.getElementById('parentDropdownPanel');
+  const parentDropdownSearch = document.getElementById('parentDropdownSearch');
+  const parentDropdownList = document.getElementById('parentDropdownList');
+  const noteTipoSel = document.getElementById('noteTipoSel');
   closeBtn.addEventListener('click', closeNoteModal);
   cancelBtn.addEventListener('click', closeNoteModal);
   saveBtn.addEventListener('click', saveNoteModal);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeNoteModal();
   });
+
+  if (parentDropdown && parentDropdownBtn && parentDropdownPanel) {
+    parentDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      parentDropdownPanel.classList.toggle('hidden');
+      if (!parentDropdownPanel.classList.contains('hidden')) {
+        const id = state.ui.selectedId; const item = state.items.find(it => it.id === id);
+        buildParentDropdownList(item, parentDropdownList, '');
+        if (parentDropdownSearch) parentDropdownSearch.value = '';
+        parentDropdownSearch?.focus();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (parentDropdownPanel && !parentDropdownPanel.classList.contains('hidden')) {
+        if (parentDropdown && !parentDropdown.contains(e.target)) parentDropdownPanel.classList.add('hidden');
+      }
+    });
+    parentDropdownSearch?.addEventListener('input', () => {
+      const id = state.ui.selectedId; const item = state.items.find(it => it.id === id);
+      buildParentDropdownList(item, parentDropdownList, parentDropdownSearch.value);
+    });
+    parentDropdownList?.addEventListener('click', (e) => {
+      const choice = e.target.closest('[data-parent-id]');
+      if (!choice) return;
+      const pidAttr = choice.getAttribute('data-parent-id');
+      const id = state.ui.selectedId; const item = state.items.find(it => it.id === id);
+      if (!item) return;
+      item.parentId = pidAttr ? Number(pidAttr) : null;
+      updateParentDropdownLabel(parentDropdownBtn, item);
+      parentDropdownPanel.classList.add('hidden');
+    });
+  }
+  if (noteTipoSel) {
+    noteTipoSel.addEventListener('change', () => {
+      const id = state.ui.selectedId;
+      if (id == null) return;
+      const item = state.items.find(it => it.id === id);
+      if (item) item.tipoEsforco = noteTipoSel.value;
+      render();
+    });
+  }
 
   // Obs adicionais modal
   const obsModal = document.getElementById('obsModal');
@@ -841,8 +891,12 @@ function openNoteModal(itemId) {
   const modal = document.getElementById('noteModal');
   const title = document.getElementById('noteItemTitle');
   const textarea = document.getElementById('noteTextarea');
+  const parentDropdownBtn = document.getElementById('parentDropdownBtn');
+  const noteTipoSel = document.getElementById('noteTipoSel');
   title.textContent = item?.demanda || '(sem título)';
   textarea.value = item?.observation || '';
+  if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
+  if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
   modal.classList.remove('hidden');
 }
 
@@ -927,6 +981,72 @@ function buildRelationsList(item, container, query = '') {
     label.appendChild(cb);
     label.appendChild(span);
     container.appendChild(label);
+  }
+}
+
+function buildParentList(item, container, query = '') {
+  clearChildren(container);
+  const q = normalizeString(query || '');
+  const options = state.items.filter(it => it.id !== item.id && (
+    !q || normalizeString(it.demanda).includes(q) || normalizeString(it.demandaDescricao || '').includes(q)
+  ));
+  // add 'Nenhum' option
+  const noneLabel = document.createElement('label');
+  noneLabel.className = 'rel-option';
+  const noneRadio = document.createElement('input');
+  noneRadio.type = 'radio';
+  noneRadio.name = 'parentChoice';
+  noneRadio.value = '';
+  noneRadio.checked = item.parentId == null;
+  const noneSpan = document.createElement('span');
+  noneSpan.textContent = '— Nenhum —';
+  noneLabel.appendChild(noneRadio);
+  noneLabel.appendChild(noneSpan);
+  container.appendChild(noneLabel);
+
+  for (const other of options) {
+    const label = document.createElement('label');
+    label.className = 'rel-option';
+    const rb = document.createElement('input');
+    rb.type = 'radio';
+    rb.name = 'parentChoice';
+    rb.value = String(other.id);
+    rb.checked = item.parentId === other.id;
+    const span = document.createElement('span');
+    span.textContent = other.demanda || '(sem título)';
+    label.appendChild(rb);
+    label.appendChild(span);
+    container.appendChild(label);
+  }
+}
+
+function updateParentDropdownLabel(buttonEl, item) {
+  const label = (() => {
+    if (!item || item.parentId == null) return 'Selecionar pai';
+    const p = state.items.find(x => x.id === item.parentId);
+    return p?.demanda || 'Selecionar pai';
+  })();
+  buttonEl.textContent = label;
+}
+
+function buildParentDropdownList(item, container, query = '') {
+  clearChildren(container);
+  const q = normalizeString(query || '');
+  // opção Nenhum
+  const none = document.createElement('div');
+  none.className = 'dropdown-option';
+  none.setAttribute('data-parent-id', '');
+  none.textContent = '— Nenhum —';
+  container.appendChild(none);
+  for (const other of state.items) {
+    if (other.id === item.id) continue;
+    const name = other.demanda || '';
+    if (q && !normalizeString(name).includes(q) && !normalizeString(other.demandaDescricao || '').includes(q)) continue;
+    const row = document.createElement('div');
+    row.className = 'dropdown-option';
+    row.setAttribute('data-parent-id', String(other.id));
+    row.textContent = name || '(sem título)';
+    container.appendChild(row);
   }
 }
 
