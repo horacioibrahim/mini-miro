@@ -268,14 +268,33 @@
     // populate squads select
     const squadSel = document.getElementById('squadPlanSel');
     while (squadSel.firstChild) squadSel.removeChild(squadSel.firstChild);
+    // Add 'Todas' for reset targeting
+    const allOpt = document.createElement('option'); allOpt.value='__ALL__'; allOpt.textContent='Todas (para reset)'; squadSel.appendChild(allOpt);
     state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadSel.appendChild(o); });
     if (state.currentSquad && state.squads.includes(state.currentSquad)) squadSel.value = state.currentSquad;
-    squadSel.addEventListener('change', ()=>{ state.currentSquad = squadSel.value; ensureWeeks(); render(); persistGrid(); });
+    squadSel.addEventListener('change', ()=>{
+      const val = squadSel.value;
+      if (val === '__ALL__') { // do not change current view
+        return;
+      }
+      state.currentSquad = val;
+      ensureWeeks(); render(); persistGrid();
+    });
 
     document.getElementById('impactoFilter2').addEventListener('change', render);
     document.getElementById('esforcoFilter2').addEventListener('change', render);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
+    document.getElementById('resetPlanBtn').addEventListener('click', ()=>{
+      const val = squadSel.value;
+      if (val === '__ALL__') {
+        state.squads.forEach(s=>{ state.grids[s] = { weeks: 5, grid: {} }; });
+      } else {
+        const s = val || state.currentSquad;
+        if (s) state.grids[s] = { weeks: 5, grid: {} };
+      }
+      ensureWeeks(); render(); persistGrid();
+    });
     document.getElementById('backToStep1').addEventListener('click', ()=>{ window.location.href = 'index.html'; });
   });
 })();
