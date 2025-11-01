@@ -3,8 +3,9 @@
   const state = {
     items: [], // from etapa 1
     filters: { impacto: 'all', esforco: 'all' },
-    weeks: 5, // default
-    grid: {}, // { 'Sem 1': { t1: [id...], t2: [], t3: [] }, ... }
+    squads: [],
+    currentSquad: '',
+    grids: {}, // { [squad]: { weeks: number, grid: { 'Sem 1': { t1:[], t2:[], t3:[] }, ... } } }
   };
 
   const IMP_ORDER = ['Altíssimo','Alto','Médio','Baixo'];
@@ -22,10 +23,16 @@
       const raw2 = localStorage.getItem('priorizacao_step2');
       if (raw2) {
         const parsed2 = JSON.parse(raw2);
-        if (parsed2 && parsed2.grid) state.grid = parsed2.grid;
-        if (parsed2 && parsed2.weeks) state.weeks = parsed2.weeks;
+        if (parsed2 && parsed2.grids) state.grids = parsed2.grids;
+        if (parsed2 && parsed2.currentSquad) state.currentSquad = parsed2.currentSquad;
       }
     } catch(e) { /* noop */ }
+
+    // squads list
+    const set = new Set();
+    state.items.forEach(it=> { const s=(it.squad||'').trim(); if (s) set.add(s); });
+    state.squads = Array.from(set).sort();
+    if (!state.currentSquad) state.currentSquad = state.squads[0] || '';
   }
 
   function normalizeString(v){
@@ -53,6 +60,12 @@
   }
   function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
 
+  function getSquadData(){
+    const key = state.currentSquad || '';
+    if (!state.grids[key]) state.grids[key] = { weeks: 5, grid: {} };
+    return state.grids[key];
+  }
+
   function ensureWeeks(){
     const board = document.getElementById('weeksBoard');
     clear(board);
@@ -62,9 +75,10 @@
     board.appendChild(el('div','x-header')).textContent='Tarefa 2';
     board.appendChild(el('div','x-header')).textContent='Tarefa 3';
 
-    for (let i=1;i<=state.weeks;i++){
+    const sdata = getSquadData();
+    for (let i=1;i<=sdata.weeks;i++){
       const weekKey = `Sem ${i}`;
-      if (!state.grid[weekKey]) state.grid[weekKey] = { t1: [], t2: [], t3: [] };
+      if (!sdata.grid[weekKey]) sdata.grid[weekKey] = { t1: [], t2: [], t3: [] };
       board.appendChild(el('div','y-label')).textContent = weekKey;
       ['t1','t2','t3'].forEach(slot=>{
         const c = el('div','cell',{ 'data-week': weekKey, 'data-slot': slot });
@@ -84,8 +98,9 @@
       if (!item) return;
       const week = target.getAttribute('data-week');
       const slot = target.getAttribute('data-slot');
+      const sdata = getSquadData();
       // keep one per slot: clear previous items in this slot
-      state.grid[week][slot] = [id];
+      sdata.grid[week][slot] = [id];
       render();
       persistGrid();
     });
@@ -97,7 +112,8 @@
     const cells = Array.from(board.querySelectorAll('.cell'));
     cells.forEach(c=>clear(c));
 
-    for (const [week,slots] of Object.entries(state.grid)){
+    const sdata = getSquadData();
+    for (const [week,slots] of Object.entries(sdata.grid)){
       for (const slot of ['t1','t2','t3']){
         const ids = slots[slot] || [];
         const target = board.querySelector(`.cell[data-week="${week}"][data-slot="${slot}"]`);
@@ -113,16 +129,18 @@
     const bl = document.getElementById('backlogList2');
     clear(bl);
     const byIdPlaced = new Set();
-    for (const [week,slots] of Object.entries(state.grid)){
+    for (const [week,slots] of Object.entries(sdata.grid)){
       ['t1','t2','t3'].forEach(slot=> (slots[slot]||[]).forEach(id=>byIdPlaced.add(id)));
     }
     const imp = document.getElementById('impactoFilter2').value;
     const esf = document.getElementById('esforcoFilter2').value;
+    const squadSel = document.getElementById('squadPlanSel').value;
     const filtered = sortItems(state.items).filter(it=>{
       if (byIdPlaced.has(it.id)) return false;
       const iok = imp==='all' || it.impactClass===imp;
       const eok = esf==='all' || it.effortClass===esf;
-      return iok && eok;
+      const sok = !squadSel || it.squad===squadSel;
+      return iok && eok && sok;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
   }
@@ -167,19 +185,21 @@
 
   function exportCsv(){
     const rows = [['Squad','Semana','Tarefa1','Tarefa2','Tarefa3']];
-    const weeks = Object.keys(state.grid).sort((a,b)=>{
+    // export all squads
+    const rowsBySquad = [];
+    for (const [squad, data] of Object.entries(state.grids)){
+      const weeks = Object.keys(data.grid).sort((a,b)=>{
       const na = Number(a.replace(/\D+/g,''));
       const nb = Number(b.replace(/\D+/g,''));
       return na - nb;
-    });
-    for (const week of weeks){
-      const slots = state.grid[week];
-      const ids = [slots.t1?.[0], slots.t2?.[0], slots.t3?.[0]];
-      const items = ids.map(id=> state.items.find(x=>x.id===id));
-      const squads = items.map(it=> it?.squad || '').filter(Boolean);
-      const squad = squads[0] || '';
-      const names = items.map(it=> it?.demanda || '');
-      rows.push([squad, week, ...names]);
+      });
+      for (const week of weeks){
+        const slots = data.grid[week];
+        const ids = [slots.t1?.[0], slots.t2?.[0], slots.t3?.[0]];
+        const items = ids.map(id=> state.items.find(x=>x.id===id));
+        const names = items.map(it=> it?.demanda || '');
+        rows.push([squad, week, ...names]);
+      }
     }
     const esc = (v)=>{
       v = v==null? '': String(v);
@@ -197,7 +217,7 @@
 
   function persistGrid(){
     try {
-      const payload = JSON.stringify({ grid: state.grid, weeks: state.weeks });
+      const payload = JSON.stringify({ grids: state.grids, currentSquad: state.currentSquad });
       localStorage.setItem('priorizacao_step2', payload);
     } catch(e){ /* noop */ }
   }
@@ -208,9 +228,16 @@
     ensureWeeks();
     render();
 
+    // populate squads select
+    const squadSel = document.getElementById('squadPlanSel');
+    while (squadSel.firstChild) squadSel.removeChild(squadSel.firstChild);
+    state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadSel.appendChild(o); });
+    if (state.currentSquad && state.squads.includes(state.currentSquad)) squadSel.value = state.currentSquad;
+    squadSel.addEventListener('change', ()=>{ state.currentSquad = squadSel.value; ensureWeeks(); render(); persistGrid(); });
+
     document.getElementById('impactoFilter2').addEventListener('change', render);
     document.getElementById('esforcoFilter2').addEventListener('change', render);
-    document.getElementById('addWeekBtn').addEventListener('click', ()=>{ state.weeks += 1; ensureWeeks(); render(); persistGrid(); });
+    document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
     document.getElementById('backToStep1').addEventListener('click', ()=>{ window.location.href = 'index.html'; });
   });
