@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', squad: [], text: '', showRelations: false },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', squad: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -39,6 +39,7 @@ const HEADERS = {
   ANDAMENTO: 'Andamento',
   PROGRESSO: 'Progresso',
   TIPO_ESFORCO: 'Tipo de esforço',
+  URGENCIA: 'Urgencia',
   ABORDAGEM:
     'Qual o tipo de abordagem (tratar como problema ou oportunidade) [problema = interno e repetido; oportunidade = externo e competição]',
   ESCOPO:
@@ -232,6 +233,7 @@ function render() {
   const escopoFilter = state.filters.escopo;
   const principalFilter = state.filters.principal;
   const tipoFilter = state.filters.tipo;
+  const urgenciaFilter = state.filters.urgencia;
   const squadFilter = state.filters.squad;
   const textFilter = normalizeString(state.filters.text || '');
 
@@ -249,17 +251,19 @@ function render() {
     const p = item.principalImpactClass || 'Outros';
     const s = item.squad || 'Outros';
     const t = item.tipoEsforco || '-';
+    const u = item.urgencia ?? 0;
     const abordagemOk = abordagemFilter === 'all' || a === abordagemFilter;
     const escopoOk = escopoFilter === 'all' || e === escopoFilter;
     const principalOk = principalFilter === 'all' || p === principalFilter;
     const tipoOk = tipoFilter === 'all' || t === tipoFilter;
+    const urgOk = urgenciaFilter === 'all' || String(u) === String(urgenciaFilter);
     const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
       ? true
       : squadFilter.includes(s);
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
-    return abordagemOk && escopoOk && principalOk && tipoOk && squadOk && textOk;
+    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && textOk;
   };
 
   // Place items
@@ -561,6 +565,7 @@ async function handleFile(file, merge = true) {
     const andamentoRaw = valueByPossibleKeys(o, [HEADERS.ANDAMENTO, 'Andamento']);
     const progressoRaw = valueByPossibleKeys(o, [HEADERS.PROGRESSO, 'Progresso']);
     const tipoEsforcoRaw = valueByPossibleKeys(o, [HEADERS.TIPO_ESFORCO, 'Tipo esforço', 'Tipo']);
+    const urgenciaRaw = valueByPossibleKeys(o, [HEADERS.URGENCIA, 'Urgência', 'Urgencia']);
     const effortClass = classifyEffort(effortRaw);
     const impactClass = classifyImpact(impactRaw);
     const abordagemClass = classifyAbordagem(abordagemRaw);
@@ -569,6 +574,7 @@ async function handleFile(file, merge = true) {
     const andamento = parseAndamento(andamentoRaw);
     const progresso = parseProgresso(progressoRaw);
     const tipoEsforco = classifyTipoEsforco(tipoEsforcoRaw);
+    const urgencia = (()=>{ const n = parseInt(String(urgenciaRaw||'').match(/\d+/)?.[0]||'',10); return (n>=0 && n<=5)? (Number.isNaN(n)? 0 : n) : 0; })();
     // baseline from CSV
     const base = {
       id: idx + 1,
@@ -589,6 +595,7 @@ async function handleFile(file, merge = true) {
       andamento,
       progresso,
       tipoEsforco,
+      urgencia,
       parentId: null,
       relatedIds: [],
       observation: '',
@@ -601,6 +608,7 @@ async function handleFile(file, merge = true) {
       base.tipoEsforco = p.tipoEsforco ?? base.tipoEsforco;
       base.andamento = p.andamento ?? base.andamento;
       base.progresso = p.progresso ?? base.progresso;
+      base.urgencia = p.urgencia ?? base.urgencia;
       base.parentId = p.parentId ?? base.parentId;
       base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : base.relatedIds;
       base.observation = p.observation ?? base.observation;
@@ -682,7 +690,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Urgencia', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -713,6 +721,7 @@ function exportCsv() {
       it.andamento ? 'Sim' : 'Não',
       `${it.progresso ?? 0}%`,
       it.tipoEsforco || '',
+      it.urgencia ?? '',
       parentName,
       relatedNames,
       it.observation,
@@ -735,6 +744,7 @@ function setupFilters() {
   const escopoSel = document.getElementById('escopoFilter');
   const principalSel = document.getElementById('principalFilter');
   const tipoSel = document.getElementById('tipoEsforcoFilter');
+  const urgSel = document.getElementById('urgenciaFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
   const textInput = document.getElementById('textFilter');
@@ -754,6 +764,12 @@ function setupFilters() {
   if (tipoSel) {
     tipoSel.addEventListener('change', () => {
       state.filters.tipo = tipoSel.value;
+      render();
+    });
+  }
+  if (urgSel) {
+    urgSel.addEventListener('change', () => {
+      state.filters.urgencia = urgSel.value;
       render();
     });
   }
@@ -846,6 +862,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const parentDropdownSearch = document.getElementById('parentDropdownSearch');
   const parentDropdownList = document.getElementById('parentDropdownList');
   const noteTipoSel = document.getElementById('noteTipoSel');
+  const noteUrgSel = document.getElementById('noteUrgSel');
   closeBtn.addEventListener('click', closeNoteModal);
   cancelBtn.addEventListener('click', closeNoteModal);
   saveBtn.addEventListener('click', saveNoteModal);
@@ -894,6 +911,16 @@ window.addEventListener('DOMContentLoaded', () => {
       render();
     });
   }
+  if (noteUrgSel) {
+    noteUrgSel.addEventListener('change', () => {
+      const id = state.ui.selectedId;
+      if (id == null) return;
+      const item = state.items.find(it => it.id === id);
+      if (item) item.urgencia = parseInt(noteUrgSel.value, 10);
+      persistState();
+      render();
+    });
+  }
 
   // Obs adicionais modal
   const obsModal = document.getElementById('obsModal');
@@ -911,6 +938,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
   const sheetImpactoSel = document.getElementById('sheetImpactoSel');
   const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
+  const sheetUrgSel = document.getElementById('sheetUrgSel');
   const sheetObservation = document.getElementById('sheetObservation');
   const relSearch = document.getElementById('relSearch');
   const relList = document.getElementById('relList');
@@ -940,6 +968,13 @@ window.addEventListener('DOMContentLoaded', () => {
     applyToSelected((it) => { it.effortClass = sheetEsforcoSel.value; it.effortRaw = sheetEsforcoSel.value; });
     render();
   });
+  if (sheetUrgSel) {
+    sheetUrgSel.addEventListener('change', () => {
+      applyToSelected((it) => { it.urgencia = parseInt(sheetUrgSel.value, 10); });
+      render();
+      persistState();
+    });
+  }
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
     persistState();
@@ -995,9 +1030,11 @@ function openNoteModal(itemId) {
   const textarea = document.getElementById('noteTextarea');
   const parentDropdownBtn = document.getElementById('parentDropdownBtn');
   const noteTipoSel = document.getElementById('noteTipoSel');
+  const noteUrgSel = document.getElementById('noteUrgSel');
   title.textContent = item?.demanda || '(sem título)';
   textarea.value = item?.observation || '';
   if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
+  if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 3);
   if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
   modal.classList.remove('hidden');
 }

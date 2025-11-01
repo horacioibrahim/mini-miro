@@ -68,6 +68,19 @@
       </div>
 
       <div class="control-group">
+        <label for="urgenciaFilter">Urgência</label>
+        <select id="urgenciaFilter">
+          <option value="all">Todas</option>
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+
+      <div class="control-group">
         <label>Squad</label>
         <div class="dropdown" id="squadDropdown">
           <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
@@ -172,6 +185,17 @@
               </select>
             </div>
           </div>
+          <div class="modal-field">
+            <label class="modal-label" for="noteUrgSel">Urgência</label>
+            <select id="noteUrgSel">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
           <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
         </div>
         <div class="modal-footer">
@@ -214,6 +238,7 @@
         <div class="sheet-row"><div class="sheet-label">Andamento</div><div class="sheet-value"><select id="sheetAndamentoSel"><option>Sim</option><option>Não</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Progresso (%)</div><div class="sheet-value"><input id="sheetProgressoInput" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></div></div>
         <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Follow-up</option></select></div></div>
+        <div class="sheet-row"><div class="sheet-label">Urgência</div><div class="sheet-value"><select id="sheetUrgSel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Principal Impacto</div><div class="sheet-value" id="sheetPrincipalImpacto"></div></div>
         <div class="sheet-row"><div class="sheet-label">Relacionamentos</div>
           <div class="sheet-value">

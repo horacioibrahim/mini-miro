@@ -156,12 +156,14 @@
     const imp = document.getElementById('impactoFilter2').value;
     const esf = document.getElementById('esforcoFilter2').value;
     const squadSel = document.getElementById('squadPlanSel').value;
+    const urg = document.getElementById('urgenciaFilter2').value;
     const filtered = sortItems(state.items).filter(it=>{
       if (byIdPlaced.has(it.id)) return false;
       const iok = imp==='all' || it.impactClass===imp;
       const eok = esf==='all' || it.effortClass===esf;
       const sok = !squadSel || it.squad===squadSel;
-      return iok && eok && sok;
+      const uok = urg==='all' || String(it.urgencia??'') === urg;
+      return iok && eok && sok && uok;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
 
