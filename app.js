@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', squad: [], text: '', showRelations: false },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', squad: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -210,6 +210,7 @@ function render() {
   const abordagemFilter = state.filters.abordagem;
   const escopoFilter = state.filters.escopo;
   const principalFilter = state.filters.principal;
+  const tipoFilter = state.filters.tipo;
   const squadFilter = state.filters.squad;
   const textFilter = normalizeString(state.filters.text || '');
 
@@ -226,16 +227,18 @@ function render() {
     const e = item.escopoClass || 'Outros';
     const p = item.principalImpactClass || 'Outros';
     const s = item.squad || 'Outros';
+    const t = item.tipoEsforco || '-';
     const abordagemOk = abordagemFilter === 'all' || a === abordagemFilter;
     const escopoOk = escopoFilter === 'all' || e === escopoFilter;
     const principalOk = principalFilter === 'all' || p === principalFilter;
+    const tipoOk = tipoFilter === 'all' || t === tipoFilter;
     const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
       ? true
       : squadFilter.includes(s);
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
-    return abordagemOk && escopoOk && principalOk && squadOk && textOk;
+    return abordagemOk && escopoOk && principalOk && tipoOk && squadOk && textOk;
   };
 
   // Place items
@@ -407,10 +410,11 @@ function renderCard(item) {
   else if (pClass === 'Plataforma') principalBadge.classList.add('badge--plataforma');
   principalBadge.textContent = pClass || 'Outros';
   const tipoBadge = el('span', 'badge');
-  if (item.tipoEsforco === 'Tarefa') tipoBadge.classList.add('badge--tarefa');
-  else if (item.tipoEsforco === 'Iniciativa') tipoBadge.classList.add('badge--iniciativa');
-  else if (item.tipoEsforco === 'Follow-up') tipoBadge.classList.add('badge--follow');
-  tipoBadge.textContent = item.tipoEsforco || '—';
+  const tipoLabel = item.tipoEsforco ? item.tipoEsforco : '-';
+  if (tipoLabel === 'Tarefa') tipoBadge.classList.add('badge--tarefa');
+  else if (tipoLabel === 'Iniciativa') tipoBadge.classList.add('badge--iniciativa');
+  else if (tipoLabel === 'Follow-up') tipoBadge.classList.add('badge--follow');
+  tipoBadge.textContent = `tipo esf.: ${tipoLabel}`;
   if (item.observation && String(item.observation).trim() !== '') {
     const notePill = el('span', 'pill pill--note');
     notePill.textContent = 'Nota';
@@ -669,6 +673,7 @@ function setupFilters() {
   const abordagemSel = document.getElementById('abordagemFilter');
   const escopoSel = document.getElementById('escopoFilter');
   const principalSel = document.getElementById('principalFilter');
+  const tipoSel = document.getElementById('tipoEsforcoFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
   const textInput = document.getElementById('textFilter');
@@ -685,6 +690,12 @@ function setupFilters() {
     state.filters.principal = principalSel.value;
     render();
   });
+  if (tipoSel) {
+    tipoSel.addEventListener('change', () => {
+      state.filters.tipo = tipoSel.value;
+      render();
+    });
+  }
   if (textInput) {
     textInput.addEventListener('input', () => {
       state.filters.text = textInput.value;

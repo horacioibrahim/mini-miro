@@ -84,9 +84,9 @@ button:hover { border-color: #cbd5e1; }
 .badge--experiencia { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
 .badge--mercado { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
 .badge--plataforma { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
-.badge--tarefa { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.badge--iniciativa { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
-.badge--follow { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
+.badge--tarefa { background: oklch(75% 0.183 55.934); color: #111; border-color: oklch(75% 0.183 55.934); }
+.badge--iniciativa { background: oklch(87.9% 0.169 91.605); color: #111; border-color: oklch(87.9% 0.169 91.605); }
+.badge--follow { background: oklch(82.8% 0.111 230.318); color: #111; border-color: oklch(82.8% 0.111 230.318); }
 .card { position: relative; }
 .card-radar { position: absolute; right: 6px; bottom: 6px; width: 10px; height: 10px; border-radius: 999px; background: #d1d5db; box-shadow: 0 0 0 2px rgba(255,255,255,0.8); }
 .card-radar.on { background: #22c55e; animation: radarPulse 1.5s ease-out infinite; }
