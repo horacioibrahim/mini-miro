@@ -70,11 +70,17 @@
       </div>
 
       <div class="control-group">
+        <label for="relationsToggle">Ver relacionamentos</label>
+        <input type="checkbox" id="relationsToggle" />
+      </div>
+
+      <div class="control-group">
         <button id="exportCsvBtn" type="button">Exportar CSV (com classificações)</button>
       </div>
     </section>
 
     <main class="board-wrapper">
+      <svg id="relationsOverlay" class="relations-overlay" aria-hidden="true"></svg>
       <section class="board" id="board">
         <!-- Column headers moved to bottom -->
 

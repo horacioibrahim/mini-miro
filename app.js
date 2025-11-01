@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, ... }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', squad: [], text: '' },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', squad: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -258,6 +258,94 @@ function render() {
       target.appendChild(card);
     } else {
       backlogList.appendChild(card);
+    }
+  }
+
+  drawRelations();
+}
+
+// Draw dashed curved lines between related items, using closest edge centers
+function drawRelations() {
+  const svg = document.getElementById('relationsOverlay');
+  if (!svg) return;
+  // clear
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  if (!state.filters.showRelations) return;
+
+  const container = document.querySelector('.board-wrapper');
+  if (!container) return;
+  const contRect = container.getBoundingClientRect();
+  svg.setAttribute('width', String(contRect.width));
+  svg.setAttribute('height', String(contRect.height));
+  svg.setAttribute('viewBox', `0 0 ${contRect.width} ${contRect.height}`);
+
+  // map id -> element
+  const idToEl = new Map();
+  document.querySelectorAll('.card[data-id]').forEach(el => {
+    const id = Number(el.getAttribute('data-id'));
+    if (!Number.isNaN(id)) idToEl.set(id, el);
+  });
+
+  function edgeCenters(r) {
+    return {
+      left:   { x: r.left - contRect.left,          y: r.top - contRect.top + r.height / 2 },
+      right:  { x: r.right - contRect.left,         y: r.top - contRect.top + r.height / 2 },
+      top:    { x: r.left - contRect.left + r.width / 2, y: r.top - contRect.top },
+      bottom: { x: r.left - contRect.left + r.width / 2, y: r.bottom - contRect.top },
+    };
+  }
+
+  function attachPoints(aRect, bRect) {
+    const aCenters = edgeCenters(aRect);
+    const bCenters = edgeCenters(bRect);
+    const candidates = [
+      [aCenters.right, bCenters.left],
+      [aCenters.left, bCenters.right],
+      [aCenters.bottom, bCenters.top],
+      [aCenters.top, bCenters.bottom],
+    ];
+    let best = candidates[0];
+    let bestD2 = Infinity;
+    for (const [s, t] of candidates) {
+      const dx = t.x - s.x, dy = t.y - s.y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < bestD2) { bestD2 = d2; best = [s, t]; }
+    }
+    return best; // [sourcePoint, targetPoint]
+  }
+
+  function cubicPath(s, t) {
+    const dx = t.x - s.x, dy = t.y - s.y;
+    const o = 0.25; // smoothness
+    let c1 = { x: s.x + dx * o, y: s.y };
+    let c2 = { x: t.x - dx * o, y: t.y };
+    // if vertical is stronger, bend vertically
+    if (Math.abs(dy) > Math.abs(dx)) {
+      c1 = { x: s.x, y: s.y + dy * o };
+      c2 = { x: t.x, y: t.y - dy * o };
+    }
+    return `M ${s.x} ${s.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${t.x} ${t.y}`;
+  }
+
+  for (const item of state.items) {
+    if (!item.relatedIds || !item.relatedIds.length) continue;
+    const aEl = idToEl.get(item.id);
+    if (!aEl) continue;
+    const aRect = aEl.getBoundingClientRect();
+    for (const rid of item.relatedIds) {
+      if (rid <= item.id) continue; // avoid duplicates
+      const bEl = idToEl.get(rid);
+      if (!bEl) continue;
+      const bRect = bEl.getBoundingClientRect();
+      const [s, t] = attachPoints(aRect, bRect);
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', cubicPath(s, t));
+      pathEl.setAttribute('fill', 'none');
+      pathEl.setAttribute('stroke', '#ef4444');
+      pathEl.setAttribute('stroke-width', '2');
+      pathEl.setAttribute('stroke-dasharray', '6 6');
+      pathEl.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(pathEl);
     }
   }
 }
@@ -581,6 +669,7 @@ function setupFilters() {
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
   const textInput = document.getElementById('textFilter');
+  const relationsToggle = document.getElementById('relationsToggle');
   abordagemSel.addEventListener('change', () => {
     state.filters.abordagem = abordagemSel.value;
     render();
@@ -617,6 +706,12 @@ function setupFilters() {
       render();
     });
   }
+  if (relationsToggle) {
+    relationsToggle.addEventListener('change', () => {
+      state.filters.showRelations = relationsToggle.checked;
+      drawRelations();
+    });
+  }
 }
 
 // Init
@@ -635,6 +730,10 @@ window.addEventListener('DOMContentLoaded', () => {
   // Export button
   const exportBtn = document.getElementById('exportCsvBtn');
   exportBtn.addEventListener('click', exportCsv);
+
+  // keep relation lines updated on viewport changes
+  window.addEventListener('resize', drawRelations);
+  window.addEventListener('scroll', drawRelations, true);
 
   // Modal wiring
   const modal = document.getElementById('noteModal');
