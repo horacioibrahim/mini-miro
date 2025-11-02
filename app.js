@@ -267,15 +267,21 @@ function render() {
     return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && textOk;
   };
 
-  // Place items and count visible
+  // Count visible after filters (independent of placement)
   let visibleCount = 0;
+  try {
+    visibleCount = state.items.reduce((acc, it) => acc + (passFilters(it) ? 1 : 0), 0);
+  } catch (_) {}
+  const vc = document.getElementById('visibleCountStep1');
+  if (vc) vc.textContent = String(visibleCount);
+
+  // Place items
   for (const item of state.items) {
     const card = renderCard(item);
     if (!passFilters(item)) {
       // hide card if filtered out
       card.style.display = 'none';
     }
-    else { visibleCount += 1; }
 
     if (!item.effortClass || !item.impactClass) {
       backlogList.appendChild(card);
@@ -379,8 +385,6 @@ function drawRelations() {
       svg.appendChild(pathEl);
     }
   }
-  const vc = document.getElementById('visibleCountStep1');
-  if (vc) vc.textContent = String(visibleCount);
 }
 
 function renderCard(item) {
