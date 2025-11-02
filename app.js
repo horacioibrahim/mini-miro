@@ -456,6 +456,9 @@ function renderCard(item) {
   const badgesRow = el('div', 'card-badges');
   badgesRow.appendChild(principalBadge);
   badgesRow.appendChild(tipoBadge);
+  const urgBadge = el('span', 'badge');
+  urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
+  badgesRow.appendChild(urgBadge);
 
   card.appendChild(head);
   card.appendChild(meta);

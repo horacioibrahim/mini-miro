@@ -207,6 +207,9 @@
     else if (tipoLabel === 'Follow-up') tipoBadge.classList.add('badge--follow');
     tipoBadge.textContent = `tipo esf.: ${tipoLabel}`;
     badges.appendChild(tipoBadge);
+    const urgBadge = el('span','badge');
+    urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
+    badges.appendChild(urgBadge);
 
     c.appendChild(title); c.appendChild(meta); c.appendChild(badges);
     // radar + progresso
