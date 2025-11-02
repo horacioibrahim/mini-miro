@@ -161,8 +161,8 @@
       if (byIdPlaced.has(it.id)) return false;
       const iok = imp==='all' || it.impactClass===imp;
       const eok = esf==='all' || it.effortClass===esf;
-      const sok = !squadSel || it.squad===squadSel;
-      const uok = urg==='all' || String(it.urgencia??'') === urg;
+      const sok = (squadSel==='__ALL__') || !squadSel || it.squad===squadSel;
+      const uok = urg==='all' || String((it.urgencia ?? 0)) === urg;
       return iok && eok && sok && uok;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
@@ -289,6 +289,7 @@
 
     document.getElementById('impactoFilter2').addEventListener('change', render);
     document.getElementById('esforcoFilter2').addEventListener('change', render);
+    document.getElementById('urgenciaFilter2').addEventListener('change', render);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
     document.getElementById('resetPlanBtn').addEventListener('click', ()=>{
