@@ -167,6 +167,9 @@
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
 
+    const vc = document.getElementById('visibleCountStep2');
+    if (vc) vc.textContent = String(filtered.length);
+
     // enable dropping back to backlog
     const backlogAside = document.getElementById('backlog2');
     if (backlogAside && !backlogAside._dndBound) {
