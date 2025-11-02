@@ -120,6 +120,7 @@ function classifyTipoEsforco(raw) {
   if (!n) return null;
   if (n.includes('tarefa')) return 'Tarefa';
   if (n.includes('iniciat')) return 'Iniciativa';
+  if (n.includes('idei')) return 'Ideia';
   if (n.includes('follow')) return 'Follow-up';
   return null;
 }
@@ -438,6 +439,7 @@ function renderCard(item) {
   const tipoLabel = item.tipoEsforco ? item.tipoEsforco : '-';
   if (tipoLabel === 'Tarefa') tipoBadge.classList.add('badge--tarefa');
   else if (tipoLabel === 'Iniciativa') tipoBadge.classList.add('badge--iniciativa');
+  else if (tipoLabel === 'Ideia') tipoBadge.classList.add('badge--ideia');
   else if (tipoLabel === 'Follow-up') tipoBadge.classList.add('badge--follow');
   tipoBadge.textContent = `tipo esf.: ${tipoLabel}`;
   if (item.observation && String(item.observation).trim() !== '') {

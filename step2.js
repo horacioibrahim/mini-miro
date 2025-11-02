@@ -203,6 +203,7 @@
     const tipoLabel = item.tipoEsforco ? item.tipoEsforco : '-';
     if (tipoLabel === 'Tarefa') tipoBadge.classList.add('badge--tarefa');
     else if (tipoLabel === 'Iniciativa') tipoBadge.classList.add('badge--iniciativa');
+    else if (tipoLabel === 'Ideia') tipoBadge.classList.add('badge--ideia');
     else if (tipoLabel === 'Follow-up') tipoBadge.classList.add('badge--follow');
     tipoBadge.textContent = `tipo esf.: ${tipoLabel}`;
     badges.appendChild(tipoBadge);
