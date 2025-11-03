@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', squad: [], text: '', showRelations: false },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', squad: [], groups: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -261,10 +261,13 @@ function render() {
     const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
       ? true
       : squadFilter.includes(s);
+    const groupsSel = state.filters.groups || [];
+    const gname = (item.grupo || '').trim();
+    const groupOk = groupsSel.length === 0 || groupsSel.includes(gname || '__NONE__');
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
-    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && textOk;
+    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && groupOk && textOk;
   };
 
   // Count visible after filters (independent of placement)
@@ -274,6 +277,13 @@ function render() {
   } catch (_) {}
   const vc = document.getElementById('visibleCountStep1');
   if (vc) vc.textContent = String(visibleCount);
+  const gs = document.getElementById('groupSummary');
+  if (gs) {
+    const sel = state.filters.groups || [];
+    if (sel.length === 0) gs.textContent = 'nenhum';
+    else if (sel.length === 1) gs.textContent = sel[0] === '__NONE__' ? 'nenhum' : sel[0];
+    else gs.textContent = 'múltiplos';
+  }
 
   // Place items
   for (const item of state.items) {
@@ -464,6 +474,9 @@ function renderCard(item) {
   const badgesRow = el('div', 'card-badges');
   badgesRow.appendChild(principalBadge);
   badgesRow.appendChild(tipoBadge);
+  if ((item.grupo || '').trim()) {
+    const gBadge = el('span','badge'); gBadge.textContent = `Grupo: ${(item.grupo||'').trim()}`; badgesRow.appendChild(gBadge);
+  }
   const urgBadge = el('span', 'badge');
   urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
   badgesRow.appendChild(urgBadge);
@@ -612,6 +625,7 @@ async function handleFile(file, merge = true) {
       parentId: null,
       relatedIds: [],
       observation: '',
+      grupo: '',
       _original: o,
     };
     // merge with persisted (preserve user edits by demanda)
@@ -632,6 +646,7 @@ async function handleFile(file, merge = true) {
       base.escopoClass = p.escopoClass ?? base.escopoClass;
       base.principalImpactClass = p.principalImpactClass ?? base.principalImpactClass;
       base.squad = p.squad ?? base.squad;
+      base.grupo = p.grupo ?? base.grupo;
     }
     return base;
   });
@@ -760,6 +775,9 @@ function setupFilters() {
   const urgSel = document.getElementById('urgenciaFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
+  const groupBtn = document.getElementById('groupDropdownBtn');
+  const groupPanel = document.getElementById('groupDropdownPanel');
+  const groupList = document.getElementById('groupDropdownList');
   const textInput = document.getElementById('textFilter');
   const relationsToggle = document.getElementById('relationsToggle');
   abordagemSel.addEventListener('change', () => {
@@ -809,6 +827,44 @@ function setupFilters() {
       updateSquadButtonLabel();
       render();
     });
+  }
+
+  // Group filter dropdown
+  function updateGroupBtn() {
+    const sel = state.filters.groups || [];
+    if (!groupBtn) return;
+    if (sel.length === 0) groupBtn.textContent = 'Grupos: Todos';
+    else if (sel.length <= 2) groupBtn.textContent = `Grupos: ${sel.map(v=> v==='__NONE__' ? 'Sem grupo' : v).join(', ')}`;
+    else groupBtn.textContent = `Grupos: ${sel.length} selecionados`;
+  }
+  function rebuildGroupList() {
+    if (!groupList) return;
+    groupList.innerHTML = '';
+    const counts = new Map();
+    for (const it of state.items) {
+      const g = (it.grupo || '').trim();
+      const key = g || '__NONE__';
+      counts.set(key, (counts.get(key)||0)+1);
+    }
+    // Ensure stable order: non-empty names then '__NONE__'
+    const names = Array.from(counts.keys()).filter(k=>k!=='__NONE__').sort();
+    if (counts.has('__NONE__')) names.push('__NONE__');
+    for (const name of names) {
+      const label = document.createElement('label'); label.className='dropdown-option';
+      const cb = document.createElement('input'); cb.type='checkbox'; cb.value=name; cb.checked=(state.filters.groups||[]).includes(name);
+      const span = document.createElement('span'); span.textContent = `${name==='__NONE__'?'Sem grupo':name} (${counts.get(name)||0})`;
+      label.appendChild(cb); label.appendChild(span); groupList.appendChild(label);
+    }
+  }
+  if (groupBtn && groupPanel) {
+    groupBtn.addEventListener('click', (e)=>{ e.stopPropagation(); rebuildGroupList(); groupPanel.classList.toggle('hidden'); });
+    document.addEventListener('click', (e)=>{ if (!groupPanel.classList.contains('hidden')) { const dd=document.getElementById('groupDropdown'); if (dd && !dd.contains(e.target)) groupPanel.classList.add('hidden'); } });
+    groupList?.addEventListener('change', ()=>{
+      const cbs = Array.from(groupList.querySelectorAll('input[type="checkbox"]'));
+      state.filters.groups = cbs.filter(cb=>cb.checked).map(cb=>cb.value);
+      updateGroupBtn(); render();
+    });
+    updateGroupBtn();
   }
   if (relationsToggle) {
     relationsToggle.addEventListener('change', () => {
@@ -875,6 +931,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const parentDropdownSearch = document.getElementById('parentDropdownSearch');
   const parentDropdownList = document.getElementById('parentDropdownList');
   const noteTipoSel = document.getElementById('noteTipoSel');
+  const noteGroupInput = document.getElementById('noteGroupInput');
+  const noteGroupDropdown = document.getElementById('noteGroupDropdown');
+  const noteGroupPanel = document.getElementById('noteGroupPanel');
+  const noteGroupList = document.getElementById('noteGroupList');
   const noteUrgSel = document.getElementById('noteUrgSel');
   closeBtn.addEventListener('click', closeNoteModal);
   cancelBtn.addEventListener('click', closeNoteModal);
@@ -933,6 +993,39 @@ window.addEventListener('DOMContentLoaded', () => {
       persistState();
       render();
     });
+  }
+  if (noteGroupInput) {
+    function buildGroupSuggestions(filter=''){
+      if (!noteGroupList) return;
+      noteGroupList.innerHTML='';
+      const norm = normalizeString(filter||'');
+      const set = new Set();
+      for (const it of state.items){ const g=(it.grupo||'').trim(); if (g) set.add(g); }
+      const names = Array.from(set).filter(n=> !norm || normalizeString(n).includes(norm)).sort();
+      names.forEach(name=>{
+        const opt=document.createElement('div'); opt.className='dropdown-option'; opt.textContent=name;
+        opt.addEventListener('mousedown', (e)=>{ // mousedown to run before input blur
+          e.preventDefault(); noteGroupInput.value=name; apply(name);
+          noteGroupPanel?.classList.add('hidden');
+        });
+        noteGroupList.appendChild(opt);
+      });
+    }
+    function apply(val){
+      const id = state.ui.selectedId; if (id == null) return;
+      const item = state.items.find(it => it.id === id); if (!item) return;
+      const v = String(val || '').slice(0,60).trim();
+      item.grupo = v;
+      persistState();
+      render();
+    }
+    noteGroupInput.addEventListener('input', ()=>{
+      noteGroupPanel?.classList.remove('hidden');
+      buildGroupSuggestions(noteGroupInput.value);
+      apply(noteGroupInput.value);
+    });
+    noteGroupInput.addEventListener('focus', ()=>{ buildGroupSuggestions(noteGroupInput.value); noteGroupPanel?.classList.remove('hidden'); });
+    document.addEventListener('click', (e)=>{ if (noteGroupDropdown && !noteGroupDropdown.contains(e.target)) noteGroupPanel?.classList.add('hidden'); });
   }
 
   // Obs adicionais modal

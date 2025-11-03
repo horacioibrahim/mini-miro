@@ -8,6 +8,7 @@
   </head>
   <body>
     <header class="app-header">
+      <div class="groupbar">Grupo: <span id="groupSummary">nenhum</span></div>
       <h1>Mini Miro - Priorização Esforço x Impacto <span id="visibleCountStep1" class="count-badge">0</span></h1>
       <div class="legend" aria-label="Legenda de estilos dos cards">
         <div class="legend-item"><span class="legend-dot legend--operacao legend--problema"></span><span>Operação + Problema</span></div>
@@ -86,6 +87,16 @@
         <div class="dropdown" id="squadDropdown">
           <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
           <div id="squadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar squads"></div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Grupos</label>
+        <div class="dropdown" id="groupDropdown">
+          <button id="groupDropdownBtn" type="button" class="dropdown-btn">Grupos: Todos</button>
+          <div id="groupDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupos">
+            <div id="groupDropdownList"></div>
+          </div>
         </div>
       </div>
 
@@ -187,16 +198,27 @@
               </select>
             </div>
           </div>
-          <div class="modal-field">
-            <label class="modal-label" for="noteUrgSel">Urgência</label>
-            <select id="noteUrgSel">
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
+          <div class="modal-grid-two">
+            <div class="modal-field">
+              <label class="modal-label" for="noteUrgSel">Urgência</label>
+              <select id="noteUrgSel">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="noteGroupInput">Grupo</label>
+              <div class="dropdown" id="noteGroupDropdown">
+                <input id="noteGroupInput" type="text" maxlength="60" placeholder="Nome do grupo (até 60 chars)" />
+                <div id="noteGroupPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupo">
+                  <div id="noteGroupList" class="dropdown-list"></div>
+                </div>
+              </div>
+            </div>
           </div>
           <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
         </div>

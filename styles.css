@@ -8,6 +8,7 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helve
 .app-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; background: var(--bg); }
 .app-header h1 { margin: 0; font-size: 20px; font-weight: 600; }
 .count-badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); background: #fff; font-size: 12px; color: var(--muted); vertical-align: middle; }
+.groupbar { width: 100%; font-size: 12px; color: var(--muted); }
 
 .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .legend-item { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
@@ -121,6 +122,7 @@ button:hover { border-color: #cbd5e1; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .modal-body { padding: 12px 16px; display: grid; gap: 8px; }
 .modal-grid-two { display: grid; grid-template-columns: 1fr 220px; gap: 12px; align-items: start; }
+.modal-field .dropdown-panel { width: 100%; }
 .modal-field select { height: 36px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
 .modal-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 .modal-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
