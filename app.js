@@ -1137,10 +1137,14 @@ function openNoteModal(itemId) {
   const parentDropdownBtn = document.getElementById('parentDropdownBtn');
   const noteTipoSel = document.getElementById('noteTipoSel');
   const noteUrgSel = document.getElementById('noteUrgSel');
+  const noteGroupInput = document.getElementById('noteGroupInput');
+  const noteGroupPanel = document.getElementById('noteGroupPanel');
   title.textContent = item?.demanda || '(sem título)';
   textarea.value = item?.observation || '';
   if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
   if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
+  if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0,60);
+  if (noteGroupPanel) noteGroupPanel.classList.add('hidden');
   if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
   modal.classList.remove('hidden');
 }
