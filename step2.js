@@ -154,18 +154,22 @@
       ['t1','t2','t3'].forEach(slot=> (slots[slot]||[]).forEach(id=>byIdPlaced.add(id)));
     }
     const imp = document.getElementById('impactoFilter2').value;
-    const esf = document.getElementById('esforcoFilter2').value;
+    const ab = document.getElementById('abordagemFilter2').value;
+    const esc = document.getElementById('escopoFilter2').value;
+    const pr = document.getElementById('principalFilter2').value;
     const squadSel = document.getElementById('squadPlanSel').value;
     const urg = document.getElementById('urgenciaFilter2').value;
     const et = document.getElementById('esforcoTecnicoFilter2').value;
     const filtered = sortItems(state.items).filter(it=>{
       if (byIdPlaced.has(it.id)) return false;
       const iok = imp==='all' || it.impactClass===imp;
-      const eok = esf==='all' || it.effortClass===esf;
+      const abOk = ab==='all' || (it.abordagemClass||'Outros')===ab;
+      const escOk = esc==='all' || (it.escopoClass||'Outros')===esc;
+      const prOk = pr==='all' || (it.principalImpactClass||'Outros')===pr;
       const sok = (squadSel==='__ALL__') || !squadSel || it.squad===squadSel;
       const uok = urg==='all' || String((it.urgencia ?? 0)) === urg;
       const etOk = et==='all' || (et==='Sem' ? (it.effortClass==null) : (it.effortClass===et));
-      return iok && eok && sok && uok && etOk;
+      return iok && abOk && escOk && prOk && sok && uok && etOk;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
 
@@ -293,7 +297,9 @@
     });
 
     document.getElementById('impactoFilter2').addEventListener('change', render);
-    document.getElementById('esforcoFilter2').addEventListener('change', render);
+    document.getElementById('abordagemFilter2').addEventListener('change', render);
+    document.getElementById('escopoFilter2').addEventListener('change', render);
+    document.getElementById('principalFilter2').addEventListener('change', render);
     document.getElementById('urgenciaFilter2').addEventListener('change', render);
     document.getElementById('esforcoTecnicoFilter2').addEventListener('change', render);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
