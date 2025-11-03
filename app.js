@@ -718,7 +718,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Urgencia', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Urgencia', 'Grupo', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -749,6 +749,7 @@ function exportCsv() {
       it.andamento ? 'Sim' : 'Não',
       `${it.progresso ?? 0}%`,
       it.tipoEsforco || '',
+      it.grupo || '',
       it.urgencia ?? '',
       parentName,
       relatedNames,
