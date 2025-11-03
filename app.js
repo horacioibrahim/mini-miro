@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', squad: [], groups: [], text: '', showRelations: false },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', squad: [], groups: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -257,6 +257,8 @@ function render() {
     const escopoOk = escopoFilter === 'all' || e === escopoFilter;
     const principalOk = principalFilter === 'all' || p === principalFilter;
     const tipoOk = tipoFilter === 'all' || t === tipoFilter;
+    const et = state.filters.esforcoTecnico || 'all';
+    const esforcoTecnicoOk = et === 'all' || (et === 'Sem' ? (item.effortClass == null) : (item.effortClass === et));
     const urgOk = urgenciaFilter === 'all' || String(u) === String(urgenciaFilter);
     const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0
       ? true
@@ -267,7 +269,7 @@ function render() {
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
-    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && groupOk && textOk;
+    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && groupOk && esforcoTecnicoOk && textOk;
   };
 
   // Count visible after filters (independent of placement)
@@ -773,6 +775,7 @@ function setupFilters() {
   const escopoSel = document.getElementById('escopoFilter');
   const principalSel = document.getElementById('principalFilter');
   const tipoSel = document.getElementById('tipoEsforcoFilter');
+  const esforcoTecnicoSel = document.getElementById('esforcoTecnicoFilter');
   const urgSel = document.getElementById('urgenciaFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
@@ -796,6 +799,12 @@ function setupFilters() {
   if (tipoSel) {
     tipoSel.addEventListener('change', () => {
       state.filters.tipo = tipoSel.value;
+      render();
+    });
+  }
+  if (esforcoTecnicoSel) {
+    esforcoTecnicoSel.addEventListener('change', () => {
+      state.filters.esforcoTecnico = esforcoTecnicoSel.value;
       render();
     });
   }
