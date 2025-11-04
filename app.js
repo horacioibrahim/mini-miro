@@ -1041,6 +1041,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // File input
   const fileInput = document.getElementById('csvFile');
+  const csvOpenBtn = document.getElementById('csvOpenBtn');
+  if (csvOpenBtn && fileInput) csvOpenBtn.addEventListener('click', ()=> fileInput.click());
   fileInput.addEventListener('change', (ev) => {
     const f = ev.target.files?.[0];
     if (f) {

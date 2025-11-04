@@ -25,8 +25,8 @@
 
     <section class="controls">
       <div class="control-group">
-        <label for="csvFile">Carregar base.csv</label>
-        <input type="file" id="csvFile" accept=".csv" />
+        <input type="file" id="csvFile" accept=".csv" style="display:none" />
+        <button id="csvOpenBtn" type="button" class="ctrl-icon-btn" title="Carregar base.csv">↓</button>
       </div>
 
       <div class="control-group">
@@ -125,15 +125,15 @@
       </div>
 
       <div class="control-group">
-        <button id="exportCsvBtn" type="button">Exportar CSV (com classificações)</button>
+        <button id="exportCsvBtn" type="button" class="ctrl-icon-btn" title="Exportar CSV">↑</button>
       </div>
 
       <div class="control-group">
-        <button id="goStep2Btn" type="button">Ir para Etapa 2 (Planejamento Semanas)</button>
+        <button id="goStep2Btn" type="button" class="ctrl-icon-btn" title="Ir para Etapa 2">→</button>
       </div>
 
       <div class="control-group">
-        <button id="resetFiltersBtn" type="button">Resetar filtros</button>
+        <button id="resetFiltersBtn" type="button" class="ctrl-icon-btn" title="Resetar filtros">R</button>
       </div>
     </section>
 

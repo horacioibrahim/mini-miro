@@ -28,6 +28,7 @@ select { height: 36px; padding: 6px 10px; border: 1px solid var(--border); borde
 input[type="text"] { height: 36px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--fg); }
 button { height: 36px; padding: 6px 12px; border: 1px solid var(--border); background: #fff; border-radius: 10px; cursor: pointer; }
 button:hover { border-color: #cbd5e1; }
+.ctrl-icon-btn { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
 
 /* Dropdown (Squad) */
 .dropdown { position: relative; }
