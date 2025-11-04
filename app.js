@@ -345,6 +345,119 @@ function render() {
   drawRelations();
 }
 
+// Build list of items that pass current filters (Step 1)
+function filteredItemsForVote() {
+  const abordagemFilter = state.filters.abordagem;
+  const escopoFilter = state.filters.escopo;
+  const principalFilter = state.filters.principal;
+  const tipoFilter = state.filters.tipo;
+  const urgenciaFilter = state.filters.urgencia;
+  const squadFilter = state.filters.squad;
+  const textFilter = normalizeString(state.filters.text || '');
+  const et = state.filters.esforcoTecnico || 'all';
+  return state.items.filter(item => {
+    const a = item.abordagemClass || 'Outros';
+    const e = item.escopoClass || 'Outros';
+    const p = item.principalImpactClass || 'Outros';
+    const s = item.squad || 'Outros';
+    const t = item.tipoEsforco || '-';
+    const u = item.urgencia ?? 0;
+    const abordagemOk = abordagemFilter === 'all' || a === abordagemFilter;
+    const escopoOk = escopoFilter === 'all' || e === escopoFilter;
+    const principalOk = principalFilter === 'all' || p === principalFilter;
+    const tipoOk = tipoFilter === 'all' || t === tipoFilter;
+    const esforcoTecnicoOk = et === 'all' || (et === 'Sem' ? (item.effortClass == null) : (item.effortClass === et));
+    const urgOk = urgenciaFilter === 'all' || String(u) === String(urgenciaFilter);
+    const squadOk = !Array.isArray(squadFilter) || squadFilter.length === 0 ? true : squadFilter.includes(s);
+    const groupsSel = state.filters.groups || [];
+    const gname = (item.grupo || '').trim();
+    const groupOk = groupsSel.length === 0 || groupsSel.includes(gname || '__NONE__');
+    const textOk = !textFilter
+      || normalizeString(item.demanda).includes(textFilter)
+      || normalizeString(item.demandaDescricao || '').includes(textFilter);
+    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && groupOk && esforcoTecnicoOk && textOk;
+  });
+}
+
+function openVoteOverlay() {
+  const overlay = document.getElementById('voteOverlay');
+  const grid = document.getElementById('voteGrid');
+  const count = document.getElementById('voteCount');
+  if (!overlay || !grid) return;
+  // build cards
+  grid.innerHTML = '';
+  const items = filteredItemsForVote();
+  if (count) count.textContent = `(${items.length})`;
+  for (const item of items) {
+    const c = document.createElement('div'); c.className = 'vote-card'; c.setAttribute('data-id', String(item.id));
+    // urgency quick menu will go in footer
+    const menu = document.createElement('div'); menu.className = 'vote-urg-menu';
+    for (let n=0;n<=5;n++){
+      const b = document.createElement('button'); b.type='button'; b.className = 'vote-urg-btn'; b.textContent = String(n);
+      if (Number(item.urgencia ?? 0) === n) b.classList.add('active');
+      b.addEventListener('click', ()=>{
+        item.urgencia = n;
+        try { persistState(); } catch(_){}
+        // update active state + badge text
+        menu.querySelectorAll('.vote-urg-btn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        const ub = c.querySelector('.badge-Urg'); if (ub) ub.textContent = `Urgência: ${n}`;
+      });
+      menu.appendChild(b);
+    }
+    // title
+    const title = document.createElement('div'); title.className='vote-card-title'; title.textContent = item.demanda || '(sem título)'; c.appendChild(title);
+    // desc
+    const desc = document.createElement('div'); desc.className='vote-card-desc'; desc.textContent = item.demandaDescricao || ''; c.appendChild(desc);
+    // badges
+    const badges = document.createElement('div'); badges.className='vote-badges';
+    // tipo esforço
+    const tipo = document.createElement('span'); tipo.className='badge';
+    const tl = item.tipoEsforco || '-';
+    if (tl === 'Tarefa') tipo.classList.add('badge--tarefa');
+    else if (tl === 'Iniciativa') tipo.classList.add('badge--iniciativa');
+    else if (tl === 'Ideia') tipo.classList.add('badge--ideia');
+    else if (tl === 'Follow-up') tipo.classList.add('badge--follow');
+    tipo.textContent = `tipo esf.: ${tl}`;
+    badges.appendChild(tipo);
+    const urg = document.createElement('span'); urg.className='badge badge-Urg'; urg.textContent = `Urgência: ${item.urgencia ?? 0}`; badges.appendChild(urg);
+    c.appendChild(badges);
+    // footer with urgency buttons
+    const footer = document.createElement('div'); footer.className='vote-card-footer';
+    footer.appendChild(menu);
+    c.appendChild(footer);
+    grid.appendChild(c);
+  }
+  // apply columns per line
+  applyVoteCols();
+  overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVoteOverlay() {
+  const overlay = document.getElementById('voteOverlay');
+  if (!overlay) return;
+  overlay.classList.add('hidden');
+  document.body.style.overflow = '';
+  // re-render board to reflect any urgency badge changes
+  render();
+}
+
+function applyVoteCols() {
+  const grid = document.getElementById('voteGrid');
+  const sel = document.getElementById('voteColsSel');
+  if (!grid || !sel) return;
+  const n = Number(sel.value) || 5;
+  grid.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+}
+
+function persistVoteCols(){
+  try {
+    const sel = document.getElementById('voteColsSel');
+    if (sel) localStorage.setItem('priorizacao_vote_cols', sel.value);
+  } catch(_){}
+}
+
 // Draw dashed curved lines between related items, using closest edge centers
 function drawRelations() {
   const svg = document.getElementById('relationsOverlay');
@@ -968,6 +1081,24 @@ window.addEventListener('DOMContentLoaded', () => {
       persistState();
       window.location.href = 'step2.html';
     });
+  }
+
+  // Vote overlay wiring
+  const openVoteBtn = document.getElementById('openVoteOverlayBtn');
+  const closeVoteBtn = document.getElementById('closeVoteOverlayBtn');
+  if (openVoteBtn) openVoteBtn.addEventListener('click', openVoteOverlay);
+  if (closeVoteBtn) closeVoteBtn.addEventListener('click', closeVoteOverlay);
+  document.addEventListener('keydown', (e)=>{
+    const overlay = document.getElementById('voteOverlay');
+    if (e.key === 'Escape' && overlay && !overlay.classList.contains('hidden')) closeVoteOverlay();
+  });
+
+  // vote cols selector
+  const voteColsSel = document.getElementById('voteColsSel');
+  if (voteColsSel) {
+    // load persisted
+    try { const v = localStorage.getItem('priorizacao_vote_cols'); if (v) voteColsSel.value = v; } catch(_){}
+    voteColsSel.addEventListener('change', ()=>{ persistVoteCols(); applyVoteCols(); });
   }
 
   // Reset filters

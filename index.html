@@ -18,6 +18,9 @@
         <div class="legend-item"><span class="legend-dot legend--outros legend--problema"></span><span>Outros + Problema</span></div>
         <div class="legend-item"><span class="legend-dot legend--outros legend--oportunidade"></span><span>Outros + Oportunidade</span></div>
       </div>
+      <div class="header-actions">
+        <button id="openVoteOverlayBtn" type="button">Modo votação (urgência)</button>
+      </div>
     </header>
 
     <section class="controls">
@@ -289,6 +292,24 @@
         <div class="sheet-row"><div class="sheet-label">Observação complementar</div><div class="sheet-value"><textarea id="sheetObservation" rows="4" placeholder="Anotações do facilitador da dinâmica..."></textarea></div></div>
       </div>
     </aside>
+
+    <!-- Overlay de votação de urgência -->
+    <div id="voteOverlay" class="vote-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="voteOverlayTitle">
+      <div class="vote-overlay-bar">
+        <h2 id="voteOverlayTitle">Votação de urgência <span id="voteCount"></span></h2>
+        <div class="vote-cols-ctrl">
+          <label for="voteColsSel">Cards por linha</label>
+          <select id="voteColsSel">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+          </select>
+        </div>
+        <button id="closeVoteOverlayBtn" type="button">Fechar</button>
+      </div>
+      <div id="voteGrid" class="vote-grid"></div>
+    </div>
 
     <script src="./app.js"></script>
   </body>

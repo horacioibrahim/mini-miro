@@ -56,6 +56,22 @@ button:hover { border-color: #cbd5e1; }
 .board-wrapper { display: grid; grid-template-columns: 1fr 330px; gap: 16px; padding: 16px 20px; align-items: start; position: relative; }
 .relations-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
 
+/* Voting overlay */
+.vote-overlay { position: fixed; inset: 0; background: #fff; color: #000; z-index: 9999; overflow: auto; padding: 16px 20px 24px; }
+.vote-overlay.hidden { display: none; }
+.vote-overlay-bar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--border); padding: 12px 0; display: flex; align-items: center; justify-content: space-between; z-index: 1; }
+.vote-grid { display: grid; gap: 12px; margin-top: 16px; }
+.vote-card { position: relative; border: 1px solid var(--border); border-radius: 12px; padding: 12px 12px 48px; background: #fff; }
+.vote-card-title { font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vote-card-desc { font-size: 13px; color: var(--muted); max-height: 4.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin-bottom: 8px; }
+.vote-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.vote-urg-menu { display: inline-flex; gap: 4px; background: transparent; border: none; border-radius: 0; padding: 0; }
+.vote-urg-btn { appearance: none; border: 1px solid var(--border); background: #fff; color: #111; border-radius: 999px; padding: 2px 6px; font-size: 12px; line-height: 1; cursor: pointer; }
+.vote-urg-btn.active { background: #111; color: #fff; border-color: #111; }
+.vote-card-footer { position: absolute; left: 12px; right: 12px; bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.vote-cols-ctrl { display: inline-flex; gap: 8px; align-items: center; }
+.vote-cols-ctrl select { height: 32px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; }
+
 .board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-template-rows: repeat(4, auto) 36px; gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; align-content: start; }
 .weeks-board { display: grid; grid-template-columns: 120px repeat(3, 1fr); grid-auto-rows: minmax(120px, auto); gap: 8px; border: 1px solid var(--border); padding: 8px; border-radius: 10px; background: #fff; align-content: start; }
 .x-header { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; font-weight: 600; background: var(--card); border: 1px dashed var(--border); border-radius: 8px; }
