@@ -157,7 +157,8 @@
     const ab = document.getElementById('abordagemFilter2').value;
     const esc = document.getElementById('escopoFilter2').value;
     const pr = document.getElementById('principalFilter2').value;
-    const squadSel = document.getElementById('squadPlanSel').value;
+    const squadPlanSel = document.getElementById('squadPlanSel').value;
+    const squadBacklogSel = document.getElementById('squadBacklogSel').value;
     const urg = document.getElementById('urgenciaFilter2').value;
     const et = document.getElementById('esforcoTecnicoFilter2').value;
     const filtered = sortItems(state.items).filter(it=>{
@@ -166,7 +167,8 @@
       const abOk = ab==='all' || (it.abordagemClass||'Outros')===ab;
       const escOk = esc==='all' || (it.escopoClass||'Outros')===esc;
       const prOk = pr==='all' || (it.principalImpactClass||'Outros')===pr;
-      const sok = (squadSel==='__ALL__') || !squadSel || it.squad===squadSel;
+      // backlog-specific squad filter
+      const sok = (squadBacklogSel==='__ALL__') || !squadBacklogSel || it.squad===squadBacklogSel;
       const uok = urg==='all' || String((it.urgencia ?? 0)) === urg;
       const etOk = et==='all' || (et==='Sem' ? (it.effortClass==null) : (it.effortClass===et));
       return iok && abOk && escOk && prOk && sok && uok && etOk;
@@ -284,6 +286,7 @@
         principal: document.getElementById('principalFilter2')?.value || 'all',
         urgencia: document.getElementById('urgenciaFilter2')?.value || 'all',
         esforcoTecnico: document.getElementById('esforcoTecnicoFilter2')?.value || 'all',
+        squadBacklog: document.getElementById('squadBacklogSel')?.value || '__ALL__',
       };
       localStorage.setItem('priorizacao_filters_step2', JSON.stringify(vals));
     } catch(e){ /* noop */ }
@@ -300,6 +303,7 @@
       set('principalFilter2', vals.principal);
       set('urgenciaFilter2', vals.urgencia);
       set('esforcoTecnicoFilter2', vals.esforcoTecnico);
+      set('squadBacklogSel', vals.squadBacklog);
     } catch(e){ /* noop */ }
   }
 
@@ -311,10 +315,14 @@
 
     // populate squads select
     const squadSel = document.getElementById('squadPlanSel');
+    const squadBackSel = document.getElementById('squadBacklogSel');
     while (squadSel.firstChild) squadSel.removeChild(squadSel.firstChild);
+    while (squadBackSel.firstChild) squadBackSel.removeChild(squadBackSel.firstChild);
     // Add 'Todas' for reset targeting
     const allOpt = document.createElement('option'); allOpt.value='__ALL__'; allOpt.textContent='Todas (Squads)'; squadSel.appendChild(allOpt);
+    const allOpt2 = document.createElement('option'); allOpt2.value='__ALL__'; allOpt2.textContent='Todas (Backlog)'; squadBackSel.appendChild(allOpt2);
     state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadSel.appendChild(o); });
+    state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadBackSel.appendChild(o); });
     if (state.currentSquad && state.squads.includes(state.currentSquad)) squadSel.value = state.currentSquad;
     squadSel.addEventListener('change', ()=>{
       const val = squadSel.value;
@@ -326,7 +334,7 @@
     });
 
     const bind = (id)=>{ const el=document.getElementById(id); if (el) el.addEventListener('change', ()=>{ persistFilters2(); render(); }); };
-    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2'].forEach(bind);
+    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2','squadBacklogSel'].forEach(bind);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
     document.getElementById('resetFilters2Btn').addEventListener('click', ()=>{
@@ -348,6 +356,8 @@
 
     // Load saved filters after DOM is ready, then render
     loadFilters2();
+    // restore backlog squad if persisted
+    try { const raw = localStorage.getItem('priorizacao_filters_step2'); if (raw){ const v=JSON.parse(raw); if (v && v.squadBacklog) { const el=document.getElementById('squadBacklogSel'); if (el) el.value=v.squadBacklog; } } } catch(e){}
     render();
   });
 })();
