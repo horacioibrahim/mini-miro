@@ -24,116 +24,120 @@
     </header>
 
     <section class="controls">
-      <div class="control-group">
-        <input type="file" id="csvFile" accept=".csv" style="display:none" />
-        <button id="csvOpenBtn" type="button" class="ctrl-icon-btn" title="Carregar base.csv">↓</button>
-      </div>
-
-      <div class="control-group">
-        <label for="abordagemFilter">Abordagem</label>
-        <select id="abordagemFilter">
-          <option value="all">Todas</option>
-          <option value="Oportunidade">Oportunidade</option>
-          <option value="Problema">Problema</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="escopoFilter">Escopo</label>
-        <select id="escopoFilter">
-          <option value="all">Todos</option>
-          <option value="Inovação">Inovação</option>
-          <option value="Operação">Operação</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="tipoEsforcoFilter">Tipo de esforço</label>
-        <select id="tipoEsforcoFilter">
-          <option value="all">Todos</option>
-          <option value="-">-</option>
-          <option value="Tarefa">Tarefa</option>
-          <option value="Iniciativa">Iniciativa</option>
-          <option value="Ideia">Ideia</option>
-          <option value="Follow-up">Follow-up</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="principalFilter">Principal</label>
-        <select id="principalFilter">
-          <option value="all">Todos</option>
-          <option value="Experiência">Experiência</option>
-          <option value="Mercado">Mercado</option>
-          <option value="Plataforma">Plataforma</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="esforcoTecnicoFilter">Esforço técnico (CSV)</label>
-        <select id="esforcoTecnicoFilter">
-          <option value="all">Todos</option>
-          <option value="Baixo">Baixo</option>
-          <option value="Médio">Médio</option>
-          <option value="Alto">Alto</option>
-          <option value="Sem">Sem classificação</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="urgenciaFilter">Urgência</label>
-        <select id="urgenciaFilter">
-          <option value="all">Todas</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>Squad</label>
-        <div class="dropdown" id="squadDropdown">
-          <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
-          <div id="squadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar squads"></div>
+      <div class="controls-row">
+        <div class="control-group">
+          <input type="file" id="csvFile" accept=".csv" style="display:none" />
+          <button id="csvOpenBtn" type="button" class="ctrl-icon-btn" title="Carregar base.csv">↓</button>
         </div>
-      </div>
 
-      <div class="control-group">
-        <label>Grupos</label>
-        <div class="dropdown" id="groupDropdown">
-          <button id="groupDropdownBtn" type="button" class="dropdown-btn">Grupos: Todos</button>
-          <div id="groupDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupos">
-            <div id="groupDropdownList"></div>
+        <div class="control-group">
+          <button id="exportCsvBtn" type="button" class="ctrl-icon-btn" title="Exportar CSV">↑</button>
+        </div>
+
+        <div class="control-group">
+          <button id="goStep2Btn" type="button" class="ctrl-icon-btn" title="Ir para Etapa 2">→</button>
+        </div>
+
+        <div class="control-group">
+          <button id="resetFiltersBtn" type="button" class="ctrl-icon-btn" title="Resetar filtros">R</button>
+        </div>
+
+        <div class="control-group">
+          <label for="textFilter">Buscar</label>
+          <input type="text" id="textFilter" placeholder="Filtrar Demanda e descrição..." />
+        </div>
+
+        <div class="control-group">
+          <label>Squad</label>
+          <div class="dropdown" id="squadDropdown">
+            <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
+            <div id="squadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar squads"></div>
           </div>
         </div>
       </div>
 
-      <div class="control-group">
-        <label for="textFilter">Buscar</label>
-        <input type="text" id="textFilter" placeholder="Filtrar Demanda e descrição..." />
-      </div>
+      <div class="controls-row">
+        <div class="control-group">
+          <label for="abordagemFilter">Abordagem</label>
+          <select id="abordagemFilter">
+            <option value="all">Todas</option>
+            <option value="Oportunidade">Oportunidade</option>
+            <option value="Problema">Problema</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <label for="relationsToggle">Ver relacionamentos</label>
-        <input type="checkbox" id="relationsToggle" />
-      </div>
+        <div class="control-group">
+          <label for="escopoFilter">Escopo</label>
+          <select id="escopoFilter">
+            <option value="all">Todos</option>
+            <option value="Inovação">Inovação</option>
+            <option value="Operação">Operação</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <button id="exportCsvBtn" type="button" class="ctrl-icon-btn" title="Exportar CSV">↑</button>
-      </div>
+        <div class="control-group">
+          <label for="tipoEsforcoFilter">Tipo de esforço</label>
+          <select id="tipoEsforcoFilter">
+            <option value="all">Todos</option>
+            <option value="-">-</option>
+            <option value="Tarefa">Tarefa</option>
+            <option value="Iniciativa">Iniciativa</option>
+            <option value="Ideia">Ideia</option>
+            <option value="Follow-up">Follow-up</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <button id="goStep2Btn" type="button" class="ctrl-icon-btn" title="Ir para Etapa 2">→</button>
-      </div>
+        <div class="control-group">
+          <label for="principalFilter">Principal</label>
+          <select id="principalFilter">
+            <option value="all">Todos</option>
+            <option value="Experiência">Experiência</option>
+            <option value="Mercado">Mercado</option>
+            <option value="Plataforma">Plataforma</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <button id="resetFiltersBtn" type="button" class="ctrl-icon-btn" title="Resetar filtros">R</button>
+        <div class="control-group">
+          <label for="esforcoTecnicoFilter">Esforço técnico (CSV)</label>
+          <select id="esforcoTecnicoFilter">
+            <option value="all">Todos</option>
+            <option value="Baixo">Baixo</option>
+            <option value="Médio">Médio</option>
+            <option value="Alto">Alto</option>
+            <option value="Sem">Sem classificação</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="urgenciaFilter">Urgência</label>
+          <select id="urgenciaFilter">
+            <option value="all">Todas</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Grupos</label>
+          <div class="dropdown" id="groupDropdown">
+            <button id="groupDropdownBtn" type="button" class="dropdown-btn">Grupos: Todos</button>
+            <div id="groupDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupos">
+              <div id="groupDropdownList"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="relationsToggle">Ver relacionamentos</label>
+          <input type="checkbox" id="relationsToggle" />
+        </div>
       </div>
     </section>
 

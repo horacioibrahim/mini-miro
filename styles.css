@@ -19,7 +19,9 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helve
 .legend--problema { border-color: #ef4444; }
 .legend--oportunidade { border-color: #3b82f6; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--border); align-items: flex-end; position: sticky; top: 64px; z-index: 95; background: var(--bg); }
+.controls { display: grid; gap: 10px 16px; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 64px; z-index: 95; background: var(--bg); }
+.controls.controls-single { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.controls-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .control-group { display: flex; gap: 8px; align-items: center; }
 label { font-size: 14px; color: var(--muted); }
 select, input[type="file"], button, input[type="text"] { font: inherit; }
