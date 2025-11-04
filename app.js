@@ -26,6 +26,38 @@ function loadPersistedState() {
   return false;
 }
 
+// Filters persistence (Step 1)
+function persistFiltersStep1() {
+  try {
+    localStorage.setItem('priorizacao_filters_step1', JSON.stringify(state.filters));
+  } catch (e) { /* noop */ }
+}
+
+function loadFiltersStep1() {
+  try {
+    const raw = localStorage.getItem('priorizacao_filters_step1');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed) return;
+    state.filters = { ...state.filters, ...parsed };
+    // apply to UI controls if present
+    const setVal = (id, val)=>{ const el=document.getElementById(id); if (el && typeof val!== 'undefined') el.value = val; };
+    setVal('abordagemFilter', state.filters.abordagem);
+    setVal('escopoFilter', state.filters.escopo);
+    setVal('principalFilter', state.filters.principal);
+    setVal('tipoEsforcoFilter', state.filters.tipo);
+    setVal('urgenciaFilter', state.filters.urgencia);
+    setVal('esforcoTecnicoFilter', state.filters.esforcoTecnico);
+    const tf = document.getElementById('textFilter'); if (tf) tf.value = state.filters.text || '';
+    const rt = document.getElementById('relationsToggle'); if (rt) rt.checked = !!state.filters.showRelations;
+    // multi dropdowns
+    updateSquadButtonLabel && updateSquadButtonLabel();
+    const gb = document.getElementById('groupDropdownBtn'); if (gb) {
+      // trigger label update via render()->summary, or rebuild list when opened
+    }
+  } catch(e){ /* noop */ }
+}
+
 // Column header names (exact CSV headers expected)
 const HEADERS = {
   DEMANDA: 'Demanda',
@@ -786,38 +818,41 @@ function setupFilters() {
   const relationsToggle = document.getElementById('relationsToggle');
   abordagemSel.addEventListener('change', () => {
     state.filters.abordagem = abordagemSel.value;
+    persistFiltersStep1();
     render();
   });
   escopoSel.addEventListener('change', () => {
     state.filters.escopo = escopoSel.value;
+    persistFiltersStep1();
     render();
   });
   principalSel.addEventListener('change', () => {
     state.filters.principal = principalSel.value;
+    persistFiltersStep1();
     render();
   });
   if (tipoSel) {
     tipoSel.addEventListener('change', () => {
       state.filters.tipo = tipoSel.value;
-      render();
+      persistFiltersStep1(); render();
     });
   }
   if (esforcoTecnicoSel) {
     esforcoTecnicoSel.addEventListener('change', () => {
       state.filters.esforcoTecnico = esforcoTecnicoSel.value;
-      render();
+      persistFiltersStep1(); render();
     });
   }
   if (urgSel) {
     urgSel.addEventListener('change', () => {
       state.filters.urgencia = urgSel.value;
-      render();
+      persistFiltersStep1(); render();
     });
   }
   if (textInput) {
     textInput.addEventListener('input', () => {
       state.filters.text = textInput.value;
-      render();
+      persistFiltersStep1(); render();
     });
   }
   if (squadBtn && squadPanel) {
@@ -835,6 +870,7 @@ function setupFilters() {
       const checkboxes = Array.from(squadPanel.querySelectorAll('input[type="checkbox"]'));
       state.filters.squad = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
       updateSquadButtonLabel();
+      persistFiltersStep1();
       render();
     });
   }
@@ -872,7 +908,7 @@ function setupFilters() {
     groupList?.addEventListener('change', ()=>{
       const cbs = Array.from(groupList.querySelectorAll('input[type="checkbox"]'));
       state.filters.groups = cbs.filter(cb=>cb.checked).map(cb=>cb.value);
-      updateGroupBtn(); render();
+      updateGroupBtn(); persistFiltersStep1(); render();
     });
     updateGroupBtn();
   }
@@ -909,12 +945,16 @@ window.addEventListener('DOMContentLoaded', () => {
   // Try to load from localStorage if present
   if (loadPersistedState()) {
     populateSquadFilter();
-    render();
   }
+  loadFiltersStep1();
+  populateSquadFilter();
+  render();
 
   // Export button
   const exportBtn = document.getElementById('exportCsvBtn');
   exportBtn.addEventListener('click', exportCsv);
+
+  // Reset filters button handler is wired earlier
 
   // keep relation lines updated on viewport changes
   window.addEventListener('resize', drawRelations);
@@ -927,6 +967,24 @@ window.addEventListener('DOMContentLoaded', () => {
       // Ensure latest state is stored for step 2
       persistState();
       window.location.href = 'step2.html';
+    });
+  }
+
+  // Reset filters
+  const resetBtn = document.getElementById('resetFiltersBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', ()=>{
+      state.filters = { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', squad: [], groups: [], text: '', showRelations: false };
+      // reset UI controls
+      const setVal = (id,val)=>{ const el=document.getElementById(id); if (el) el.value=val; };
+      setVal('abordagemFilter','all'); setVal('escopoFilter','all'); setVal('principalFilter','all'); setVal('tipoEsforcoFilter','all'); setVal('urgenciaFilter','all'); setVal('esforcoTecnicoFilter','all');
+      const tf=document.getElementById('textFilter'); if (tf) tf.value='';
+      const rt=document.getElementById('relationsToggle'); if (rt) rt.checked=false;
+      populateSquadFilter();
+      updateSquadButtonLabel && updateSquadButtonLabel();
+      // group label updates via render()
+      persistFiltersStep1();
+      render();
     });
   }
 

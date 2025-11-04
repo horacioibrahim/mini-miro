@@ -274,11 +274,40 @@
     } catch(e){ /* noop */ }
   }
 
+  // Filters persistence (Step 2)
+  function persistFilters2(){
+    try {
+      const vals = {
+        impacto: document.getElementById('impactoFilter2')?.value || 'all',
+        abordagem: document.getElementById('abordagemFilter2')?.value || 'all',
+        escopo: document.getElementById('escopoFilter2')?.value || 'all',
+        principal: document.getElementById('principalFilter2')?.value || 'all',
+        urgencia: document.getElementById('urgenciaFilter2')?.value || 'all',
+        esforcoTecnico: document.getElementById('esforcoTecnicoFilter2')?.value || 'all',
+      };
+      localStorage.setItem('priorizacao_filters_step2', JSON.stringify(vals));
+    } catch(e){ /* noop */ }
+  }
+  function loadFilters2(){
+    try {
+      const raw = localStorage.getItem('priorizacao_filters_step2');
+      if (!raw) return;
+      const vals = JSON.parse(raw);
+      const set = (id,val)=>{ const el=document.getElementById(id); if (el && typeof val!== 'undefined') el.value = val; };
+      set('impactoFilter2', vals.impacto);
+      set('abordagemFilter2', vals.abordagem);
+      set('escopoFilter2', vals.escopo);
+      set('principalFilter2', vals.principal);
+      set('urgenciaFilter2', vals.urgencia);
+      set('esforcoTecnicoFilter2', vals.esforcoTecnico);
+    } catch(e){ /* noop */ }
+  }
+
   // Init
   window.addEventListener('DOMContentLoaded', ()=>{
     loadItems();
     ensureWeeks();
-    render();
+    // render will be called after filters load
 
     // populate squads select
     const squadSel = document.getElementById('squadPlanSel');
@@ -296,14 +325,15 @@
       ensureWeeks(); render(); persistGrid();
     });
 
-    document.getElementById('impactoFilter2').addEventListener('change', render);
-    document.getElementById('abordagemFilter2').addEventListener('change', render);
-    document.getElementById('escopoFilter2').addEventListener('change', render);
-    document.getElementById('principalFilter2').addEventListener('change', render);
-    document.getElementById('urgenciaFilter2').addEventListener('change', render);
-    document.getElementById('esforcoTecnicoFilter2').addEventListener('change', render);
+    const bind = (id)=>{ const el=document.getElementById(id); if (el) el.addEventListener('change', ()=>{ persistFilters2(); render(); }); };
+    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2'].forEach(bind);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
+    document.getElementById('resetFilters2Btn').addEventListener('click', ()=>{
+      const set=(id,val)=>{ const el=document.getElementById(id); if (el) el.value=val; };
+      set('impactoFilter2','all'); set('abordagemFilter2','all'); set('escopoFilter2','all'); set('principalFilter2','all'); set('urgenciaFilter2','all'); set('esforcoTecnicoFilter2','all');
+      persistFilters2(); render();
+    });
     document.getElementById('resetPlanBtn').addEventListener('click', ()=>{
       const val = squadSel.value;
       if (val === '__ALL__') {
@@ -315,5 +345,9 @@
       ensureWeeks(); render(); persistGrid();
     });
     document.getElementById('backToStep1').addEventListener('click', ()=>{ window.location.href = 'index.html'; });
+
+    // Load saved filters after DOM is ready, then render
+    loadFilters2();
+    render();
   });
 })();
