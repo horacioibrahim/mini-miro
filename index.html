@@ -230,7 +230,7 @@
               </select>
             </div>
           </div>
-          <div class="modal-grid-two">
+          <div class="modal-grid-three">
             <div class="modal-field">
               <label class="modal-label" for="noteUrgSel">Urgência</label>
               <select id="noteUrgSel">
@@ -251,13 +251,42 @@
                 </div>
               </div>
             </div>
+            <div class="modal-field">
+              <label class="modal-label" for="noteSubSquadInput">SubSquad</label>
+              <input id="noteSubSquadInput" type="text" placeholder="Nome da subSquad" />
+            </div>
           </div>
-        <div class="modal-grid-two">
-          <div class="modal-field">
-            <label class="modal-label" for="noteSubSquadInput">SubSquad</label>
-            <input id="noteSubSquadInput" type="text" placeholder="Nome da subSquad" />
+
+          <div class="modal-grid-three">
+            <div class="modal-field">
+              <label class="modal-label" for="noteImpactSel">Impacto</label>
+              <select id="noteImpactSel">
+                <option>Baixo</option>
+                <option>Médio</option>
+                <option>Alto</option>
+                <option>Altíssimo</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="noteEsforcoSel">Esforço</label>
+              <select id="noteEsforcoSel">
+                <option>Baixo</option>
+                <option>Médio</option>
+                <option>Alto</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="noteBoraSel">Bora_Impact</label>
+              <select id="noteBoraSel">
+                <option value=""></option>
+                <option value="0.25">0.25</option>
+                <option value="0.5">0.5</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
           </div>
-        </div>
           <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
         </div>
         <div class="modal-footer">
@@ -299,7 +328,6 @@
         <div class="sheet-row"><div class="sheet-label">Esforço técnico para entregar em produção</div><div class="sheet-value"><select id="sheetEsforcoSel"><option>Baixo</option><option>Médio</option><option>Alto</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Andamento</div><div class="sheet-value"><select id="sheetAndamentoSel"><option>Sim</option><option>Não</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Progresso (%)</div><div class="sheet-value"><input id="sheetProgressoInput" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></div></div>
-        <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Follow-up</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Ideia</option><option>Follow-up</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Urgência</div><div class="sheet-value"><select id="sheetUrgSel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">SubSquad</div><div class="sheet-value"><input id="sheetSubSquadInput" type="text" placeholder="Nome da subSquad" /></div></div>

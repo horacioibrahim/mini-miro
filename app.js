@@ -1424,6 +1424,10 @@ function openNoteModal(itemId) {
   const noteTipoSel = document.getElementById('noteTipoSel');
   const noteUrgSel = document.getElementById('noteUrgSel');
   const noteGroupInput = document.getElementById('noteGroupInput');
+  const noteSubSquadInput = document.getElementById('noteSubSquadInput');
+  const noteImpactSel = document.getElementById('noteImpactSel');
+  const noteEsforcoSel = document.getElementById('noteEsforcoSel');
+  const noteBoraSel = document.getElementById('noteBoraSel');
   const noteGroupPanel = document.getElementById('noteGroupPanel');
   title.textContent = item?.demanda || '(sem título)';
   textarea.value = item?.observation || '';
@@ -1431,6 +1435,9 @@ function openNoteModal(itemId) {
   if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
   if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0,60);
   if (noteSubSquadInput) noteSubSquadInput.value = String(item?.subSquad || '');
+  if (noteImpactSel && item) noteImpactSel.value = item.impactClass || 'Baixo';
+  if (noteEsforcoSel && item) noteEsforcoSel.value = item.effortClass || 'Baixo';
+  if (noteBoraSel && item) noteBoraSel.value = String(item.boraImpact || '');
   if (noteGroupPanel) noteGroupPanel.classList.add('hidden');
   if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
   modal.classList.remove('hidden');
@@ -1452,10 +1459,16 @@ function saveNoteModal() {
     const noteUrgSel = document.getElementById('noteUrgSel');
     const noteGroupInput = document.getElementById('noteGroupInput');
     const noteSubSquadInput = document.getElementById('noteSubSquadInput');
+    const noteImpactSel = document.getElementById('noteImpactSel');
+    const noteEsforcoSel = document.getElementById('noteEsforcoSel');
+    const noteBoraSel = document.getElementById('noteBoraSel');
     if (item && noteTipoSel) item.tipoEsforco = noteTipoSel.value;
     if (item && noteUrgSel) item.urgencia = Number(noteUrgSel.value);
     if (item && noteGroupInput) item.grupo = String(noteGroupInput.value||'').slice(0,60);
     if (item && noteSubSquadInput) item.subSquad = String(noteSubSquadInput.value||'');
+    if (item && noteImpactSel) item.impactClass = noteImpactSel.value;
+    if (item && noteEsforcoSel) item.effortClass = noteEsforcoSel.value;
+    if (item && noteBoraSel) item.boraImpact = String(noteBoraSel.value||'');
   }
   // persist all edits including tipoEsforco possibly changed via dropdown
   persistState();
