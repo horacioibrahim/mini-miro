@@ -869,6 +869,117 @@ async function handleFile(file, merge = true) {
   render();
 }
 
+// Import from classified CSV (our own export format)
+async function handleClassifiedFile(file, merge = true){
+  const text = await file.text();
+  const rows = parseCsv(text);
+  const objs = rowsToObjects(rows);
+
+  // Prepare persisted map if merge
+  let persistedMap = new Map();
+  if (merge) {
+    try {
+      const raw = localStorage.getItem('priorizacao_state');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items)) {
+          for (const it of parsed.items) {
+            const key = normalizeString(it.demanda || '');
+            if (key) persistedMap.set(key, it);
+          }
+        }
+      }
+    } catch(_){}
+  }
+
+  const items = objs.map((o, idx)=>{
+    const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'Demanda']);
+    const demandDesc = valueByPossibleKeys(o, [HEADERS.DEMANDA_DESC, 'Demanda descrição']);
+    const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'Squad']);
+    const grupo = o['Grupo'] ?? '';
+    const subSquad = o['SubSquad'] ?? '';
+    const urgencia = (()=>{ const s = String(o['Urgencia'] ?? o['Urgência'] ?? ''); const n = parseInt(s.replace(/\D+/g,''),10); return Number.isFinite(n)? Math.max(0, Math.min(5, n)) : 0; })();
+    const tipoEsforco = o['TipoEsforco'] ?? '';
+    const andamento = String(o['Andamento']||'').trim().toLowerCase().startsWith('s');
+    const progresso = (()=>{ const s = String(o['Progresso']||'').replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
+    const boraImpact = o['Bora_Impact'] ?? '';
+    const observation = o['Observacao_Complementar'] ?? '';
+    const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o,[HEADERS.ESFORCO]));
+    const impactClass = o['Impacto_Class'] ?? classifyImpact(valueByPossibleKeys(o,[HEADERS.IMPACTO]));
+    const abordagemClass = o['Abordagem_Class'] ?? classifyAbordagem(valueByPossibleKeys(o,[HEADERS.ABORDAGEM]));
+    const escopoClass = o['Escopo_Class'] ?? classifyEscopo(valueByPossibleKeys(o,[HEADERS.ESCOPO]));
+    const principalImpactClass = o['PrincipalImpacto_Class'] ?? classifyPrincipalImpact(valueByPossibleKeys(o,[HEADERS.PRINCIPAL_IMPACTO]));
+    const parentName = (o['Pai']||'').trim();
+    const relatedNames = String(o['Relacionamentos']||'').split(';').map(s=>s.trim()).filter(Boolean);
+
+    const base = {
+      id: idx + 1,
+      demanda,
+      demandaDescricao: demandDesc,
+      squad,
+      grupo,
+      subSquad,
+      urgencia,
+      tipoEsforco,
+      andamento,
+      progresso,
+      boraImpact,
+      effortClass,
+      impactClass,
+      abordagemClass,
+      escopoClass,
+      principalImpactClass,
+      observation,
+      parentId: null,
+      relatedIds: [],
+      _original: o,
+      _parentName: parentName,
+      _relatedNames: relatedNames,
+    };
+
+    const p = persistedMap.get(normalizeString(demanda||''));
+    if (p) {
+      base.id = p.id ?? base.id;
+      base.tipoEsforco = p.tipoEsforco ?? base.tipoEsforco;
+      base.andamento = p.andamento ?? base.andamento;
+      base.progresso = p.progresso ?? base.progresso;
+      base.urgencia = p.urgencia ?? base.urgencia;
+      base.parentId = p.parentId ?? base.parentId;
+      base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : base.relatedIds;
+      base.observation = p.observation ?? base.observation;
+      base.effortClass = p.effortClass ?? base.effortClass;
+      base.impactClass = p.impactClass ?? base.impactClass;
+      base.abordagemClass = p.abordagemClass ?? base.abordagemClass;
+      base.escopoClass = p.escopoClass ?? base.escopoClass;
+      base.principalImpactClass = p.principalImpactClass ?? base.principalImpactClass;
+      base.squad = p.squad ?? base.squad;
+      base.subSquad = p.subSquad ?? base.subSquad;
+      base.grupo = p.grupo ?? base.grupo;
+      base.boraImpact = p.boraImpact ?? base.boraImpact;
+    }
+    return base;
+  });
+
+  // Resolve Pai e Relacionamentos por nome
+  const nameToId = new Map();
+  for (const it of items) { const k = normalizeString(it.demanda||''); if (k && !nameToId.has(k)) nameToId.set(k, it.id); }
+  for (const it of items) {
+    if (it.parentId == null && it._parentName) {
+      const pid = nameToId.get(normalizeString(it._parentName)); if (pid) it.parentId = pid;
+    }
+    if ((!it.relatedIds || it.relatedIds.length===0) && Array.isArray(it._relatedNames)) {
+      it.relatedIds = it._relatedNames.map(n=> nameToId.get(normalizeString(n))).filter(Boolean);
+    }
+    delete it._parentName; delete it._relatedNames;
+  }
+
+  state.items = items;
+  populateSquadFilter();
+  populateSubSquadFilter();
+  persistState();
+  render();
+}
+
 function populateSquadFilter() {
   const panel = document.getElementById('squadDropdownPanel');
   const btn = document.getElementById('squadDropdownBtn');
@@ -1169,6 +1280,24 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       } catch (e) { /* ignore */ }
       handleFile(f, merge);
+    }
+  });
+
+  // File input (base classificada)
+  const classInput = document.getElementById('csvClassFile');
+  const classOpenBtn = document.getElementById('csvClassOpenBtn');
+  if (classOpenBtn && classInput) classOpenBtn.addEventListener('click', ()=> classInput.click());
+  classInput?.addEventListener('change', (ev)=>{
+    const f = ev.target.files?.[0];
+    if (f) {
+      let merge = true;
+      try {
+        const raw = localStorage.getItem('priorizacao_state');
+        if (raw) {
+          merge = window.confirm('Importar base classificada. OK = MERGE com estado salvo, Cancelar = ZERAR e usar somente o CSV.');
+        }
+      } catch(e){}
+      handleClassifiedFile(f, merge);
     }
   });
 
