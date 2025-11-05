@@ -416,9 +416,10 @@ function openVoteOverlay() {
     for (let n=0;n<=5;n++){
       const b = document.createElement('button'); b.type='button'; b.className = 'vote-urg-btn'; b.textContent = String(n);
       if (Number(item.urgencia ?? 0) === n) b.classList.add('active');
-      b.addEventListener('click', ()=>{
+      b.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
         item.urgencia = n;
-        try { persistState(); } catch(_){}
+        try { persistState(); } catch(_){ }
         // update active state + badge text
         menu.querySelectorAll('.vote-urg-btn').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
@@ -443,11 +444,42 @@ function openVoteOverlay() {
     badges.appendChild(tipo);
     const urg = document.createElement('span'); urg.className='badge badge-Urg'; urg.textContent = `Urgência: ${item.urgencia ?? 0}`; badges.appendChild(urg);
     c.appendChild(badges);
-    // footer with urgency buttons
+    // footer with urgency + bora buttons
     const footer = document.createElement('div'); footer.className='vote-card-footer';
     footer.appendChild(menu);
+    // Bora buttons
+    const bora = document.createElement('div'); bora.className = 'vote-bora-menu';
+    const boraVals = ['0.25','0.5','1','2','3'];
+    for (const v of boraVals){
+      const bb = document.createElement('button'); bb.type='button'; bb.className='vote-bora-btn'; bb.textContent = v;
+      if ((item.boraImpact || '') === v) bb.classList.add('active');
+      bb.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        item.boraImpact = v;
+        try { persistState(); } catch(_){ }
+        bora.querySelectorAll('.vote-bora-btn').forEach(x=>x.classList.remove('active'));
+        bb.classList.add('active');
+      });
+      bora.appendChild(bb);
+    }
+    footer.appendChild(bora);
     c.appendChild(footer);
     grid.appendChild(c);
+
+    // highlight selection
+    c.addEventListener('click', ()=>{
+      const isSel = c.classList.toggle('selected');
+      if (isSel) overlay.classList.add('has-selection');
+      else {
+        if (!grid.querySelector('.vote-card.selected')) overlay.classList.remove('has-selection');
+      }
+    });
+    // prevent button clicks from toggling selection
+    footer.addEventListener('click',(ev)=>{
+      if (ev.target.closest('.vote-urg-btn') || ev.target.closest('.vote-bora-btn')) {
+        ev.stopPropagation();
+      }
+    });
   }
   // apply columns per line
   applyVoteCols();
