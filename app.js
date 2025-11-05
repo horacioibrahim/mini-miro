@@ -945,26 +945,13 @@ async function handleClassifiedFile(file, merge = true){
       _relatedNames: relatedNames,
     };
 
-    const p = persistedMap.get(normalizeString(demanda||''));
-    if (p) {
-      base.id = p.id ?? base.id;
-      base.tipoEsforco = p.tipoEsforco ?? base.tipoEsforco;
-      base.andamento = p.andamento ?? base.andamento;
-      base.progresso = p.progresso ?? base.progresso;
-      base.urgencia = p.urgencia ?? base.urgencia;
-      base.parentId = p.parentId ?? base.parentId;
-      base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : base.relatedIds;
-      base.observation = p.observation ?? base.observation;
-      base.effortClass = p.effortClass ?? base.effortClass;
-      base.impactClass = p.impactClass ?? base.impactClass;
-      base.abordagemClass = p.abordagemClass ?? base.abordagemClass;
-      base.escopoClass = p.escopoClass ?? base.escopoClass;
-      base.principalImpactClass = p.principalImpactClass ?? base.principalImpactClass;
-      base.squad = p.squad ?? base.squad;
-      base.subSquad = p.subSquad ?? base.subSquad;
-      base.grupo = p.grupo ?? base.grupo;
-      base.boraImpact = p.boraImpact ?? base.boraImpact;
-    }
+  const p = persistedMap.get(normalizeString(demanda||''));
+  if (p) {
+    // On classified import, prefer CSV values (backup) and only carry over ID and links if missing
+    base.id = p.id ?? base.id;
+    if (base.parentId == null) base.parentId = p.parentId ?? null;
+    if (!Array.isArray(base.relatedIds) || base.relatedIds.length===0) base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : [];
+  }
     return base;
   });
 
@@ -1085,10 +1072,20 @@ function exportCsv() {
   for (const it of state.items) {
     const base = originalHeaders.map(h => {
       const hn = normalizeString(h);
+      // override classification and user-edited fields with current state values
+      if (hn === 'esforco_class') return esc(it.effortClass);
+      if (hn === 'impacto_class') return esc(it.impactClass);
+      if (hn === 'abordagem_class') return esc(it.abordagemClass);
+      if (hn === 'escopo_class') return esc(it.escopoClass);
+      if (hn === 'principalimpacto_class') return esc(it.principalImpactClass);
+      if (hn === 'bora_impact') return esc(it.boraImpact || '');
       if (hn === 'urgencia' || hn === 'urgência') return esc(it.urgencia ?? '');
       if (hn === 'grupo') return esc(it.grupo || '');
       if (hn === 'subsquad') return esc(it.subSquad || '');
       if (hn === 'tipoesforco' || hn === 'tipo esforço' || hn === 'tipoesforço') return esc(it.tipoEsforco || (it._original[h] ?? ''));
+      if (hn === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
+      if (hn === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
+      if (hn === 'observacao_complementar') return esc(it.observation || '');
       return esc(it._original[h] ?? '');
     });
     const extras = includedDefs.map(def => esc(def.get(it)));
