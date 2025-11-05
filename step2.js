@@ -159,6 +159,7 @@
     const pr = document.getElementById('principalFilter2').value;
     const squadPlanSel = document.getElementById('squadPlanSel').value;
     const squadBacklogSel = document.getElementById('squadBacklogSel').value;
+    const subBack = document.getElementById('subSquadBacklogSel')?.value || '__ALL__';
     const urg = document.getElementById('urgenciaFilter2').value;
     const et = document.getElementById('esforcoTecnicoFilter2').value;
     const filtered = sortItems(state.items).filter(it=>{
@@ -167,11 +168,12 @@
       const abOk = ab==='all' || (it.abordagemClass||'Outros')===ab;
       const escOk = esc==='all' || (it.escopoClass||'Outros')===esc;
       const prOk = pr==='all' || (it.principalImpactClass||'Outros')===pr;
-      // backlog-specific squad filter
+      // backlog-specific squad + subSquad filters
       const sok = (squadBacklogSel==='__ALL__') || !squadBacklogSel || it.squad===squadBacklogSel;
+      const subOk = (subBack==='__ALL__') || (subBack==='__NONE__' ? !(it.subSquad && it.subSquad.trim()) : it.subSquad===subBack);
       const uok = urg==='all' || String((it.urgencia ?? 0)) === urg;
       const etOk = et==='all' || (et==='Sem' ? (it.effortClass==null) : (it.effortClass===et));
-      return iok && abOk && escOk && prOk && sok && uok && etOk;
+      return iok && abOk && escOk && prOk && sok && subOk && uok && etOk;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
 
@@ -238,7 +240,7 @@
   }
 
   function exportCsv(){
-    const rows = [['Squad','Ciclo','Tarefa1','Tarefa2','Tarefa3']];
+    const rows = [['Squad','Ciclo','Tarefa1','Tarefa2','Tarefa3','SubSquad1','SubSquad2','SubSquad3']];
     // export all squads
     const rowsBySquad = [];
     for (const [squad, data] of Object.entries(state.grids)){
@@ -252,7 +254,8 @@
         const ids = [slots.t1?.[0], slots.t2?.[0], slots.t3?.[0]];
         const items = ids.map(id=> state.items.find(x=>x.id===id));
         const names = items.map(it=> it?.demanda || '');
-        rows.push([squad, week, ...names]);
+        const subs = items.map(it=> it?.subSquad || '');
+        rows.push([squad, week, ...names, ...subs]);
       }
     }
     const esc = (v)=>{
@@ -287,6 +290,7 @@
         urgencia: document.getElementById('urgenciaFilter2')?.value || 'all',
         esforcoTecnico: document.getElementById('esforcoTecnicoFilter2')?.value || 'all',
         squadBacklog: document.getElementById('squadBacklogSel')?.value || '__ALL__',
+        subSquadBacklog: document.getElementById('subSquadBacklogSel')?.value || '__ALL__',
       };
       localStorage.setItem('priorizacao_filters_step2', JSON.stringify(vals));
     } catch(e){ /* noop */ }
@@ -304,6 +308,7 @@
       set('urgenciaFilter2', vals.urgencia);
       set('esforcoTecnicoFilter2', vals.esforcoTecnico);
       set('squadBacklogSel', vals.squadBacklog);
+      set('subSquadBacklogSel', vals.subSquadBacklog);
     } catch(e){ /* noop */ }
   }
 
@@ -316,13 +321,20 @@
     // populate squads select
     const squadSel = document.getElementById('squadPlanSel');
     const squadBackSel = document.getElementById('squadBacklogSel');
+    const subBackSel = document.getElementById('subSquadBacklogSel');
     while (squadSel.firstChild) squadSel.removeChild(squadSel.firstChild);
     while (squadBackSel.firstChild) squadBackSel.removeChild(squadBackSel.firstChild);
+    while (subBackSel.firstChild) subBackSel.removeChild(subBackSel.firstChild);
     // Add 'Todas' for reset targeting
     const allOpt = document.createElement('option'); allOpt.value='__ALL__'; allOpt.textContent='Todas (Squads)'; squadSel.appendChild(allOpt);
     const allOpt2 = document.createElement('option'); allOpt2.value='__ALL__'; allOpt2.textContent='Todas (Backlog)'; squadBackSel.appendChild(allOpt2);
     state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadSel.appendChild(o); });
     state.squads.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; squadBackSel.appendChild(o); });
+    // populate subSquads from items
+    const subs = Array.from(new Set(state.items.map(it=> (it.subSquad||'').trim()).filter(Boolean))).sort();
+    const allSub = document.createElement('option'); allSub.value='__ALL__'; allSub.textContent='Todas (SubSquad)'; subBackSel.appendChild(allSub);
+    const noneSub = document.createElement('option'); noneSub.value='__NONE__'; noneSub.textContent='Sem subSquad'; subBackSel.appendChild(noneSub);
+    subs.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; subBackSel.appendChild(o); });
     if (state.currentSquad && state.squads.includes(state.currentSquad)) squadSel.value = state.currentSquad;
     squadSel.addEventListener('change', ()=>{
       const val = squadSel.value;
@@ -334,7 +346,7 @@
     });
 
     const bind = (id)=>{ const el=document.getElementById(id); if (el) el.addEventListener('change', ()=>{ persistFilters2(); render(); }); };
-    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2','squadBacklogSel'].forEach(bind);
+    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2','squadBacklogSel','subSquadBacklogSel'].forEach(bind);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
     document.getElementById('resetFilters2Btn').addEventListener('click', ()=>{

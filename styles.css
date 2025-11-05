@@ -69,7 +69,7 @@ button:hover { border-color: #cbd5e1; }
 .vote-card-desc { font-size: 13px; color: var(--muted); max-height: 4.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin-bottom: 8px; }
 .vote-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .vote-urg-menu { display: inline-flex; gap: 4px; background: transparent; border: none; border-radius: 0; padding: 0; }
-.vote-urg-btn { appearance: none; border: 1px solid var(--border); background: #fff; color: #111; border-radius: 999px; padding: 2px 6px; font-size: 12px; line-height: 1; cursor: pointer; }
+.vote-urg-btn { appearance: none; border: 1px solid var(--border); background: #fff; color: #111; border-radius: 999px; width: 26px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; cursor: pointer; }
 .vote-urg-btn.active { background: #111; color: #fff; border-color: #111; }
 .vote-card-footer { position: absolute; left: 12px; right: 12px; bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 .vote-cols-ctrl { display: inline-flex; gap: 8px; align-items: center; }

@@ -135,6 +135,14 @@
         </div>
 
         <div class="control-group">
+          <label for="subSquadFilter">SubSquad</label>
+          <select id="subSquadFilter">
+            <option value="all">Todas</option>
+            <option value="__NONE__">Sem subSquad</option>
+          </select>
+        </div>
+
+        <div class="control-group">
           <label for="relationsToggle">Ver relacionamentos</label>
           <input type="checkbox" id="relationsToggle" />
         </div>
@@ -242,6 +250,12 @@
               </div>
             </div>
           </div>
+        <div class="modal-grid-two">
+          <div class="modal-field">
+            <label class="modal-label" for="noteSubSquadInput">SubSquad</label>
+            <input id="noteSubSquadInput" type="text" placeholder="Nome da subSquad" />
+          </div>
+        </div>
           <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
         </div>
         <div class="modal-footer">
@@ -286,6 +300,7 @@
         <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Follow-up</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Ideia</option><option>Follow-up</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Urgência</div><div class="sheet-value"><select id="sheetUrgSel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div></div>
+        <div class="sheet-row"><div class="sheet-label">SubSquad</div><div class="sheet-value"><input id="sheetSubSquadInput" type="text" placeholder="Nome da subSquad" /></div></div>
         <div class="sheet-row"><div class="sheet-label">Principal Impacto</div><div class="sheet-value" id="sheetPrincipalImpacto"></div></div>
         <div class="sheet-row"><div class="sheet-label">Relacionamentos</div>
           <div class="sheet-value">

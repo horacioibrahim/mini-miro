@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', squad: [], groups: [], text: '', showRelations: false },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', subSquad: 'all', squad: [], groups: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -47,6 +47,7 @@ function loadFiltersStep1() {
     setVal('principalFilter', state.filters.principal);
     setVal('tipoEsforcoFilter', state.filters.tipo);
     setVal('urgenciaFilter', state.filters.urgencia);
+    setVal('subSquadFilter', state.filters.subSquad);
     setVal('esforcoTecnicoFilter', state.filters.esforcoTecnico);
     const tf = document.getElementById('textFilter'); if (tf) tf.value = state.filters.text || '';
     const rt = document.getElementById('relationsToggle'); if (rt) rt.checked = !!state.filters.showRelations;
@@ -72,6 +73,7 @@ const HEADERS = {
   PROGRESSO: 'Progresso',
   TIPO_ESFORCO: 'Tipo de esforço',
   URGENCIA: 'Urgencia',
+  SUBSQUAD: 'SubSquad',
   ABORDAGEM:
     'Qual o tipo de abordagem (tratar como problema ou oportunidade) [problema = interno e repetido; oportunidade = externo e competição]',
   ESCOPO:
@@ -267,6 +269,7 @@ function render() {
   const principalFilter = state.filters.principal;
   const tipoFilter = state.filters.tipo;
   const urgenciaFilter = state.filters.urgencia;
+  const subSquadFilter = state.filters.subSquad || 'all';
   const squadFilter = state.filters.squad;
   const textFilter = normalizeString(state.filters.text || '');
 
@@ -298,10 +301,12 @@ function render() {
     const groupsSel = state.filters.groups || [];
     const gname = (item.grupo || '').trim();
     const groupOk = groupsSel.length === 0 || groupsSel.includes(gname || '__NONE__');
+    const ss = (item.subSquad || '').trim();
+    const subOk = subSquadFilter === 'all' || (subSquadFilter==='__NONE__' ? !ss : ss === subSquadFilter);
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
-    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && groupOk && esforcoTecnicoOk && textOk;
+    return abordagemOk && escopoOk && principalOk && tipoOk && urgOk && squadOk && groupOk && subOk && esforcoTecnicoOk && textOk;
   };
 
   // Count visible after filters (independent of placement)
@@ -343,6 +348,22 @@ function render() {
   }
 
   drawRelations();
+}
+
+// Populate SubSquad filter options dynamically
+function populateSubSquadFilter(){
+  const sel = document.getElementById('subSquadFilter');
+  if (!sel) return;
+  const keep = sel.value;
+  const set = new Set();
+  for (const it of state.items){ const v=(it.subSquad||'').trim(); if (v) set.add(v); }
+  const values = Array.from(set).sort();
+  sel.innerHTML = '';
+  const mk=(val,txt)=>{ const o=document.createElement('option'); o.value=val; o.textContent=txt; return o; };
+  sel.appendChild(mk('all','Todas'));
+  sel.appendChild(mk('__NONE__','Sem subSquad'));
+  values.forEach(v=> sel.appendChild(mk(v, v)));
+  if (keep) sel.value = keep;
 }
 
 // Build list of items that pass current filters (Step 1)
@@ -732,6 +753,7 @@ async function handleFile(file, merge = true) {
     const escopoRaw = valueByPossibleKeys(o, [HEADERS.ESCOPO]);
     const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'demanda']);
     const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'squad', 'Squad']);
+    const subSquad = valueByPossibleKeys(o, [HEADERS.SUBSQUAD, 'SubSquad', 'subSquad']);
     const obsAdicionais = valueByPossibleKeys(o, [HEADERS.OBS_ADICIONAIS, 'Observações adicionais']);
     const demandaDescricao = valueByPossibleKeys(o, [HEADERS.DEMANDA_DESC, 'Demanda descrição']);
     const principalImpacto = valueByPossibleKeys(o, [HEADERS.PRINCIPAL_IMPACTO]);
@@ -769,6 +791,7 @@ async function handleFile(file, merge = true) {
       progresso,
       tipoEsforco,
       urgencia,
+      subSquad: subSquad || '',
       parentId: null,
       relatedIds: [],
       observation: '',
@@ -793,6 +816,7 @@ async function handleFile(file, merge = true) {
       base.escopoClass = p.escopoClass ?? base.escopoClass;
       base.principalImpactClass = p.principalImpactClass ?? base.principalImpactClass;
       base.squad = p.squad ?? base.squad;
+      base.subSquad = p.subSquad ?? base.subSquad;
       base.grupo = p.grupo ?? base.grupo;
     }
     return base;
@@ -800,6 +824,7 @@ async function handleFile(file, merge = true) {
 
   state.items = items;
   populateSquadFilter();
+  populateSubSquadFilter();
   persistState();
   render();
 }
@@ -865,7 +890,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'Urgencia', 'Grupo', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'SubSquad', 'Urgencia', 'Grupo', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -896,6 +921,7 @@ function exportCsv() {
       it.andamento ? 'Sim' : 'Não',
       `${it.progresso ?? 0}%`,
       it.tipoEsforco || '',
+      it.subSquad || '',
       it.grupo || '',
       it.urgencia ?? '',
       parentName,
@@ -922,6 +948,7 @@ function setupFilters() {
   const tipoSel = document.getElementById('tipoEsforcoFilter');
   const esforcoTecnicoSel = document.getElementById('esforcoTecnicoFilter');
   const urgSel = document.getElementById('urgenciaFilter');
+  const subSquadSel = document.getElementById('subSquadFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
   const groupBtn = document.getElementById('groupDropdownBtn');
@@ -944,6 +971,9 @@ function setupFilters() {
     persistFiltersStep1();
     render();
   });
+  if (subSquadSel) {
+    subSquadSel.addEventListener('change', ()=>{ state.filters.subSquad = subSquadSel.value; persistFiltersStep1(); render(); });
+  }
   if (tipoSel) {
     tipoSel.addEventListener('change', () => {
       state.filters.tipo = tipoSel.value;
@@ -1031,6 +1061,15 @@ function setupFilters() {
       drawRelations();
     });
   }
+
+  // Sheet SubSquad live save
+  const sheetSubInput = document.getElementById('sheetSubSquadInput');
+  if (sheetSubInput) {
+    sheetSubInput.addEventListener('input', ()=>{
+      const id = state.ui.selectedId; const item = state.items.find(it=>it.id===id);
+      if (!item) return; item.subSquad = String(sheetSubInput.value||''); persistState();
+    });
+  }
 }
 
 // Init
@@ -1063,6 +1102,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   loadFiltersStep1();
   populateSquadFilter();
+  populateSubSquadFilter();
   render();
 
   // Export button
@@ -1107,10 +1147,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const resetBtn = document.getElementById('resetFiltersBtn');
   if (resetBtn) {
     resetBtn.addEventListener('click', ()=>{
-      state.filters = { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', squad: [], groups: [], text: '', showRelations: false };
+      state.filters = { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', subSquad: 'all', squad: [], groups: [], text: '', showRelations: false };
       // reset UI controls
       const setVal = (id,val)=>{ const el=document.getElementById(id); if (el) el.value=val; };
-      setVal('abordagemFilter','all'); setVal('escopoFilter','all'); setVal('principalFilter','all'); setVal('tipoEsforcoFilter','all'); setVal('urgenciaFilter','all'); setVal('esforcoTecnicoFilter','all');
+      setVal('abordagemFilter','all'); setVal('escopoFilter','all'); setVal('principalFilter','all'); setVal('tipoEsforcoFilter','all'); setVal('urgenciaFilter','all'); setVal('esforcoTecnicoFilter','all'); setVal('subSquadFilter','all');
       const tf=document.getElementById('textFilter'); if (tf) tf.value='';
       const rt=document.getElementById('relationsToggle'); if (rt) rt.checked=false;
       populateSquadFilter();
@@ -1137,6 +1177,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const noteGroupPanel = document.getElementById('noteGroupPanel');
   const noteGroupList = document.getElementById('noteGroupList');
   const noteUrgSel = document.getElementById('noteUrgSel');
+  const noteSubSquadInput = document.getElementById('noteSubSquadInput');
   closeBtn.addEventListener('click', closeNoteModal);
   cancelBtn.addEventListener('click', closeNoteModal);
   saveBtn.addEventListener('click', saveNoteModal);
@@ -1345,6 +1386,7 @@ function openNoteModal(itemId) {
   if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
   if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
   if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0,60);
+  if (noteSubSquadInput) noteSubSquadInput.value = String(item?.subSquad || '');
   if (noteGroupPanel) noteGroupPanel.classList.add('hidden');
   if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
   modal.classList.remove('hidden');
@@ -1362,6 +1404,14 @@ function saveNoteModal() {
   if (id != null) {
     const item = state.items.find(it => it.id === id);
     if (item) item.observation = textarea.value;
+    const noteTipoSel = document.getElementById('noteTipoSel');
+    const noteUrgSel = document.getElementById('noteUrgSel');
+    const noteGroupInput = document.getElementById('noteGroupInput');
+    const noteSubSquadInput = document.getElementById('noteSubSquadInput');
+    if (item && noteTipoSel) item.tipoEsforco = noteTipoSel.value;
+    if (item && noteUrgSel) item.urgencia = Number(noteUrgSel.value);
+    if (item && noteGroupInput) item.grupo = String(noteGroupInput.value||'').slice(0,60);
+    if (item && noteSubSquadInput) item.subSquad = String(noteSubSquadInput.value||'');
   }
   // persist all edits including tipoEsforco possibly changed via dropdown
   persistState();
@@ -1409,6 +1459,8 @@ function openDetailSheet(itemId) {
   if (sheetProgressoInput) sheetProgressoInput.value = String(item.progresso ?? 0);
   if (sheetTipoSel) sheetTipoSel.value = item.tipoEsforco || 'Tarefa';
   if (sheetUrgSel) sheetUrgSel.value = String(item.urgencia ?? 0);
+  const sheetSubInput = document.getElementById('sheetSubSquadInput');
+  if (sheetSubInput) sheetSubInput.value = item.subSquad || '';
   const relList = document.getElementById('relList');
   const relSearch = document.getElementById('relSearch');
   if (relList) buildRelationsList(item, relList, relSearch?.value || '');
