@@ -220,6 +220,9 @@
     else if (tipoLabel === 'Follow-up') tipoBadge.classList.add('badge--follow');
     tipoBadge.textContent = `tipo esf.: ${tipoLabel}`;
     badges.appendChild(tipoBadge);
+    if ((item.subSquad||'').trim()) {
+      const ss = el('span','badge'); ss.textContent = `SubSquad: ${(item.subSquad||'').trim()}`; badges.appendChild(ss);
+    }
     const urgBadge = el('span','badge');
     urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
     badges.appendChild(urgBadge);

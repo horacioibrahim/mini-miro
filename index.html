@@ -135,11 +135,13 @@
         </div>
 
         <div class="control-group">
-          <label for="subSquadFilter">SubSquad</label>
-          <select id="subSquadFilter">
-            <option value="all">Todas</option>
-            <option value="__NONE__">Sem subSquad</option>
-          </select>
+          <label>SubSquads</label>
+          <div class="dropdown" id="subSquadDropdown">
+            <button id="subSquadDropdownBtn" type="button" class="dropdown-btn">SubSquad: Todos</button>
+            <div id="subSquadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar subSquads">
+              <div id="subSquadDropdownList"></div>
+            </div>
+          </div>
         </div>
 
         <div class="control-group">

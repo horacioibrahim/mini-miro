@@ -1,7 +1,7 @@
 // Data state
 const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
-  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', subSquad: 'all', squad: [], groups: [], text: '', showRelations: false },
+  filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', subSquad: [], squad: [], groups: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
 };
 
@@ -47,7 +47,7 @@ function loadFiltersStep1() {
     setVal('principalFilter', state.filters.principal);
     setVal('tipoEsforcoFilter', state.filters.tipo);
     setVal('urgenciaFilter', state.filters.urgencia);
-    setVal('subSquadFilter', state.filters.subSquad);
+    // subSquad is multi-select via dropdown; UI label updated dynamically
     setVal('esforcoTecnicoFilter', state.filters.esforcoTecnico);
     const tf = document.getElementById('textFilter'); if (tf) tf.value = state.filters.text || '';
     const rt = document.getElementById('relationsToggle'); if (rt) rt.checked = !!state.filters.showRelations;
@@ -269,7 +269,7 @@ function render() {
   const principalFilter = state.filters.principal;
   const tipoFilter = state.filters.tipo;
   const urgenciaFilter = state.filters.urgencia;
-  const subSquadFilter = state.filters.subSquad || 'all';
+  const subSquadSel = state.filters.subSquad || [];
   const squadFilter = state.filters.squad;
   const textFilter = normalizeString(state.filters.text || '');
 
@@ -302,7 +302,7 @@ function render() {
     const gname = (item.grupo || '').trim();
     const groupOk = groupsSel.length === 0 || groupsSel.includes(gname || '__NONE__');
     const ss = (item.subSquad || '').trim();
-    const subOk = subSquadFilter === 'all' || (subSquadFilter==='__NONE__' ? !ss : ss === subSquadFilter);
+    const subOk = (subSquadSel.length===0) || subSquadSel.includes(ss || '__NONE__');
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
@@ -645,6 +645,9 @@ function renderCard(item) {
   if ((item.grupo || '').trim()) {
     const gBadge = el('span','badge'); gBadge.textContent = `Grupo: ${(item.grupo||'').trim()}`; badgesRow.appendChild(gBadge);
   }
+  if ((item.subSquad || '').trim()) {
+    const sBadge = el('span','badge'); sBadge.textContent = `SubSquad: ${(item.subSquad||'').trim()}`; badgesRow.appendChild(sBadge);
+  }
   const urgBadge = el('span', 'badge');
   urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
   badgesRow.appendChild(urgBadge);
@@ -948,7 +951,6 @@ function setupFilters() {
   const tipoSel = document.getElementById('tipoEsforcoFilter');
   const esforcoTecnicoSel = document.getElementById('esforcoTecnicoFilter');
   const urgSel = document.getElementById('urgenciaFilter');
-  const subSquadSel = document.getElementById('subSquadFilter');
   const squadBtn = document.getElementById('squadDropdownBtn');
   const squadPanel = document.getElementById('squadDropdownPanel');
   const groupBtn = document.getElementById('groupDropdownBtn');
@@ -971,8 +973,35 @@ function setupFilters() {
     persistFiltersStep1();
     render();
   });
-  if (subSquadSel) {
-    subSquadSel.addEventListener('change', ()=>{ state.filters.subSquad = subSquadSel.value; persistFiltersStep1(); render(); });
+  // SubSquad dropdown (multi)
+  const subBtn = document.getElementById('subSquadDropdownBtn');
+  const subPanel = document.getElementById('subSquadDropdownPanel');
+  const subList = document.getElementById('subSquadDropdownList');
+  function updateSubBtn(){
+    const sel = state.filters.subSquad || [];
+    if (!subBtn) return;
+    if (sel.length === 0) subBtn.textContent = 'SubSquad: Todos';
+    else if (sel.length <= 2) subBtn.textContent = `SubSquad: ${sel.map(v=> v==='__NONE__' ? 'Sem subSquad' : v).join(', ')}`;
+    else subBtn.textContent = `SubSquad: ${sel.length} selecionadas`;
+  }
+  function rebuildSubList(){
+    if (!subList) return;
+    subList.innerHTML='';
+    const counts = new Map();
+    for (const it of state.items){ const k=(it.subSquad||'').trim() || '__NONE__'; counts.set(k,(counts.get(k)||0)+1); }
+    const names = Array.from(counts.keys()).filter(k=>k!=='__NONE__').sort(); if (counts.has('__NONE__')) names.push('__NONE__');
+    for (const name of names){
+      const label = document.createElement('label'); label.className='dropdown-option';
+      const cb = document.createElement('input'); cb.type='checkbox'; cb.value=name; cb.checked=(state.filters.subSquad||[]).includes(name);
+      const span = document.createElement('span'); span.textContent = `${name==='__NONE__'?'Sem subSquad':name} (${counts.get(name)||0})`;
+      label.appendChild(cb); label.appendChild(span); subList.appendChild(label);
+    }
+  }
+  if (subBtn && subPanel){
+    subBtn.addEventListener('click',(e)=>{ e.stopPropagation(); rebuildSubList(); subPanel.classList.toggle('hidden'); });
+    document.addEventListener('click',(e)=>{ if (!subPanel.classList.contains('hidden')){ const dd=document.getElementById('subSquadDropdown'); if (dd && !dd.contains(e.target)) subPanel.classList.add('hidden'); }});
+    subList?.addEventListener('change',()=>{ const cbs = Array.from(subList.querySelectorAll('input[type="checkbox"]')); state.filters.subSquad = cbs.filter(cb=>cb.checked).map(cb=>cb.value); updateSubBtn(); persistFiltersStep1(); render(); });
+    updateSubBtn();
   }
   if (tipoSel) {
     tipoSel.addEventListener('change', () => {
