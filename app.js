@@ -1083,7 +1083,14 @@ function exportCsv() {
 
   lines.push(headers.map(esc).join(','));
   for (const it of state.items) {
-    const base = originalHeaders.map(h => esc(it._original[h] ?? ''));
+    const base = originalHeaders.map(h => {
+      const hn = normalizeString(h);
+      if (hn === 'urgencia' || hn === 'urgência') return esc(it.urgencia ?? '');
+      if (hn === 'grupo') return esc(it.grupo || '');
+      if (hn === 'subsquad') return esc(it.subSquad || '');
+      if (hn === 'tipoesforco' || hn === 'tipo esforço' || hn === 'tipoesforço') return esc(it.tipoEsforco || (it._original[h] ?? ''));
+      return esc(it._original[h] ?? '');
+    });
     const extras = includedDefs.map(def => esc(def.get(it)));
     lines.push([...base, ...extras].join(','));
   }
