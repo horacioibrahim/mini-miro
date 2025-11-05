@@ -896,9 +896,17 @@ async function handleClassifiedFile(file, merge = true){
     const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'Demanda']);
     const demandDesc = valueByPossibleKeys(o, [HEADERS.DEMANDA_DESC, 'Demanda descrição']);
     const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'Squad']);
-    const grupo = o['Grupo'] ?? '';
+    let grupo = o['Grupo'] ?? '';
     const subSquad = o['SubSquad'] ?? '';
-    const urgencia = (()=>{ const s = String(o['Urgencia'] ?? o['Urgência'] ?? ''); const n = parseInt(s.replace(/\D+/g,''),10); return Number.isFinite(n)? Math.max(0, Math.min(5, n)) : 0; })();
+    const urgRaw = String(o['Urgencia'] ?? o['Urgência'] ?? '');
+    let urgencia = (()=>{ const n = parseInt(urgRaw.replace(/\D+/g,''),10); return Number.isFinite(n)? Math.max(0, Math.min(5, n)) : 0; })();
+    // Heurística de correção para CSVs antigos onde Urgencia/Grupo estavam trocados
+    const grupoLooksNumber = /^\s*[0-5]\s*$/.test(String(o['Grupo'] ?? ''));
+    const urgLooksName = !/^\s*[0-5]\s*$/.test(urgRaw) && String(urgRaw).trim().length>0;
+    if ((urgencia===0 && grupoLooksNumber) || (urgLooksName && grupoLooksNumber)) {
+      urgencia = parseInt(String(o['Grupo']).trim(),10);
+      grupo = urgRaw; // o que estava em Urgencia vira grupo
+    }
     const tipoEsforco = o['TipoEsforco'] ?? '';
     const andamento = String(o['Andamento']||'').trim().toLowerCase().startsWith('s');
     const progresso = (()=>{ const s = String(o['Progresso']||'').replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
@@ -1041,8 +1049,26 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Bora_Impact', 'Andamento', 'Progresso', 'TipoEsforco', 'SubSquad', 'Urgencia', 'Grupo', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
-  const headers = [...originalHeaders, ...extraHeaders];
+  const originalCI = new Set(originalHeaders.map(h => normalizeString(h)));
+  const extraDefsAll = [
+    { name: 'Esforco_Class', get: (it)=> it.effortClass },
+    { name: 'Impacto_Class', get: (it)=> it.impactClass },
+    { name: 'Abordagem_Class', get: (it)=> it.abordagemClass },
+    { name: 'Escopo_Class', get: (it)=> it.escopoClass },
+    { name: 'PrincipalImpacto_Class', get: (it)=> it.principalImpactClass },
+    { name: 'Bora_Impact', get: (it)=> it.boraImpact || '' },
+    { name: 'Andamento', get: (it)=> it.andamento ? 'Sim' : 'Não' },
+    { name: 'Progresso', get: (it)=> `${it.progresso ?? 0}%` },
+    { name: 'TipoEsforco', get: (it)=> it.tipoEsforco || '' },
+    { name: 'SubSquad', get: (it)=> it.subSquad || '' },
+    { name: 'Urgencia', get: (it)=> it.urgencia ?? '' },
+    { name: 'Grupo', get: (it)=> it.grupo || '' },
+    { name: 'Pai', get: (it)=> { const p = state.items.find(x=>x.id===it.parentId); return p?.demanda || ''; } },
+    { name: 'Relacionamentos', get: (it)=> (it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; ') },
+    { name: 'Observacao_Complementar', get: (it)=> it.observation },
+  ];
+  const includedDefs = extraDefsAll.filter(def => !originalCI.has(normalizeString(def.name)));
+  const headers = [...originalHeaders, ...includedDefs.map(d=>d.name)];
 
   const lines = [];
   const esc = (v) => {
@@ -1058,28 +1084,7 @@ function exportCsv() {
   lines.push(headers.map(esc).join(','));
   for (const it of state.items) {
     const base = originalHeaders.map(h => esc(it._original[h] ?? ''));
-    const relatedNames = (it.relatedIds || []).map(id => {
-      const other = state.items.find(x => x.id === id);
-      return other?.demanda || `#${id}`;
-    }).join('; ');
-    const parentName = (() => { const p = state.items.find(x => x.id === it.parentId); return p?.demanda || ''; })();
-    const extras = [
-      it.effortClass,
-      it.impactClass,
-      it.abordagemClass,
-      it.escopoClass,
-      it.principalImpactClass,
-      it.boraImpact || '',
-      it.andamento ? 'Sim' : 'Não',
-      `${it.progresso ?? 0}%`,
-      it.tipoEsforco || '',
-      it.subSquad || '',
-      it.grupo || '',
-      it.urgencia ?? '',
-      parentName,
-      relatedNames,
-      it.observation,
-    ].map(esc);
+    const extras = includedDefs.map(def => esc(def.get(it)));
     lines.push([...base, ...extras].join(','));
   }
 
