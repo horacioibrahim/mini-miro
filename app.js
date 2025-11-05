@@ -648,6 +648,9 @@ function renderCard(item) {
   if ((item.subSquad || '').trim()) {
     const sBadge = el('span','badge'); sBadge.textContent = `SubSquad: ${(item.subSquad||'').trim()}`; badgesRow.appendChild(sBadge);
   }
+  if ((item.boraImpact || '') !== '') {
+    const bBadge = el('span','badge'); bBadge.textContent = `Bora: ${item.boraImpact}`; badgesRow.appendChild(bBadge);
+  }
   const urgBadge = el('span', 'badge');
   urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
   badgesRow.appendChild(urgBadge);
@@ -795,6 +798,7 @@ async function handleFile(file, merge = true) {
       tipoEsforco,
       urgencia,
       subSquad: subSquad || '',
+      boraImpact: '',
       parentId: null,
       relatedIds: [],
       observation: '',
@@ -820,6 +824,7 @@ async function handleFile(file, merge = true) {
       base.principalImpactClass = p.principalImpactClass ?? base.principalImpactClass;
       base.squad = p.squad ?? base.squad;
       base.subSquad = p.subSquad ?? base.subSquad;
+      base.boraImpact = p.boraImpact ?? base.boraImpact;
       base.grupo = p.grupo ?? base.grupo;
     }
     return base;
@@ -893,7 +898,7 @@ function updateSquadButtonLabel() {
 function exportCsv() {
   if (!state.items.length) return;
   const originalHeaders = Object.keys(state.items[0]._original);
-  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Andamento', 'Progresso', 'TipoEsforco', 'SubSquad', 'Urgencia', 'Grupo', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
+  const extraHeaders = ['Esforco_Class', 'Impacto_Class', 'Abordagem_Class', 'Escopo_Class', 'PrincipalImpacto_Class', 'Bora_Impact', 'Andamento', 'Progresso', 'TipoEsforco', 'SubSquad', 'Urgencia', 'Grupo', 'Pai', 'Relacionamentos', 'Observacao_Complementar'];
   const headers = [...originalHeaders, ...extraHeaders];
 
   const lines = [];
@@ -921,6 +926,7 @@ function exportCsv() {
       it.abordagemClass,
       it.escopoClass,
       it.principalImpactClass,
+      it.boraImpact || '',
       it.andamento ? 'Sim' : 'Não',
       `${it.progresso ?? 0}%`,
       it.tipoEsforco || '',
@@ -1097,6 +1103,15 @@ function setupFilters() {
     sheetSubInput.addEventListener('input', ()=>{
       const id = state.ui.selectedId; const item = state.items.find(it=>it.id===id);
       if (!item) return; item.subSquad = String(sheetSubInput.value||''); persistState();
+    });
+  }
+  const sheetBoraSel2 = document.getElementById('sheetBoraSel');
+  if (sheetBoraSel2) {
+    sheetBoraSel2.addEventListener('change', ()=>{
+      const id = state.ui.selectedId; const item = state.items.find(it=>it.id===id);
+      if (!item) return; item.boraImpact = sheetBoraSel2.value || '';
+      persistState();
+      render();
     });
   }
 }
@@ -1490,6 +1505,8 @@ function openDetailSheet(itemId) {
   if (sheetUrgSel) sheetUrgSel.value = String(item.urgencia ?? 0);
   const sheetSubInput = document.getElementById('sheetSubSquadInput');
   if (sheetSubInput) sheetSubInput.value = item.subSquad || '';
+  const sheetBoraSel = document.getElementById('sheetBoraSel');
+  if (sheetBoraSel) sheetBoraSel.value = String(item.boraImpact || '');
   const relList = document.getElementById('relList');
   const relSearch = document.getElementById('relSearch');
   if (relList) buildRelationsList(item, relList, relSearch?.value || '');

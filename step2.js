@@ -220,6 +220,9 @@
     else if (tipoLabel === 'Follow-up') tipoBadge.classList.add('badge--follow');
     tipoBadge.textContent = `tipo esf.: ${tipoLabel}`;
     badges.appendChild(tipoBadge);
+    if ((item.boraImpact||'') !== '') {
+      const bb = el('span','badge'); bb.textContent = `Bora: ${item.boraImpact}`; badges.appendChild(bb);
+    }
     if ((item.subSquad||'').trim()) {
       const ss = el('span','badge'); ss.textContent = `SubSquad: ${(item.subSquad||'').trim()}`; badges.appendChild(ss);
     }
@@ -243,7 +246,7 @@
   }
 
   function exportCsv(){
-    const rows = [['Squad','Ciclo','Tarefa1','Tarefa2','Tarefa3','SubSquad1','SubSquad2','SubSquad3']];
+    const rows = [['Squad','Ciclo','Tarefa1','Tarefa2','Tarefa3','SubSquad1','SubSquad2','SubSquad3','BoraImpact1','BoraImpact2','BoraImpact3']];
     // export all squads
     const rowsBySquad = [];
     for (const [squad, data] of Object.entries(state.grids)){
@@ -258,7 +261,8 @@
         const items = ids.map(id=> state.items.find(x=>x.id===id));
         const names = items.map(it=> it?.demanda || '');
         const subs = items.map(it=> it?.subSquad || '');
-        rows.push([squad, week, ...names, ...subs]);
+        const boras = items.map(it=> it?.boraImpact || '');
+        rows.push([squad, week, ...names, ...subs, ...boras]);
       }
     }
     const esc = (v)=>{
