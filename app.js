@@ -909,7 +909,8 @@ async function handleClassifiedFile(file, merge = true){
     }
     const tipoEsforco = o['TipoEsforco'] ?? '';
     const andamento = String(o['Andamento']||'').trim().toLowerCase().startsWith('s');
-    const progresso = (()=>{ const s = String(o['Progresso']||'').replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
+    const progRaw = o['Progresso'] ?? o['Progresso (%)'] ?? o['progresso'] ?? o['progresso (%)'] ?? '';
+    const progresso = (()=>{ const s = String(progRaw).replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
     const boraImpact = o['Bora_Impact'] ?? '';
     const observation = o['Observacao_Complementar'] ?? '';
     const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o,[HEADERS.ESFORCO]));
@@ -1083,6 +1084,7 @@ function exportCsv() {
       if (hn === 'grupo') return esc(it.grupo || '');
       if (hn === 'subsquad') return esc(it.subSquad || '');
       if (hn === 'tipoesforco' || hn === 'tipo esforço' || hn === 'tipoesforço') return esc(it.tipoEsforco || (it._original[h] ?? ''));
+      if (hn.startsWith('progresso')) return esc(`${it.progresso ?? 0}%`);
       if (hn === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
       if (hn === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
       if (hn === 'observacao_complementar') return esc(it.observation || '');
