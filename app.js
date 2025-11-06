@@ -1062,7 +1062,7 @@ function exportCsv() {
     { name: 'Pai', get: (it)=> { const p = state.items.find(x=>x.id===it.parentId); return p?.demanda || ''; } },
     { name: 'Relacionamentos', get: (it)=> (it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; ') },
     { name: 'Observacao_Complementar', get: (it)=> it.observation },
-    { name: 'Modalidade', get: (it)=> it.modalidade || '' },
+    { name: 'Modalidade', get: (it)=> (it.modalidade || (Array.isArray(it.modalidades) && it.modalidades[0]) || '') },
     { name: 'Modalidades', get: (it)=> (it.modalidades||[]).join('; ') },
     { name: 'Persona', get: (it)=> (it.personas||[]).join('; ') },
     { name: 'Hipoteses', get: (it)=> it.hipoteses || '' },
@@ -1600,7 +1600,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Modalidades drawer logic
-function buildModalidadesOptions(selected){
+  function buildModalidadesOptions(selected){
     if (!modalidadesList) return;
     modalidadesList.innerHTML='';
     const opts = [
@@ -1626,19 +1626,27 @@ function buildModalidadesOptions(selected){
       'RCE–Regime de Contratação Estatal',
       'Regime Diferenciado de Contratação'
     ];
+    const selSet = new Set(Array.isArray(selected)? selected : (selected ? [selected] : []));
     for (const name of opts){
       const label=document.createElement('label');
       label.textContent = name;
-      if (name === (selected||'')) label.classList.add('selected');
+      if (selSet.has(name)) label.classList.add('selected');
       modalidadesList.appendChild(label);
       label.addEventListener('click',()=>{
         const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
-        it.modalidade = name;
-        // also mirror into modalidades array for backward compatibility
-        it.modalidades = [name];
-        // update styles
-        modalidadesList.querySelectorAll('label').forEach(l=>l.classList.remove('selected'));
-        label.classList.add('selected');
+        if (!Array.isArray(it.modalidades)) it.modalidades = [];
+        const idx = it.modalidades.indexOf(name);
+        if (idx >= 0) {
+          // deselect
+          it.modalidades.splice(idx,1);
+          label.classList.remove('selected');
+        } else {
+          // select
+          it.modalidades.push(name);
+          label.classList.add('selected');
+        }
+        // keep a primary 'modalidade' for backward compatibility (first selected or empty)
+        it.modalidade = it.modalidades[0] || '';
         persistState();
       });
     }
