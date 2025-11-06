@@ -171,6 +171,10 @@ button:hover { border-color: #cbd5e1; }
 .sheet-value { white-space: pre-wrap; }
 .sheet-value textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 8px; font: inherit; background: #fff; }
 .sheet-row .hint { margin-top: 4px; }
+
+/* Backdrop behind sheet */
+.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(1px); z-index: 170; }
+.backdrop.hidden { display: none; }
 .rel-list { border: 1px solid var(--border); border-radius: 8px; max-height: 220px; overflow: auto; padding: 6px; display: grid; gap: 6px; background: #fff; }
 .rel-option { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; }
 .rel-option:hover { background: #f8fafc; }

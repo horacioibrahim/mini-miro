@@ -1697,6 +1697,13 @@ function openDetailSheet(itemId) {
   const relSearch = document.getElementById('relSearch');
   if (relList) buildRelationsList(item, relList, relSearch?.value || '');
   document.getElementById('detailSheet').classList.remove('hidden');
+  const backdrop = document.getElementById('sheetBackdrop');
+  if (backdrop) {
+    backdrop.classList.remove('hidden');
+    // close on click outside
+    const onClick = ()=>{ closeDetailSheet(); };
+    backdrop.addEventListener('click', onClick, { once: true });
+  }
 }
 
 function buildRelationsList(item, container, query = '') {
@@ -1790,6 +1797,8 @@ function buildParentDropdownList(item, container, query = '') {
 
 function closeDetailSheet() {
   document.getElementById('detailSheet').classList.add('hidden');
+  const backdrop = document.getElementById('sheetBackdrop');
+  if (backdrop) backdrop.classList.add('hidden');
   render();
 }
 
