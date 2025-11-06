@@ -1600,7 +1600,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Modalidades drawer logic
-  function buildModalidadesOptions(selectedArr){
+function buildModalidadesOptions(selected){
     if (!modalidadesList) return;
     modalidadesList.innerHTML='';
     const opts = [
@@ -1626,23 +1626,23 @@ window.addEventListener('DOMContentLoaded', () => {
       'RCE–Regime de Contratação Estatal',
       'Regime Diferenciado de Contratação'
     ];
-    const selSet = new Set(selectedArr||[]);
     for (const name of opts){
-      const id = 'mod_'+name.replace(/\W+/g,'_');
       const label=document.createElement('label');
-      const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=selSet.has(name);
-      const span=document.createElement('span'); span.textContent=name;
-      label.appendChild(cb); label.appendChild(span);
+      label.textContent = name;
+      if (name === (selected||'')) label.classList.add('selected');
       modalidadesList.appendChild(label);
-      cb.addEventListener('change',()=>{
+      label.addEventListener('click',()=>{
         const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
-        if(!Array.isArray(it.modalidades)) it.modalidades=[];
-        if (cb.checked){ if(!it.modalidades.includes(name)) it.modalidades.push(name); }
-        else { const i=it.modalidades.indexOf(name); if(i>-1) it.modalidades.splice(i,1); }
+        it.modalidade = name;
+        // also mirror into modalidades array for backward compatibility
+        it.modalidades = [name];
+        // update styles
+        modalidadesList.querySelectorAll('label').forEach(l=>l.classList.remove('selected'));
+        label.classList.add('selected');
         persistState();
       });
     }
-  }
+}
 
   function buildPersonaOptions(selectedArr){
     if (!personaList) return;
