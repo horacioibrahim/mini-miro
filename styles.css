@@ -197,7 +197,7 @@ button:hover { border-color: #cbd5e1; }
 .drawer-notes textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; }
 
 /* Tokens & chip toggles for Diagnóstico */
-.token-input { display:flex; gap:8px; align-items:center; }
+.token-input { display:flex; gap:8px; align-items:center; position: relative; }
 .token-input input { flex:1; height:36px; padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; }
 .token-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .token { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:#e5edff; border-radius:999px; }
@@ -205,6 +205,17 @@ button:hover { border-color: #cbd5e1; }
 .types-area { display:flex; flex-wrap:wrap; gap:10px; }
 .chip-toggle { border:1px solid var(--border); background:#fff; color:#111; border-radius:999px; padding:6px 10px; cursor:pointer; }
 .chip-toggle.active { background:#1d4ed8; color:#fff; border-color:transparent; }
+
+/* Suggestion dropdowns */
+.suggest-panel { position:absolute; left:0; right:40px; top: calc(100% + 6px); background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 24px rgba(0,0,0,0.08); z-index: 250; max-height: 220px; overflow:auto; padding:6px; }
+.suggest-panel.hidden { display:none; }
+.suggest-option { padding:6px 8px; border-radius:6px; cursor:pointer; }
+.suggest-option:hover { background:#f8fafc; }
+
+/* Two-column form for complexidade/horas */
+.form-two { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.field-label { display:block; font-size:12px; color: var(--muted); margin-bottom:4px; }
+.field select, .field input { width:100%; height:36px; padding:6px 10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
 
 /* Responsive */
 @media (max-width: 1024px) {

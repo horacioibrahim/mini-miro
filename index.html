@@ -226,12 +226,12 @@
           </div>
           <div class="drawer-section">
             <div class="drawer-subtitle">Tecnologias</div>
-            <div class="token-input"><input id="diagTechInput" type="text" placeholder="Ex.: React, Node.js"/><button id="diagAddTechBtn" class="btn-icon" title="Adicionar">＋</button></div>
+            <div class="token-input"><input id="diagTechInput" type="text" placeholder="Ex.: React, Node.js"/><button id="diagAddTechBtn" class="btn-icon" title="Adicionar">＋</button><div id="diagTechSuggest" class="suggest-panel hidden"></div></div>
             <div id="diagTechList" class="token-list"></div>
           </div>
           <div class="drawer-section">
             <div class="drawer-subtitle">Serviços</div>
-            <div class="token-input"><input id="diagServInput" type="text" placeholder="Ex.: service-api-01, keycloak..."/><button id="diagAddServBtn" class="btn-icon" title="Adicionar">＋</button></div>
+            <div class="token-input"><input id="diagServInput" type="text" placeholder="Ex.: service-api-01, keycloak..."/><button id="diagAddServBtn" class="btn-icon" title="Adicionar">＋</button><div id="diagServSuggest" class="suggest-panel hidden"></div></div>
             <div id="diagServList" class="token-list"></div>
           </div>
           <div class="drawer-section">
@@ -249,14 +249,14 @@
             </div>
           </div>
           <div class="drawer-section">
-            <div class="sheet-row" style="border:none;padding:0;gap:16px;">
-              <div style="display:grid; grid-template-columns: 160px 1fr; align-items:center; gap:8px; width:100%;">
-                <div class="sheet-label">Complexidade</div>
-                <div class="sheet-value"><select id="diagComplexSel"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select></div>
+            <div class="form-two">
+              <div class="field">
+                <label class="field-label">Complexidade</label>
+                <select id="diagComplexSel"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select>
               </div>
-              <div style="display:grid; grid-template-columns: 160px 1fr; align-items:center; gap:8px; width:100%;">
-                <div class="sheet-label">Horas Estimadas</div>
-                <div class="sheet-value"><input id="diagHoursInput" type="number" min="0" step="1" placeholder="0"/></div>
+              <div class="field">
+                <label class="field-label">Horas Estimadas</label>
+                <input id="diagHoursInput" type="number" min="0" step="1" placeholder="0"/>
               </div>
             </div>
           </div>

@@ -1554,6 +1554,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const diagServInput = document.getElementById('diagServInput');
   const diagAddServBtn = document.getElementById('diagAddServBtn');
   const diagServList = document.getElementById('diagServList');
+  const diagTechSuggest = document.getElementById('diagTechSuggest');
+  const diagServSuggest = document.getElementById('diagServSuggest');
   const diagTypesArea = document.getElementById('diagTypesArea');
   const diagComplexSel = document.getElementById('diagComplexSel');
   const diagHoursInput = document.getElementById('diagHoursInput');
@@ -1736,6 +1738,29 @@ window.addEventListener('DOMContentLoaded', () => {
     inputEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); addBtn.click(); }});
   }
 
+  function gatherSuggestions(kind){
+    const set = new Set();
+    for (const it of state.items){
+      if (kind==='tech'){ (it.tecnologias||[]).forEach(v=>{ if(v) set.add(v); }); }
+      else { (it.servicos||[]).forEach(v=>{ if(v) set.add(v); }); }
+    }
+    return Array.from(set).sort((a,b)=> a.localeCompare(b));
+  }
+  function showSuggestions(panel, inputEl, options, onPick){
+    if (!panel || !inputEl) return;
+    const q = (inputEl.value||'').toLowerCase();
+    const filtered = options.filter(o=> !q || o.toLowerCase().includes(q)).slice(0, 30);
+    panel.innerHTML = '';
+    for (const opt of filtered){
+      const div = document.createElement('div');
+      div.className = 'suggest-option';
+      div.textContent = opt;
+      panel.appendChild(div);
+      div.addEventListener('mousedown', (e)=>{ e.preventDefault(); onPick(opt); panel.classList.add('hidden'); });
+    }
+    panel.classList.toggle('hidden', filtered.length===0);
+  }
+
   function openModalidadesDrawer(){
     const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
     buildModalidadesOptions(it.modalidades);
@@ -1790,6 +1815,24 @@ window.addEventListener('DOMContentLoaded', () => {
   // bind tokens
   bindToken(diagTechInput, diagAddTechBtn, diagTechList, (it)=>{ if(!Array.isArray(it.tecnologias)) it.tecnologias=[]; return it.tecnologias; });
   bindToken(diagServInput, diagAddServBtn, diagServList, (it)=>{ if(!Array.isArray(it.servicos)) it.servicos=[]; return it.servicos; });
+
+  // autocomplete for tokens
+  if (diagTechInput && diagTechSuggest){
+    const pick = (val)=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; if(!Array.isArray(it.tecnologias)) it.tecnologias=[]; if(!it.tecnologias.includes(val)) it.tecnologias.push(val); renderTokenList(diagTechList, it.tecnologias); diagTechInput.value=''; persistState(); };
+    const refresh = ()=> showSuggestions(diagTechSuggest, diagTechInput, gatherSuggestions('tech'), pick);
+    diagTechInput.addEventListener('input', refresh);
+    diagTechInput.addEventListener('focus', refresh);
+  }
+  if (diagServInput && diagServSuggest){
+    const pick = (val)=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; if(!Array.isArray(it.servicos)) it.servicos=[]; if(!it.servicos.includes(val)) it.servicos.push(val); renderTokenList(diagServList, it.servicos); diagServInput.value=''; persistState(); };
+    const refresh = ()=> showSuggestions(diagServSuggest, diagServInput, gatherSuggestions('serv'), pick);
+    diagServInput.addEventListener('input', refresh);
+    diagServInput.addEventListener('focus', refresh);
+  }
+  document.addEventListener('click', (e)=>{
+    if (diagTechSuggest && !diagTechSuggest.contains(e.target) && e.target!==diagTechInput) diagTechSuggest.classList.add('hidden');
+    if (diagServSuggest && !diagServSuggest.contains(e.target) && e.target!==diagServInput) diagServSuggest.classList.add('hidden');
+  });
 
   // tipos alteração
   if (diagTypesArea){
