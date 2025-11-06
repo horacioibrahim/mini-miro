@@ -202,6 +202,17 @@
 
       <!-- Backdrop for Sheet -->
       <div id="sheetBackdrop" class="backdrop hidden" aria-hidden="true"></div>
+
+      <!-- Drawer: Modalidades -->
+      <aside id="modalidadesDrawer" class="drawer hidden" aria-label="Selecionar Modalidades">
+        <div class="drawer-header">
+          <button id="drawerBackBtn" class="btn-back" aria-label="Voltar">‹</button>
+          <strong>Modalidades</strong>
+        </div>
+        <div class="drawer-body">
+          <div id="modalidadesList" class="modalidade-list"></div>
+        </div>
+      </aside>
     </main>
 
     <footer class="app-footer">
@@ -325,7 +336,10 @@
     <aside id="detailSheet" class="sheet hidden" aria-label="Detalhes da demanda">
       <div class="sheet-header">
         <strong id="sheetTitle">Detalhes</strong>
-        <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="openModalidadesDrawerBtn" class="btn-icon" title="Modalidades">›</button>
+          <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+        </div>
       </div>
       <div class="sheet-body">
         <div class="sheet-row stack"><div class="sheet-label">Demanda descrição</div><div class="sheet-value" id="sheetDemandaDesc"></div></div>

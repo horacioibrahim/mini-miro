@@ -912,6 +912,8 @@ async function handleClassifiedFile(file, merge = true){
     const progRaw = o['Progresso'] ?? o['Progresso (%)'] ?? o['progresso'] ?? o['progresso (%)'] ?? '';
     const progresso = (()=>{ const s = String(progRaw).replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
     const boraImpact = o['Bora_Impact'] ?? '';
+    const modalidade = o['Modalidade'] || '';
+    const modalidades = String(o['Modalidades']||'').split(';').map(s=>s.trim()).filter(Boolean);
     const observation = o['Observacao_Complementar'] ?? '';
     const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o,[HEADERS.ESFORCO]));
     const impactClass = o['Impacto_Class'] ?? classifyImpact(valueByPossibleKeys(o,[HEADERS.IMPACTO]));
@@ -933,6 +935,8 @@ async function handleClassifiedFile(file, merge = true){
       andamento,
       progresso,
       boraImpact,
+      modalidade,
+      modalidades,
       effortClass,
       impactClass,
       abordagemClass,
@@ -1054,6 +1058,16 @@ function exportCsv() {
     { name: 'Pai', get: (it)=> { const p = state.items.find(x=>x.id===it.parentId); return p?.demanda || ''; } },
     { name: 'Relacionamentos', get: (it)=> (it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; ') },
     { name: 'Observacao_Complementar', get: (it)=> it.observation },
+    { name: 'Modalidade', get: (it)=> it.modalidade || '' },
+    { name: 'Modalidades', get: (it)=> (it.modalidades||[]).join('; ') },
+    { name: 'Persona', get: (it)=> (it.personas||[]).join('; ') },
+    { name: 'Hipoteses', get: (it)=> it.hipoteses || '' },
+    { name: 'Proposta', get: (it)=> it.proposta || '' },
+    { name: 'Tecnologias', get: (it)=> (it.tecnologias||[]).join('; ') },
+    { name: 'Servicos', get: (it)=> (it.servicos||[]).join('; ') },
+    { name: 'TiposAlteracao', get: (it)=> (it.tiposAlteracao||[]).join('; ') },
+    { name: 'Complexidade', get: (it)=> it.complexidade || '' },
+    { name: 'HorasEstimadas', get: (it)=> it.horasEstimadas ?? '' },
   ];
   const includedDefs = extraDefsAll.filter(def => !originalCI.has(normalizeString(def.name)));
   const headers = [...originalHeaders, ...includedDefs.map(d=>d.name)];
@@ -1499,6 +1513,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const sheet = document.getElementById('detailSheet');
   const sheetCloseBtn = document.getElementById('sheetCloseBtn');
   sheetCloseBtn.addEventListener('click', closeDetailSheet);
+  // Drawer elements
+  const drawer = document.getElementById('modalidadesDrawer');
+  const openDrawerBtn = document.getElementById('openModalidadesDrawerBtn');
+  const drawerBackBtn = document.getElementById('drawerBackBtn');
+  const modalidadesList = document.getElementById('modalidadesList');
   const sheetEscopoSel = document.getElementById('sheetEscopoSel');
   const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
   const sheetImpactoSel = document.getElementById('sheetImpactoSel');
@@ -1540,6 +1559,70 @@ window.addEventListener('DOMContentLoaded', () => {
       persistState();
     });
   }
+
+  // Modalidades drawer logic
+  function buildModalidadesOptions(selectedArr){
+    if (!modalidadesList) return;
+    modalidadesList.innerHTML='';
+    const opts = [
+      'Chamada Pública da Agricultura Familiar',
+      'Chamamento Público - 13.019',
+      'Chamamento Público - 9.637',
+      'Concorrência',
+      'Concurso',
+      'Contratação Direta',
+      'Cotação',
+      'Credenciamento',
+      'Diálogo Competitivo',
+      'Dispensa',
+      'Dispensa - Lei das Estatais 13.303',
+      'Inexigibilidade',
+      'IRP–Intenção para Registro de Preço',
+      'Leilão',
+      'Leilão Eletrônico',
+      'Pré-Qualificação',
+      'Pregão',
+      'Pregão Lei das Estatais 13.303',
+      'Pregão para Registro de Preço',
+      'RCE–Regime de Contratação Estatal',
+      'Regime Diferenciado de Contratação'
+    ];
+    const selSet = new Set(selectedArr||[]);
+    for (const name of opts){
+      const id = 'mod_'+name.replace(/\W+/g,'_');
+      const label=document.createElement('label');
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=selSet.has(name);
+      const span=document.createElement('span'); span.textContent=name;
+      label.appendChild(cb); label.appendChild(span);
+      modalidadesList.appendChild(label);
+      cb.addEventListener('change',()=>{
+        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+        if(!Array.isArray(it.modalidades)) it.modalidades=[];
+        if (cb.checked){ if(!it.modalidades.includes(name)) it.modalidades.push(name); }
+        else { const i=it.modalidades.indexOf(name); if(i>-1) it.modalidades.splice(i,1); }
+        persistState();
+      });
+    }
+  }
+
+  function openModalidadesDrawer(){
+    const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+    buildModalidadesOptions(it.modalidades);
+    if (drawer){
+      drawer.classList.remove('hidden');
+      // allow transition
+      requestAnimationFrame(()=> drawer.classList.add('open'));
+    }
+  }
+  function closeModalidadesDrawer(){
+    if (!drawer) return;
+    drawer.classList.remove('open');
+    const handler=()=>{ drawer.classList.add('hidden'); drawer.removeEventListener('transitionend', handler); };
+    drawer.addEventListener('transitionend', handler);
+  }
+
+  openDrawerBtn?.addEventListener('click', openModalidadesDrawer);
+  drawerBackBtn?.addEventListener('click', closeModalidadesDrawer);
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
     persistState();
@@ -1796,9 +1879,15 @@ function buildParentDropdownList(item, container, query = '') {
 }
 
 function closeDetailSheet() {
+  document.getElementById('detailSheet').addEventListener;
   document.getElementById('detailSheet').classList.add('hidden');
   const backdrop = document.getElementById('sheetBackdrop');
   if (backdrop) backdrop.classList.add('hidden');
+  const drawer = document.getElementById('modalidadesDrawer');
+  if (drawer) {
+    drawer.classList.remove('open');
+    drawer.classList.add('hidden');
+  }
   render();
 }
 
