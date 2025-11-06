@@ -915,6 +915,8 @@ async function handleClassifiedFile(file, merge = true){
     const modalidade = o['Modalidade'] || '';
     const modalidades = String(o['Modalidades']||'').split(';').map(s=>s.trim()).filter(Boolean);
     const observation = o['Observacao_Complementar'] ?? '';
+    const legalRequired = String(o['RequerJuridico']||'').trim().toLowerCase().startsWith('s');
+    const legalNotes = o['QuestoesJuridicas'] || '';
     const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o,[HEADERS.ESFORCO]));
     const impactClass = o['Impacto_Class'] ?? classifyImpact(valueByPossibleKeys(o,[HEADERS.IMPACTO]));
     const abordagemClass = o['Abordagem_Class'] ?? classifyAbordagem(valueByPossibleKeys(o,[HEADERS.ABORDAGEM]));
@@ -943,6 +945,8 @@ async function handleClassifiedFile(file, merge = true){
       escopoClass,
       principalImpactClass,
       observation,
+      legalRequired,
+      legalNotes,
       parentId: null,
       relatedIds: [],
       _original: o,
@@ -1068,6 +1072,8 @@ function exportCsv() {
     { name: 'TiposAlteracao', get: (it)=> (it.tiposAlteracao||[]).join('; ') },
     { name: 'Complexidade', get: (it)=> it.complexidade || '' },
     { name: 'HorasEstimadas', get: (it)=> it.horasEstimadas ?? '' },
+    { name: 'RequerJuridico', get: (it)=> it.legalRequired ? 'Sim' : 'Não' },
+    { name: 'QuestoesJuridicas', get: (it)=> it.legalNotes || '' },
   ];
   const includedDefs = extraDefsAll.filter(def => !originalCI.has(normalizeString(def.name)));
   const headers = [...originalHeaders, ...includedDefs.map(d=>d.name)];
@@ -1103,6 +1109,9 @@ function exportCsv() {
       if (hn === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
       if (hn === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
       if (hn === 'observacao_complementar') return esc(it.observation || '');
+      if (hn === 'modalidade') return esc(it.modalidade || '');
+      if (hn === 'hacasesespeciais' || hn === 'ha_casos_especiais') return esc(it.hasCaseSpecial ? 'Sim' : 'Não');
+      if (hn === 'casoespecial' || hn === 'caso_especial') return esc(it.caseSpecial || '');
       return esc(it._original[h] ?? '');
     });
     const extras = includedDefs.map(def => esc(def.get(it)));
@@ -1518,10 +1527,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const openDrawerBtn = document.getElementById('openModalidadesDrawerBtn');
   const drawerBackBtn = document.getElementById('drawerBackBtn');
   const modalidadesList = document.getElementById('modalidadesList');
+  const personaList = document.getElementById('personaList');
+  const legalReqChk = document.getElementById('legalReqChk');
+  const legalNotesRow = document.getElementById('legalNotesRow');
+  const legalNotesText = document.getElementById('legalNotesText');
   const sheetEscopoSel = document.getElementById('sheetEscopoSel');
   const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
   const sheetImpactoSel = document.getElementById('sheetImpactoSel');
   const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
+  const sheetModalidadeSel = document.getElementById('sheetModalidadeSel');
+  const sheetHasCaseChk = document.getElementById('sheetHasCaseChk');
+  const sheetCaseRow = document.getElementById('sheetCaseRow');
+  const sheetCaseText = document.getElementById('sheetCaseText');
   const sheetUrgSel = document.getElementById('sheetUrgSel');
   const sheetObservation = document.getElementById('sheetObservation');
   const relSearch = document.getElementById('relSearch');
@@ -1556,6 +1573,28 @@ window.addEventListener('DOMContentLoaded', () => {
     sheetUrgSel.addEventListener('change', () => {
       applyToSelected((it) => { it.urgencia = parseInt(sheetUrgSel.value, 10); });
       render();
+      persistState();
+    });
+  }
+
+  // Diagnóstico fields
+  if (sheetModalidadeSel) {
+    sheetModalidadeSel.addEventListener('change', (e)=>{
+      applyToSelected((it)=>{ it.modalidade = e.target.value; });
+      persistState();
+    });
+  }
+  if (sheetHasCaseChk) {
+    sheetHasCaseChk.addEventListener('change', ()=>{
+      const checked = !!sheetHasCaseChk.checked;
+      if (sheetCaseRow) sheetCaseRow.classList.toggle('hidden', !checked);
+      applyToSelected((it)=>{ it.hasCaseSpecial = checked; });
+      persistState();
+    });
+  }
+  if (sheetCaseText) {
+    sheetCaseText.addEventListener('input', ()=>{
+      applyToSelected((it)=>{ it.caseSpecial = sheetCaseText.value; });
       persistState();
     });
   }
@@ -1605,9 +1644,34 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function buildPersonaOptions(selectedArr){
+    if (!personaList) return;
+    personaList.innerHTML='';
+    const opts = ['Comprador','Fornecedor','Pregoeiro','Apoio','Administrador','Outro'];
+    const selSet = new Set(selectedArr||[]);
+    for (const name of opts){
+      const id = 'per_'+name.replace(/\W+/g,'_');
+      const label=document.createElement('label');
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=selSet.has(name);
+      const span=document.createElement('span'); span.textContent=name;
+      label.appendChild(cb); label.appendChild(span);
+      personaList.appendChild(label);
+      cb.addEventListener('change',()=>{
+        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; if(!Array.isArray(it.personas)) it.personas=[];
+        if (cb.checked){ if(!it.personas.includes(name)) it.personas.push(name); }
+        else { const i=it.personas.indexOf(name); if(i>-1) it.personas.splice(i,1); }
+        persistState();
+      });
+    }
+  }
+
   function openModalidadesDrawer(){
     const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
     buildModalidadesOptions(it.modalidades);
+    buildPersonaOptions(it.personas);
+    if (legalReqChk){ legalReqChk.checked = !!it.legalRequired; }
+    if (legalNotesRow){ legalNotesRow.classList.toggle('hidden', !it.legalRequired); }
+    if (legalNotesText){ legalNotesText.value = it.legalNotes || ''; }
     if (drawer){
       drawer.classList.remove('hidden');
       // allow transition
@@ -1623,6 +1687,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
   openDrawerBtn?.addEventListener('click', openModalidadesDrawer);
   drawerBackBtn?.addEventListener('click', closeModalidadesDrawer);
+
+  // legal requirement events
+  if (legalReqChk){
+    legalReqChk.addEventListener('change', ()=>{
+      const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.legalRequired = !!legalReqChk.checked; persistState();
+      if (legalNotesRow) legalNotesRow.classList.toggle(true, false); // force reflow
+      if (legalNotesRow) legalNotesRow.classList.toggle('hidden', !legalReqChk.checked);
+    });
+  }
+  if (legalNotesText){
+    legalNotesText.addEventListener('input', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.legalNotes = legalNotesText.value; persistState(); });
+  }
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
     persistState();
@@ -1765,6 +1841,14 @@ function openDetailSheet(itemId) {
   if (sheetImpactoSel) sheetImpactoSel.value = item.impactClass || 'Baixo';
   if (sheetEsforcoSel) sheetEsforcoSel.value = item.effortClass || 'Baixo';
   if (sheetObservation) sheetObservation.value = item.observation || '';
+  const sheetModalidadeSel2 = document.getElementById('sheetModalidadeSel');
+  if (sheetModalidadeSel2) sheetModalidadeSel2.value = item.modalidade || '';
+  const sheetHasCaseChk2 = document.getElementById('sheetHasCaseChk');
+  const sheetCaseRow2 = document.getElementById('sheetCaseRow');
+  const sheetCaseText2 = document.getElementById('sheetCaseText');
+  if (sheetHasCaseChk2) sheetHasCaseChk2.checked = !!item.hasCaseSpecial;
+  if (sheetCaseRow2) sheetCaseRow2.classList.toggle('hidden', !item.hasCaseSpecial);
+  if (sheetCaseText2) sheetCaseText2.value = item.caseSpecial || '';
   const sheetAndamentoSel = document.getElementById('sheetAndamentoSel');
   const sheetProgressoInput = document.getElementById('sheetProgressoInput');
   const sheetTipoSel = document.getElementById('sheetTipoSel');

@@ -171,6 +171,7 @@ button:hover { border-color: #cbd5e1; }
 .sheet-value { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; min-width: 0; }
 .sheet-value textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 8px; font: inherit; background: #fff; }
 .sheet-row .hint { margin-top: 4px; }
+.sheet-row input[type="checkbox"] { transform: scale(1.1); }
 
 /* Backdrop behind sheet */
 .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(1px); z-index: 170; }
@@ -186,8 +187,12 @@ button:hover { border-color: #cbd5e1; }
 .drawer-header { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--bp, #e5e7eb); }
 .drawer-body { height: calc(100% - 50px); overflow:auto; padding:13px; }
 .btn-icon, .btn-back { border:1px solid var(--border); background:#fff; width:28px; height:28px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
-.modalidade-list { display:flex; flex-wrap:wrap; gap:10px 14px; }
-.modalidade-list label { display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#f1f5f9; cursor:pointer; }
+.modalidade-list, .persona-list { display:flex; flex-wrap:wrap; gap:10px 14px; }
+.modalidade-list label, .persona-list label { display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#f1f5f9; cursor:pointer; }
+.drawer-section { margin-bottom: 12px; }
+.drawer-subtitle { font-weight:600; margin: 0 0 6px 0; color: rgba(0,0,0,0.8); }
+.drawer-checkbox { display:flex; align-items:center; gap:8px; font-size:14px; color: rgba(0,0,0,0.85); }
+.drawer-notes textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; }
 
 /* Responsive */
 @media (max-width: 1024px) {
