@@ -196,6 +196,16 @@ button:hover { border-color: #cbd5e1; }
 .drawer-checkbox { display:flex; align-items:center; gap:8px; font-size:14px; color: rgba(0,0,0,0.85); }
 .drawer-notes textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; }
 
+/* Tokens & chip toggles for Diagnóstico */
+.token-input { display:flex; gap:8px; align-items:center; }
+.token-input input { flex:1; height:36px; padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; }
+.token-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.token { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:#e5edff; border-radius:999px; }
+.token button { border:none; background:transparent; cursor:pointer; font-size:14px; line-height:1; }
+.types-area { display:flex; flex-wrap:wrap; gap:10px; }
+.chip-toggle { border:1px solid var(--border); background:#fff; color:#111; border-radius:999px; padding:6px 10px; cursor:pointer; }
+.chip-toggle.active { background:#1d4ed8; color:#fff; border-color:transparent; }
+
 /* Responsive */
 @media (max-width: 1024px) {
   .board-wrapper { grid-template-columns: 1fr; }

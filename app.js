@@ -915,6 +915,14 @@ async function handleClassifiedFile(file, merge = true){
     const modalidade = o['Modalidade'] || '';
     const modalidades = String(o['Modalidades']||'').split(';').map(s=>s.trim()).filter(Boolean);
     const observation = o['Observacao_Complementar'] ?? '';
+    const personas = String(o['Persona']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const hipoteses = o['Hipoteses'] || '';
+    const proposta = o['Proposta'] || '';
+    const tecnologias = String(o['Tecnologias']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const servicos = String(o['Servicos']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const tiposAlteracao = String(o['TiposAlteracao']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const complexidade = o['Complexidade'] || '';
+    const horasEstimadas = (()=>{ const n = parseInt(o['HorasEstimadas'],10); return Number.isFinite(n)? n : null; })();
     const legalRequired = String(o['RequerJuridico']||'').trim().toLowerCase().startsWith('s');
     const legalNotes = o['QuestoesJuridicas'] || '';
     const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o,[HEADERS.ESFORCO]));
@@ -945,6 +953,14 @@ async function handleClassifiedFile(file, merge = true){
       escopoClass,
       principalImpactClass,
       observation,
+      personas,
+      hipoteses,
+      proposta,
+      tecnologias,
+      servicos,
+      tiposAlteracao,
+      complexidade,
+      horasEstimadas,
       legalRequired,
       legalNotes,
       parentId: null,
@@ -1531,6 +1547,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const legalReqChk = document.getElementById('legalReqChk');
   const legalNotesRow = document.getElementById('legalNotesRow');
   const legalNotesText = document.getElementById('legalNotesText');
+  // Diagnóstico extra controls
+  const diagTechInput = document.getElementById('diagTechInput');
+  const diagAddTechBtn = document.getElementById('diagAddTechBtn');
+  const diagTechList = document.getElementById('diagTechList');
+  const diagServInput = document.getElementById('diagServInput');
+  const diagAddServBtn = document.getElementById('diagAddServBtn');
+  const diagServList = document.getElementById('diagServList');
+  const diagTypesArea = document.getElementById('diagTypesArea');
+  const diagComplexSel = document.getElementById('diagComplexSel');
+  const diagHoursInput = document.getElementById('diagHoursInput');
   const sheetEscopoSel = document.getElementById('sheetEscopoSel');
   const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
   const sheetImpactoSel = document.getElementById('sheetImpactoSel');
@@ -1673,6 +1699,43 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function renderTokenList(container, list){
+    if (!container) return;
+    container.innerHTML = '';
+    (list||[]).forEach((value)=>{
+      const chip = document.createElement('span');
+      chip.className = 'token';
+      const text = document.createElement('span'); text.textContent = value;
+      const btn = document.createElement('button'); btn.type='button'; btn.textContent='×';
+      chip.appendChild(text); chip.appendChild(btn);
+      container.appendChild(chip);
+      btn.addEventListener('click',()=>{
+        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+        const arr = (container===diagTechList) ? (it.tecnologias||[]) : (it.servicos||[]);
+        const idx = arr.indexOf(value);
+        if (idx>=0) arr.splice(idx,1);
+        if (container===diagTechList) it.tecnologias = arr; else it.servicos = arr;
+        renderTokenList(container, arr);
+        persistState();
+      });
+    });
+  }
+
+  function bindToken(inputEl, addBtn, container, getter){
+    if (!inputEl || !addBtn || !container) return;
+    addBtn.addEventListener('click',()=>{
+      const v = (inputEl.value||'').trim();
+      if (!v) return;
+      const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+      const arr = getter(it);
+      if (!arr.includes(v)) arr.push(v);
+      renderTokenList(container, arr);
+      inputEl.value='';
+      persistState();
+    });
+    inputEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); addBtn.click(); }});
+  }
+
   function openModalidadesDrawer(){
     const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
     buildModalidadesOptions(it.modalidades);
@@ -1680,6 +1743,22 @@ window.addEventListener('DOMContentLoaded', () => {
     if (legalReqChk){ legalReqChk.checked = !!it.legalRequired; }
     if (legalNotesRow){ legalNotesRow.classList.toggle('hidden', !it.legalRequired); }
     if (legalNotesText){ legalNotesText.value = it.legalNotes || ''; }
+    // tokens lists
+    if (!Array.isArray(it.tecnologias)) it.tecnologias = [];
+    if (!Array.isArray(it.servicos)) it.servicos = [];
+    renderTokenList(diagTechList, it.tecnologias);
+    renderTokenList(diagServList, it.servicos);
+    // tipos alteração
+    if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao = [];
+    if (diagTypesArea){
+      diagTypesArea.querySelectorAll('.chip-toggle').forEach(btn=>{
+        const tipo = btn.getAttribute('data-tipo');
+        if (it.tiposAlteracao.includes(tipo)) btn.classList.add('active'); else btn.classList.remove('active');
+      });
+    }
+    // complexidade e horas
+    if (diagComplexSel) diagComplexSel.value = it.complexidade || '';
+    if (diagHoursInput) diagHoursInput.value = (it.horasEstimadas ?? '').toString();
     if (drawer){
       drawer.classList.remove('hidden');
       // allow transition
@@ -1706,6 +1785,32 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (legalNotesText){
     legalNotesText.addEventListener('input', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.legalNotes = legalNotesText.value; persistState(); });
+  }
+
+  // bind tokens
+  bindToken(diagTechInput, diagAddTechBtn, diagTechList, (it)=>{ if(!Array.isArray(it.tecnologias)) it.tecnologias=[]; return it.tecnologias; });
+  bindToken(diagServInput, diagAddServBtn, diagServList, (it)=>{ if(!Array.isArray(it.servicos)) it.servicos=[]; return it.servicos; });
+
+  // tipos alteração
+  if (diagTypesArea){
+    diagTypesArea.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.chip-toggle'); if(!btn) return;
+      const tipo = btn.getAttribute('data-tipo'); if(!tipo) return;
+      const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+      if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao=[];
+      const i = it.tiposAlteracao.indexOf(tipo);
+      if (i>=0) { it.tiposAlteracao.splice(i,1); btn.classList.remove('active'); }
+      else { it.tiposAlteracao.push(tipo); btn.classList.add('active'); }
+      persistState();
+    });
+  }
+
+  // complexidade / horas
+  if (diagComplexSel){
+    diagComplexSel.addEventListener('change', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.complexidade = diagComplexSel.value || ''; persistState(); });
+  }
+  if (diagHoursInput){
+    diagHoursInput.addEventListener('input', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; const n=parseInt(diagHoursInput.value,10); it.horasEstimadas = Number.isFinite(n)? n : null; persistState(); });
   }
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
