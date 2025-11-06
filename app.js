@@ -1085,6 +1085,7 @@ function exportCsv() {
       if (hn === 'subsquad') return esc(it.subSquad || '');
       if (hn === 'tipoesforco' || hn === 'tipo esforço' || hn === 'tipoesforço') return esc(it.tipoEsforco || (it._original[h] ?? ''));
       if (hn.startsWith('progresso')) return esc(`${it.progresso ?? 0}%`);
+      if (hn === 'andamento') return esc(it.andamento ? 'Sim' : 'Não');
       if (hn === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
       if (hn === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
       if (hn === 'observacao_complementar') return esc(it.observation || '');
