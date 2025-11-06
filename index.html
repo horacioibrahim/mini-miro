@@ -325,26 +325,26 @@
         <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
       </div>
       <div class="sheet-body">
-        <div class="sheet-row"><div class="sheet-label">Demanda descrição</div><div class="sheet-value" id="sheetDemandaDesc"></div></div>
-        <div class="sheet-row"><div class="sheet-label">Observações adicionais</div><div class="sheet-value" id="sheetObsAdd"></div></div>
-        <div class="sheet-row"><div class="sheet-label">Qual o tipo de escopo</div><div class="sheet-value"><select id="sheetEscopoSel"><option>Operação</option><option>Inovação</option><option>Outros</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Qual o tipo de abordagem</div><div class="sheet-value"><select id="sheetAbordagemSel"><option>Oportunidade</option><option>Problema</option><option>Outros</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Qual o impacto econômico que poderá trazer?</div><div class="sheet-value"><select id="sheetImpactoSel"><option>Baixo</option><option>Médio</option><option>Alto</option><option>Altíssimo</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Esforço técnico para entregar em produção</div><div class="sheet-value"><select id="sheetEsforcoSel"><option>Baixo</option><option>Médio</option><option>Alto</option></select></div></div>
+        <div class="sheet-row stack"><div class="sheet-label">Demanda descrição</div><div class="sheet-value" id="sheetDemandaDesc"></div></div>
+        <div class="sheet-row stack"><div class="sheet-label">Observações adicionais</div><div class="sheet-value" id="sheetObsAdd"></div></div>
+        <div class="sheet-row"><div class="sheet-label">Escopo</div><div class="sheet-value"><select id="sheetEscopoSel"><option>Operação</option><option>Inovação</option><option>Outros</option></select><div class="hint">Ex.: Inovação ou Operação</div></div></div>
+        <div class="sheet-row"><div class="sheet-label">Abordagem</div><div class="sheet-value"><select id="sheetAbordagemSel"><option>Oportunidade</option><option>Problema</option><option>Outros</option></select><div class="hint">Ex.: Oportunidade ou Problema</div></div></div>
+        <div class="sheet-row"><div class="sheet-label">Impacto (R$)</div><div class="sheet-value"><select id="sheetImpactoSel"><option>Baixo</option><option>Médio</option><option>Alto</option><option>Altíssimo</option></select></div></div>
+        <div class="sheet-row"><div class="sheet-label">Esforço</div><div class="sheet-value"><select id="sheetEsforcoSel"><option>Baixo</option><option>Médio</option><option>Alto</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Andamento</div><div class="sheet-value"><select id="sheetAndamentoSel"><option>Sim</option><option>Não</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Progresso (%)</div><div class="sheet-value"><input id="sheetProgressoInput" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></div></div>
         <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Ideia</option><option>Follow-up</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">Urgência</div><div class="sheet-value"><select id="sheetUrgSel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div></div>
         <div class="sheet-row"><div class="sheet-label">SubSquad</div><div class="sheet-value"><input id="sheetSubSquadInput" type="text" placeholder="Nome da subSquad" /></div></div>
         <div class="sheet-row"><div class="sheet-label">Bora_Impact</div><div class="sheet-value"><select id="sheetBoraSel"><option value="">-</option><option value="0.25">0.25</option><option value="0.5">0.5</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Principal Impacto</div><div class="sheet-value" id="sheetPrincipalImpacto"></div></div>
-        <div class="sheet-row"><div class="sheet-label">Relacionamentos</div>
+        <div class="sheet-row"><div class="sheet-label">Camada</div><div class="sheet-value" id="sheetPrincipalImpacto"></div></div>
+        <div class="sheet-row stack"><div class="sheet-label">Relacionamentos</div>
           <div class="sheet-value">
             <input id="relSearch" type="text" placeholder="Buscar demanda..." />
             <div id="relList" class="rel-list"></div>
           </div>
         </div>
-        <div class="sheet-row"><div class="sheet-label">Observação complementar</div><div class="sheet-value"><textarea id="sheetObservation" rows="4" placeholder="Anotações do facilitador da dinâmica..."></textarea></div></div>
+        <div class="sheet-row stack"><div class="sheet-label">Observação complementar</div><div class="sheet-value"><textarea id="sheetObservation" rows="4" placeholder="Anotações do facilitador da dinâmica..."></textarea></div></div>
       </div>
     </aside>
 
