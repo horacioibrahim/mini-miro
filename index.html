@@ -48,6 +48,10 @@
         </div>
 
         <div class="control-group">
+          <button id="sheetsCfgBtn" type="button" class="ctrl-icon-btn" title="Configurar Google Sheets">⚙︎</button>
+        </div>
+
+        <div class="control-group">
           <label for="textFilter">Buscar</label>
           <input type="text" id="textFilter" placeholder="Filtrar Demanda e descrição..." />
         </div>
@@ -377,6 +381,62 @@
         </div>
         <div class="modal-footer">
           <button id="obsOkBtn" type="button">Ok</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Configuração do Google Sheets -->
+    <div id="sheetsCfgModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sheetsCfgTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="sheetsCfgTitle">Integração com Google Sheets</h3>
+          <button id="sheetsCfgCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-field">
+            <label class="modal-label" for="sheetsUrlInput">URL ou ID da planilha</label>
+            <input id="sheetsUrlInput" type="text" placeholder="https://docs.google.com/spreadsheets/d/ID... ou apenas o ID" />
+          </div>
+          <div class="modal-grid-two">
+            <div class="modal-field">
+              <label class="modal-label" for="sheetsNameInput">Nome da aba</label>
+              <input id="sheetsNameInput" type="text" placeholder="base_classificada" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label" for="sheetsGidInput">GID (opcional)</label>
+              <input id="sheetsGidInput" type="text" placeholder="ex.: 0" />
+            </div>
+          </div>
+          <div class="modal-grid-two">
+            <div class="modal-field">
+              <label class="modal-label" for="sheetsImportMode">Importação</label>
+              <select id="sheetsImportMode">
+                <option value="merge">Merge (mesclar com estado)</option>
+                <option value="zerar">Zerar (apenas da planilha)</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Publicação</label>
+              <div class="hint">Para leitura sem login: Arquivo → Publicar na Web → aba escolhida.</div>
+            </div>
+          </div>
+          <div class="modal-grid-two">
+            <div class="modal-field">
+              <label class="modal-label">Autenticação</label>
+              <div style="display:flex; gap:8px;">
+                <button id="sheetsOAuthBtn" type="button" class="btn-google">Entrar com Google</button>
+              </div>
+              <div id="sheetsAuthStatus" class="hint"></div>
+            </div>
+            <div class="modal-field"></div>
+          </div>
+          <div style="margin-top:6px; display:flex; gap:8px;">
+            <button id="sheetsTestBtn" type="button">Testar leitura</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="sheetsCfgCancelBtn" type="button">Cancelar</button>
+          <button id="sheetsCfgSaveBtn" type="button">Salvar</button>
         </div>
       </div>
     </div>

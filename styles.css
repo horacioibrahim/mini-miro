@@ -157,6 +157,9 @@ button:hover { border-color: #cbd5e1; }
 .btn-close { border: 1px solid var(--border); background: #fff; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
 .modal textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; }
 .obs-content { white-space: pre-wrap; }
+/* Google button */
+.btn-google { background: #1a73e8; color:#fff; border-color:#1a73e8; border-radius:8px; padding:6px 12px; height:36px; display:inline-flex; align-items:center; gap:8px; }
+.btn-google:hover { background: #1669d2; border-color:#1669d2; }
 
 /* Sheet lateral */
 .sheet.hidden { display: none; }

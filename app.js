@@ -90,6 +90,11 @@ function normalizeString(value) {
     .replace(/\p{Diacritic}/gu, '');
 }
 
+// Header normalization for CSV column comparisons (aggressive: remove non-alphanum)
+function normalizeHeaderKey(value){
+  return normalizeString(value).replace(/[^a-z0-9]+/g,'');
+}
+
 function classifyEffort(esforcoRaw) {
   const n = normalizeString(esforcoRaw);
   if (!n) return null;
@@ -907,7 +912,7 @@ async function handleClassifiedFile(file, merge = true){
       urgencia = parseInt(String(o['Grupo']).trim(),10);
       grupo = urgRaw; // o que estava em Urgencia vira grupo
     }
-    const tipoEsforco = o['TipoEsforco'] ?? '';
+    const tipoEsforco = o['TipoEsforco'] ?? o['Tipo esforço'] ?? o['Tipo Esforço'] ?? o['Tipo de esforço'] ?? '';
     const andamento = String(o['Andamento']||'').trim().toLowerCase().startsWith('s');
     const progRaw = o['Progresso'] ?? o['Progresso (%)'] ?? o['progresso'] ?? o['progresso (%)'] ?? '';
     const progresso = (()=>{ const s = String(progRaw).replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
@@ -1060,8 +1065,17 @@ function updateSquadButtonLabel() {
 // Export with classification columns appended (does not overwrite originals)
 function exportCsv() {
   if (!state.items.length) return;
-  const originalHeaders = Object.keys(state.items[0]._original);
-  const originalCI = new Set(originalHeaders.map(h => normalizeString(h)));
+  // Deduplicate original headers by normalized key (keeps first occurrence)
+  const originalHeadersRaw = Object.keys(state.items[0]._original);
+  const seenKeys = new Set();
+  const originalHeaders = [];
+  for (const h of originalHeadersRaw){
+    const k = normalizeHeaderKey(h);
+    if (seenKeys.has(k)) continue;
+    seenKeys.add(k);
+    originalHeaders.push(h);
+  }
+  const originalCI = new Set(originalHeaders.map(h => normalizeHeaderKey(h)));
   const extraDefsAll = [
     { name: 'Esforco_Class', get: (it)=> it.effortClass },
     { name: 'Impacto_Class', get: (it)=> it.impactClass },
@@ -1091,7 +1105,7 @@ function exportCsv() {
     { name: 'RequerJuridico', get: (it)=> it.legalRequired ? 'Sim' : 'Não' },
     { name: 'QuestoesJuridicas', get: (it)=> it.legalNotes || '' },
   ];
-  const includedDefs = extraDefsAll.filter(def => !originalCI.has(normalizeString(def.name)));
+  const includedDefs = extraDefsAll.filter(def => !originalCI.has(normalizeHeaderKey(def.name)));
   const headers = [...originalHeaders, ...includedDefs.map(d=>d.name)];
 
   const lines = [];
@@ -1108,26 +1122,26 @@ function exportCsv() {
   lines.push(headers.map(esc).join(','));
   for (const it of state.items) {
     const base = originalHeaders.map(h => {
-      const hn = normalizeString(h);
+      const hk = normalizeHeaderKey(h);
       // override classification and user-edited fields with current state values
-      if (hn === 'esforco_class') return esc(it.effortClass);
-      if (hn === 'impacto_class') return esc(it.impactClass);
-      if (hn === 'abordagem_class') return esc(it.abordagemClass);
-      if (hn === 'escopo_class') return esc(it.escopoClass);
-      if (hn === 'principalimpacto_class') return esc(it.principalImpactClass);
-      if (hn === 'bora_impact') return esc(it.boraImpact || '');
-      if (hn === 'urgencia' || hn === 'urgência') return esc(it.urgencia ?? '');
-      if (hn === 'grupo') return esc(it.grupo || '');
-      if (hn === 'subsquad') return esc(it.subSquad || '');
-      if (hn === 'tipoesforco' || hn === 'tipo esforço' || hn === 'tipoesforço') return esc(it.tipoEsforco || (it._original[h] ?? ''));
-      if (hn.startsWith('progresso')) return esc(`${it.progresso ?? 0}%`);
-      if (hn === 'andamento') return esc(it.andamento ? 'Sim' : 'Não');
-      if (hn === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
-      if (hn === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
-      if (hn === 'observacao_complementar') return esc(it.observation || '');
-      if (hn === 'modalidade') return esc(it.modalidade || '');
-      if (hn === 'hacasesespeciais' || hn === 'ha_casos_especiais') return esc(it.hasCaseSpecial ? 'Sim' : 'Não');
-      if (hn === 'casoespecial' || hn === 'caso_especial') return esc(it.caseSpecial || '');
+      if (hk === 'esforcoclass') return esc(it.effortClass);
+      if (hk === 'impactoclass') return esc(it.impactClass);
+      if (hk === 'abordagemclass') return esc(it.abordagemClass);
+      if (hk === 'escopoclass') return esc(it.escopoClass);
+      if (hk === 'principalimpactoclass') return esc(it.principalImpactClass);
+      if (hk === 'boraimpact') return esc(it.boraImpact || '');
+      if (hk === 'urgencia') return esc(it.urgencia ?? '');
+      if (hk === 'grupo') return esc(it.grupo || '');
+      if (hk === 'subsquad') return esc(it.subSquad || '');
+      if (hk === 'tipoesforco') return esc(it.tipoEsforco || (it._original[h] ?? ''));
+      if (hk.startsWith('progresso')) return esc(`${it.progresso ?? 0}%`);
+      if (hk === 'andamento') return esc(it.andamento ? 'Sim' : 'Não');
+      if (hk === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
+      if (hk === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
+      if (hk === 'observacaocomplementar') return esc(it.observation || '');
+      if (hk === 'modalidade') return esc(it.modalidade || '');
+      if (hk === 'hacasesespeciais') return esc(it.hasCaseSpecial ? 'Sim' : 'Não');
+      if (hk === 'casoespecial') return esc(it.caseSpecial || '');
       return esc(it._original[h] ?? '');
     });
     const extras = includedDefs.map(def => esc(def.get(it)));
@@ -1533,6 +1547,280 @@ window.addEventListener('DOMContentLoaded', () => {
   obsClose.addEventListener('click', closeObsModal);
   obsOk.addEventListener('click', closeObsModal);
   obsModal.addEventListener('click', (e) => { if (e.target === obsModal) closeObsModal(); });
+
+  // Google Sheets config modal (read-only via Published CSV)
+  const sheetsCfgBtn = document.getElementById('sheetsCfgBtn');
+  const sheetsCfgModal = document.getElementById('sheetsCfgModal');
+  const sheetsCfgCloseBtn = document.getElementById('sheetsCfgCloseBtn');
+  const sheetsCfgCancelBtn = document.getElementById('sheetsCfgCancelBtn');
+  const sheetsCfgSaveBtn = document.getElementById('sheetsCfgSaveBtn');
+  const sheetsTestBtn = document.getElementById('sheetsTestBtn');
+  const sheetsUrlInput = document.getElementById('sheetsUrlInput');
+  const sheetsNameInput = document.getElementById('sheetsNameInput');
+  // GID não é necessário
+  const sheetsImportMode = document.getElementById('sheetsImportMode');
+  const sheetsClientIdInput = document.getElementById('sheetsClientIdInput');
+  const sheetsOAuthBtn = document.getElementById('sheetsOAuthBtn');
+  const sheetsAuthStatus = document.getElementById('sheetsAuthStatus');
+  let gisAccessToken = null;
+  const DEFAULT_GIS_CLIENT_ID = '1712067639-gp823soeiks0jvtabr52orb89jvn1geo.apps.googleusercontent.com';
+
+  function parseSheetIdOrDirectUrl(s){
+    const val = String(s||'').trim();
+    // Caso 1: URL publicada (/d/e/.../pub?output=csv) -> usar diretamente
+    if (/^https?:\/\/docs\.google\.com\/spreadsheets\/d\/e\//.test(val) && /(?:output=csv|format=csv)/.test(val)) {
+      return { direct: val };
+    }
+    // Caso 2: URL normal de planilha -> extrai ID
+    const m = val.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (m) return { id: m[1] };
+    // Caso 3: usuário colou apenas o ID
+    return { id: val };
+  }
+  // Alias para compatibilidade com versões antigas que chamavam parseSheetId
+  try { if (typeof window !== 'undefined' && !window.parseSheetId) { window.parseSheetId = parseSheetIdOrDirectUrl; } } catch(_) {}
+  function buildPublishedCsvUrl(cfg){
+    // Se veio um endpoint direto publicado, devolve como está
+    if (cfg.direct) return cfg.direct;
+    const id = cfg.id;
+    if (cfg.gid) return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${encodeURIComponent(cfg.gid)}`;
+    const sheet = encodeURIComponent(cfg.sheet || 'base_classificada');
+    return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
+  }
+  async function importFromPublishedCsv(merge){
+    try {
+      const raw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (!raw) { alert('Configure a planilha primeiro.'); return; }
+      const cfg = JSON.parse(raw);
+      const url = buildPublishedCsvUrl(cfg);
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      const text = await resp.text();
+      const file = new File([text], 'sheet.csv', { type: 'text/csv' });
+      await handleClassifiedFile(file, merge);
+      alert('Importado da planilha (publicada) com sucesso.');
+    } catch (e) {
+      console.error('Sheets import error', e);
+      alert('Falhou ao ler a planilha publicada. Verifique se a aba foi Publicada na Web e a URL/ID está correta.');
+    }
+  }
+
+  function openSheetsCfg(){
+    try {
+      const raw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (raw) {
+        const cfg = JSON.parse(raw);
+        if (sheetsUrlInput) sheetsUrlInput.value = cfg.id || '';
+        if (sheetsNameInput) sheetsNameInput.value = cfg.sheet || 'base_classificada';
+        
+      } else {
+        if (sheetsNameInput) sheetsNameInput.value = 'base_classificada';
+      }
+      // Client ID é hardcoded; nenhum input necessário
+    } catch(_){ if (sheetsNameInput) sheetsNameInput.value = 'base_classificada'; }
+    try { const em = localStorage.getItem('priorizacao_gis_email'); if (em && sheetsAuthStatus) sheetsAuthStatus.textContent = `Autenticado: ${em}`; } catch(_){}
+    sheetsCfgModal?.classList.remove('hidden');
+  }
+  function closeSheetsCfg(){ sheetsCfgModal?.classList.add('hidden'); }
+
+  sheetsCfgBtn?.addEventListener('click', openSheetsCfg);
+  sheetsCfgCloseBtn?.addEventListener('click', closeSheetsCfg);
+  sheetsCfgCancelBtn?.addEventListener('click', closeSheetsCfg);
+  sheetsCfgSaveBtn?.addEventListener('click', ()=>{
+    const parsed = parseSheetIdOrDirectUrl(sheetsUrlInput?.value || '');
+    const sheet = (sheetsNameInput?.value || 'base_classificada').trim() || 'base_classificada';
+    localStorage.setItem('priorizacao_sheets_cfg', JSON.stringify({ ...parsed, sheet }));
+    closeSheetsCfg();
+  });
+  sheetsTestBtn?.addEventListener('click', ()=>{
+    const merge = (sheetsImportMode?.value || 'merge') === 'merge';
+    // salva temporariamente antes de testar
+    const parsed = parseSheetIdOrDirectUrl(sheetsUrlInput?.value || '');
+    const sheet = (sheetsNameInput?.value || 'base_classificada').trim() || 'base_classificada';
+    localStorage.setItem('priorizacao_sheets_cfg', JSON.stringify({ ...parsed, sheet }));
+    importFromPublishedCsv(merge);
+  });
+
+  // OAuth (GIS) helpers
+  function ensureGisLoaded(){
+    return new Promise((resolve)=>{
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true; s.defer = true;
+      s.onload = ()=> resolve();
+      document.head.appendChild(s);
+    });
+  }
+  async function getGisToken(){
+    await ensureGisLoaded();
+    const clientId = DEFAULT_GIS_CLIENT_ID;
+    return new Promise((resolve)=>{
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email',
+        callback: (resp) => {
+          if (resp && resp.access_token) {
+            gisAccessToken = resp.access_token;
+            // fetch email
+            updateUserInfoEmail(gisAccessToken);
+            resolve(gisAccessToken);
+          } else {
+            if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Falha na autenticação';
+            resolve(null);
+          }
+        },
+      });
+      tokenClient.requestAccessToken({ prompt: '' }); // mostra consent se necessário
+    });
+  }
+  async function updateUserInfoEmail(token){
+    try {
+      const resp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${token}` } });
+      if (resp.ok) {
+        const data = await resp.json();
+        const email = data && data.email ? String(data.email) : '';
+        if (email) {
+          try { localStorage.setItem('priorizacao_gis_email', email); } catch(_){ }
+          if (sheetsAuthStatus) sheetsAuthStatus.textContent = `Autenticado: ${email}`;
+        } else {
+          if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Autenticado';
+        }
+      } else {
+        if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Autenticado';
+      }
+    } catch(_) {
+      if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Autenticado';
+    }
+  }
+  function valuesToCsv(values){
+    const enc = (v)=> {
+      const s = v==null ? '' : String(v);
+      if (/[\",\\n]/.test(s)) return '\"' + s.replace(/\"/g,'\"\"') + '\"';
+      return s;
+    };
+    return (values||[]).map(row => (row||[]).map(enc).join(',')).join('\\n');
+  }
+  function a1Col(index){
+    let n = index + 1; let s = '';
+    while(n>0){ const m = (n-1)%26; s = String.fromCharCode(65+m)+s; n = Math.floor((n-1)/26); }
+    return s;
+  }
+  function normKey(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+  function valueForHeader(key, item){
+    switch(key){
+      case 'demanda': return item.demanda || '';
+      case 'demanda_descricao': return item.demandaDescricao || '';
+      case 'squad': return item.squad || '';
+      case 'subsquad': return Array.isArray(item.subSquad)? item.subSquad.join('; ') : (item.subSquad||'');
+      case 'grupo': return item.grupo || '';
+      case 'tipoesforco': return item.tipoEsforco || '';
+      case 'urgencia': return Number(item.urgencia||0);
+      case 'andamento': return item.andamento ? 'Sim' : 'Não';
+      case 'progresso': return Number(item.progresso||0);
+      case 'esforco_class': return item.effortClass || '';
+      case 'impacto_class': return item.impactClass || '';
+      case 'abordagem_class': return item.abordagemClass || '';
+      case 'escopo_class': return item.escopoClass || '';
+      case 'principalimpacto_class': return item.principalImpactClass || '';
+      case 'bora_impact': return item.boraImpact || '';
+      case 'observacao_complementar': return item.observation || '';
+      case 'modalidade': return item.modalidade || (Array.isArray(item.modalidades) && item.modalidades[0]) || '';
+      case 'modalidades': return (item.modalidades||[]).join('; ');
+      case 'persona': return (item.personas||[]).join('; ');
+      case 'requerjuridico': return item.legalRequired ? 'Sim' : 'Não';
+      case 'questoesjuridicas': return item.legalNotes || '';
+      case 'tecnologias': return (item.tecnologias||[]).join('; ');
+      case 'servicos': return (item.servicos||[]).join('; ');
+      case 'tiposalteracao': return (item.tiposAlteracao||[]).join('; ');
+      case 'complexidade': return item.complexidade || '';
+      case 'horasestimadas': return item.horasEstimadas ?? '';
+      case 'pai': {
+        const p = state.items.find(x=> x.id === item.parentId); return p? (p.demanda||'') : '';
+      }
+      case 'relacionamentos': {
+        const ids = Array.isArray(item.relatedIds)? item.relatedIds : []; const names = ids.map(id=>{ const it=state.items.find(x=>x.id===id); return it? it.demanda:''; }).filter(Boolean); return names.join('; ');
+      }
+      default: return '';
+    }
+  }
+  async function upsertItemToSheets(item){
+    try {
+      const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (!cfgRaw) return; // não configurado → não sincroniza
+      const cfg = JSON.parse(cfgRaw);
+      const token = gisAccessToken || await getGisToken();
+      if (!token) return;
+      const id = cfg.id; if (!id || id.startsWith('http')) return;
+      const title = cfg.sheet || 'base_classificada';
+      // 1) headers
+      let url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!1:1`;
+      let resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error('Falha ao ler cabeçalho');
+      const headData = await resp.json();
+      const headers = (headData.values && headData.values[0]) ? headData.values[0] : [];
+      const nkeys = headers.map(h=> normKey(h));
+      // 2) localizar linha pela coluna Demanda
+      const demandCol = nkeys.findIndex(k=> k === 'demanda');
+      let rowIndex = -1;
+      if (demandCol >= 0){
+        const colA1 = a1Col(demandCol);
+        url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!${colA1}2:${colA1}`;
+        resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (resp.ok){
+          const colData = await resp.json();
+          const vals = (colData.values||[]).map(r => (r&&r[0])? String(r[0]) : '');
+          const idx = vals.findIndex(v => v === (item.demanda||''));
+          if (idx >= 0) rowIndex = idx + 2;
+        }
+      }
+      // 3) construir linha
+      const width = headers.length;
+      const row = new Array(width).fill('');
+      for (let i=0;i<width;i++) row[i] = valueForHeader(nkeys[i], item);
+      // 4) update/append
+      if (rowIndex > 0){
+        const lastCol = a1Col(width-1);
+        const range = `${title}!A${rowIndex}:${lastCol}${rowIndex}`;
+        const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+        await fetch(putUrl, { method: 'PUT', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ range, majorDimension: 'ROWS', values: [row] }) });
+      } else {
+        const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+        await fetch(appendUrl, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ values: [row] }) });
+      }
+    } catch(e){ console.error('Sheets upsert error', e); }
+  }
+  // gid → título não é mais necessário (sem GID)
+  async function importFromSheetsOAuth(merge){
+    try {
+      const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (!cfgRaw) { alert('Configure a planilha primeiro.'); return; }
+      const cfg = JSON.parse(cfgRaw);
+      const token = gisAccessToken || await getGisToken();
+      if (!token) return;
+      let id = cfg.id || cfg.direct;
+      // se usuário colou URL direta publicada, ela não serve para OAuth; exigimos id
+      if (!id || id.startsWith('http')) { alert('Informe o ID/URL da planilha (não o link publicado) para OAuth.'); return; }
+      let title = cfg.sheet || 'base_classificada';
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}?majorDimension=ROWS`;
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      const data = await resp.json();
+      const csv = valuesToCsv(data.values || []);
+      const file = new File([csv], 'sheet.csv', { type: 'text/csv' });
+      await handleClassifiedFile(file, merge);
+      alert('Importado via OAuth (Sheets API) com sucesso.');
+    } catch (e) {
+      console.error('Sheets OAuth import error', e);
+      alert('Falhou ao ler via OAuth. Verifique permissões (você precisa ter acesso à planilha).');
+    }
+  }
+  sheetsOAuthBtn?.addEventListener('click', async ()=>{
+    const token = await getGisToken();
+    if (!token) return;
+    const merge = (sheetsImportMode?.value || 'merge') === 'merge';
+    await importFromSheetsOAuth(merge);
+  });
 
   // Sheet
   const sheet = document.getElementById('detailSheet');
@@ -1960,6 +2248,7 @@ function saveNoteModal() {
   }
   // persist all edits including tipoEsforco possibly changed via dropdown
   persistState();
+  try { const item = state.items.find(it=> it.id===state.ui.selectedId); if (item) upsertItemToSheets(item); } catch(_){}
   closeNoteModal();
   render();
 }
@@ -2119,6 +2408,7 @@ function buildParentDropdownList(item, container, query = '') {
 }
 
 function closeDetailSheet() {
+  try { const item = state.items.find(it=> it.id===state.ui.selectedId); if (item) { persistState(); upsertItemToSheets(item); } } catch(_){}
   document.getElementById('detailSheet').addEventListener;
   document.getElementById('detailSheet').classList.add('hidden');
   const backdrop = document.getElementById('sheetBackdrop');
