@@ -704,10 +704,11 @@ function renderCard(item) {
   const footer = el('div', 'card-footer');
   const progress = el('div', 'progress');
   const bar = el('div', 'progress-bar');
-  bar.style.width = `${item.progresso ?? 0}%`;
+  const progVal = Math.max(0, Math.min(100, Number(item.progresso ?? 0)));
+  bar.style.width = `${progVal}%`;
   progress.appendChild(bar);
   const label = el('div', 'progress-label');
-  label.textContent = `${item.progresso ?? 0}%`;
+  label.textContent = `${progVal}%`;
   footer.appendChild(progress);
   footer.appendChild(label);
   card.appendChild(footer);
@@ -1917,8 +1918,10 @@ window.addEventListener('DOMContentLoaded', () => {
     render();
   });
   sheetEsforcoSel.addEventListener('change', () => {
-    applyToSelected((it) => { it.effortClass = sheetEsforcoSel.value; it.effortRaw = sheetEsforcoSel.value; });
+    applyToSelected((it) => { it.tipoEsforco = sheetEsforcoSel.value; });
     render();
+    persistState();
+    try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
   });
   if (sheetUrgSel) {
     sheetUrgSel.addEventListener('change', () => {
