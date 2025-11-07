@@ -1816,6 +1816,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
   sheetsOAuthBtn?.addEventListener('click', async ()=>{
+    // Persist current config before authenticating, so import doesn't complain
+    try {
+      const parsed = parseSheetIdOrDirectUrl(sheetsUrlInput?.value || '');
+      const sheet = (sheetsNameInput?.value || 'base_classificada').trim() || 'base_classificada';
+      localStorage.setItem('priorizacao_sheets_cfg', JSON.stringify({ ...parsed, sheet }));
+    } catch(_){}
     const token = await getGisToken();
     if (!token) return;
     const merge = (sheetsImportMode?.value || 'merge') === 'merge';
