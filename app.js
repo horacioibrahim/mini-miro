@@ -1566,16 +1566,23 @@ window.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_GIS_CLIENT_ID = '1712067639-gp823soeiks0jvtabr52orb89jvn1geo.apps.googleusercontent.com';
 
   function parseSheetIdOrDirectUrl(s){
-    const val = String(s||'').trim();
-    // Caso 1: URL publicada (/d/e/.../pub?output=csv) -> usar diretamente
+    const val = String(s||'').trim().replace(/^['"]|['"]$/g,'');
+    // Caso 1: URL publicada (/d/e/.../pub?output=csv) -> usar diretamente (apenas leitura)
     if (/^https?:\/\/docs\.google\.com\/spreadsheets\/d\/e\//.test(val) && /(?:output=csv|format=csv)/.test(val)) {
       return { direct: val };
     }
-    // Caso 2: URL normal de planilha -> extrai ID
+    // Caso 2: URL normal de planilha -> extrai ID em qualquer sufixo (?gid=...#gid=..., /edit, /copy etc)
     const m = val.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     if (m) return { id: m[1] };
-    // Caso 3: usuário colou apenas o ID
-    return { id: val };
+    // Caso 3: links do tipo open?id=
+    const u = (()=>{ try{ return new URL(val); } catch(_){ return null; } })();
+    if (u) {
+      const idParam = u.searchParams.get('id');
+      if (idParam) return { id: idParam };
+    }
+    // Caso 4: usuário colou apenas o ID (sequência segura)
+    if (/^[a-zA-Z0-9-_]{20,}$/.test(val)) return { id: val };
+    return { id: '' };
   }
   // Alias para compatibilidade com versões antigas que chamavam parseSheetId
   try { if (typeof window !== 'undefined' && !window.parseSheetId) { window.parseSheetId = parseSheetIdOrDirectUrl; } } catch(_) {}
@@ -1658,7 +1665,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return new Promise((resolve)=>{
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
-        scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email',
+        scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.readonly',
         callback: (resp) => {
           if (resp && resp.access_token) {
             gisAccessToken = resp.access_token;
@@ -1744,19 +1751,27 @@ window.addEventListener('DOMContentLoaded', () => {
       default: return '';
     }
   }
-  async function upsertItemToSheets(item){
+  async function upsertItemToSheets(itemOrId){
     try {
+      // Resolve item: accepts object, id, or uses currently selected item
+      let item = itemOrId;
+      if (!item || typeof item !== 'object') {
+        const id = (typeof itemOrId === 'number') ? itemOrId : state.ui.selectedId;
+        if (id != null) item = state.items.find(x => x.id === id);
+      }
+      if (!item) { console.warn('[Sheets] upsert: nenhum item resolvido (selecione um card)'); return; }
       const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
-      if (!cfgRaw) return; // não configurado → não sincroniza
+      if (!cfgRaw) { console.warn('[Sheets] upsert: configuração ausente'); if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Configure a planilha (ID/URL de edição)'; return; }
       const cfg = JSON.parse(cfgRaw);
       const token = gisAccessToken || await getGisToken();
       if (!token) return;
-      const id = cfg.id; if (!id || id.startsWith('http')) return;
+      const id = cfg.id; if (!id || id.startsWith('http')) { console.warn('[Sheets] upsert: é preciso o spreadsheetId (URL de edição), link publicado não serve'); if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Use a URL de edição (…/spreadsheets/d/ID/…)'; return; }
       const title = cfg.sheet || 'base_classificada';
+      console.log('[Sheets] upsert:start', { spreadsheetId: id, sheet: title, demanda: item.demanda });
       // 1) headers
       let url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!1:1`;
       let resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!resp.ok) throw new Error('Falha ao ler cabeçalho');
+      if (!resp.ok) { const body = await resp.text(); throw new Error('Falha ao ler cabeçalho: '+resp.status+' - '+body); }
       const headData = await resp.json();
       const headers = (headData.values && headData.values[0]) ? headData.values[0] : [];
       const nkeys = headers.map(h=> normKey(h));
@@ -1764,6 +1779,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const demandCol = nkeys.findIndex(k=> k === 'demanda');
       let rowIndex = -1;
       if (demandCol >= 0){
+        console.log('[Sheets] upsert:demandCol', demandCol);
         const colA1 = a1Col(demandCol);
         url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!${colA1}2:${colA1}`;
         resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -1783,13 +1799,26 @@ window.addEventListener('DOMContentLoaded', () => {
         const lastCol = a1Col(width-1);
         const range = `${title}!A${rowIndex}:${lastCol}${rowIndex}`;
         const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+        console.log('[Sheets] upsert:PUT', range);
         await fetch(putUrl, { method: 'PUT', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ range, majorDimension: 'ROWS', values: [row] }) });
       } else {
         const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+        console.log('[Sheets] upsert:APPEND');
         await fetch(appendUrl, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ values: [row] }) });
       }
+      console.log('[Sheets] upsert:done');
     } catch(e){ console.error('Sheets upsert error', e); }
   }
+  // Mark as used for static analyzers and allow manual triggering in console if needed
+  try { if (typeof window !== 'undefined') { window.__upsertItemToSheets = upsertItemToSheets; } } catch(_){ }
+  function triggerSheetsUpsert(itemOrId){
+    try {
+      const fn = (typeof upsertItemToSheets === 'function') ? upsertItemToSheets : (typeof window !== 'undefined' ? window.__upsertItemToSheets : null);
+      if (typeof fn === 'function') return fn(itemOrId);
+      console.warn('[Sheets] upsert: função indisponível');
+    } catch(e){ console.error('[Sheets] upsert wrapper error', e); }
+  }
+  try { if (typeof window !== 'undefined') { window.demands = window.demands || {}; window.demands.triggerSheetsUpsert = triggerSheetsUpsert; window.demands.upsertItemToSheets = upsertItemToSheets; } } catch(_){ }
   // gid → título não é mais necessário (sem GID)
   async function importFromSheetsOAuth(merge){
     try {
@@ -1804,7 +1833,7 @@ window.addEventListener('DOMContentLoaded', () => {
       let title = cfg.sheet || 'base_classificada';
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}?majorDimension=ROWS`;
       const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      if (!resp.ok) { const body = await resp.text(); throw new Error('HTTP '+resp.status+' - '+body); }
       const data = await resp.json();
       const csv = valuesToCsv(data.values || []);
       const file = new File([csv], 'sheet.csv', { type: 'text/csv' });
@@ -2254,7 +2283,15 @@ function saveNoteModal() {
   }
   // persist all edits including tipoEsforco possibly changed via dropdown
   persistState();
-  try { const item = state.items.find(it=> it.id===state.ui.selectedId); if (item) upsertItemToSheets(item); } catch(_){}
+  console.log('[Sheets] saveNoteModal:persistState');
+  console.log(state.ui.selectedId);
+  try { 
+      const item = state.items.find(it=> it.id===state.ui.selectedId); 
+      if (item && window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); 
+      else if (item) triggerSheetsUpsert(item);
+    } catch(_){
+      console.log('[Sheets] saveNoteModal:upsertItemToSheets:error', _);
+    }
   closeNoteModal();
   render();
 }
@@ -2414,7 +2451,7 @@ function buildParentDropdownList(item, container, query = '') {
 }
 
 function closeDetailSheet() {
-  try { const item = state.items.find(it=> it.id===state.ui.selectedId); if (item) { persistState(); upsertItemToSheets(item); } } catch(_){}
+  try { const item = state.items.find(it=> it.id===state.ui.selectedId); if (item) { persistState(); if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } } catch(_){}
   document.getElementById('detailSheet').addEventListener;
   document.getElementById('detailSheet').classList.add('hidden');
   const backdrop = document.getElementById('sheetBackdrop');
