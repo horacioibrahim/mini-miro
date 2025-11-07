@@ -1727,7 +1727,9 @@ window.addEventListener('DOMContentLoaded', () => {
       case 'squad': return item.squad || '';
       case 'subsquad': return Array.isArray(item.subSquad)? item.subSquad.join('; ') : (item.subSquad||'');
       case 'grupo': return item.grupo || '';
-      case 'tipoesforco': return item.tipoEsforco || '';
+      case 'tipoesforco':
+      case 'tipo_esforco':
+        return item.tipoEsforco || '';
       case 'urgencia': return Number(item.urgencia||0);
       case 'andamento': return item.andamento ? 'Sim' : 'Não';
       case 'progresso': return Math.max(0, Math.min(1, Number(item.progresso||0) / 100));
@@ -1923,7 +1925,8 @@ window.addEventListener('DOMContentLoaded', () => {
     render();
   });
   sheetEsforcoSel.addEventListener('change', () => {
-    applyToSelected((it) => { it.tipoEsforco = sheetEsforcoSel.value; });
+    // Esforço (Baixo, Médio, Alto) → it.effortClass
+    applyToSelected((it) => { it.effortClass = sheetEsforcoSel.value; });
     render();
     persistState();
     try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
@@ -2205,9 +2208,11 @@ window.addEventListener('DOMContentLoaded', () => {
     try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
   });
   sheetTipoSel.addEventListener('change', () => {
+    // Tipo de esforço (Tarefa, Iniciativa, Ideia, Follow-up)
     applyToSelected((it) => { it.tipoEsforco = sheetTipoSel.value; });
     render();
     persistState();
+    try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
   });
   if (relSearch && relList) {
     relSearch.addEventListener('input', () => {
