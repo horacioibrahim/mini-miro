@@ -148,10 +148,15 @@ function parseAndamento(raw) {
 
 function parseProgresso(raw) {
   if (raw == null) return 0;
-  const m = String(raw).match(/\d+/);
-  const v = m ? Number(m[0]) : Number(raw);
-  if (Number.isNaN(v)) return 0;
-  return Math.min(100, Math.max(0, v));
+  const s = String(raw).trim();
+  // Remove símbolo de % se houver
+  const noPct = s.replace('%','').trim();
+  const n = Number(noPct);
+  if (!Number.isFinite(n)) return 0;
+  // Se valor vier entre 0 e 1 (Sheets com formato decimal), converte para %
+  if (n >= 0 && n <= 1 && s.indexOf('%') === -1) return Math.round(n * 100);
+  // Caso geral: já é percentual 0..100
+  return Math.min(100, Math.max(0, Math.round(n)));
 }
 
 function classifyTipoEsforco(raw) {
@@ -916,7 +921,7 @@ async function handleClassifiedFile(file, merge = true){
     const tipoEsforco = o['TipoEsforco'] ?? o['Tipo esforço'] ?? o['Tipo Esforço'] ?? o['Tipo de esforço'] ?? '';
     const andamento = String(o['Andamento']||'').trim().toLowerCase().startsWith('s');
     const progRaw = o['Progresso'] ?? o['Progresso (%)'] ?? o['progresso'] ?? o['progresso (%)'] ?? '';
-    const progresso = (()=>{ const s = String(progRaw).replace('%',''); const n = parseInt(s,10); return Number.isFinite(n)? Math.max(0,Math.min(100,n)) : 0; })();
+    const progresso = parseProgresso(progRaw);
     const boraImpact = o['Bora_Impact'] ?? '';
     const modalidade = o['Modalidade'] || '';
     const modalidades = String(o['Modalidades']||'').split(';').map(s=>s.trim()).filter(Boolean);
@@ -1725,7 +1730,7 @@ window.addEventListener('DOMContentLoaded', () => {
       case 'tipoesforco': return item.tipoEsforco || '';
       case 'urgencia': return Number(item.urgencia||0);
       case 'andamento': return item.andamento ? 'Sim' : 'Não';
-      case 'progresso': return Number(item.progresso||0);
+      case 'progresso': return Math.max(0, Math.min(1, Number(item.progresso||0) / 100));
       case 'esforco_class': return item.effortClass || '';
       case 'impacto_class': return item.impactClass || '';
       case 'abordagem_class': return item.abordagemClass || '';
@@ -2197,6 +2202,7 @@ window.addEventListener('DOMContentLoaded', () => {
     applyToSelected((it) => { it.progresso = v; });
     render();
     persistState();
+    try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
   });
   sheetTipoSel.addEventListener('change', () => {
     applyToSelected((it) => { it.tipoEsforco = sheetTipoSel.value; });
