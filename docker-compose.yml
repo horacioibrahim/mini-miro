@@ -3,6 +3,6 @@ services:
   priorizacao:
     build: .
     ports:
-      - "0.0.0.0:8089:80"
+      - "0.0.0.0:8090:80"
     restart: unless-stopped
 
