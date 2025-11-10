@@ -763,12 +763,26 @@ function setupDropTargets() {
     item.effortClass = effort;
     item.impactClass = impact;
     persistState();
+    try {
+      if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') {
+        window.demands.triggerSheetsUpsert(item);
+      } else {
+        triggerSheetsUpsert(item);
+      }
+    } catch (_){}
   }));
 
   attachDropEvents(backlog, (item) => {
     item.effortClass = null;
     item.impactClass = null;
     persistState();
+    try {
+      if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') {
+        window.demands.triggerSheetsUpsert(item);
+      } else {
+        triggerSheetsUpsert(item);
+      }
+    } catch (_){}
   });
 }
 
