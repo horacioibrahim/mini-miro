@@ -1891,6 +1891,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const drawerBackBtn = document.getElementById('drawerBackBtn');
   const modalidadesList = document.getElementById('modalidadesList');
   const personaList = document.getElementById('personaList');
+  const modalidadesBadges = document.getElementById('modalidadesBadges');
   const legalReqChk = document.getElementById('legalReqChk');
   const legalNotesRow = document.getElementById('legalNotesRow');
   const legalNotesText = document.getElementById('legalNotesText');
@@ -2064,6 +2065,34 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function buildModalidadesBadges(selectedArr){
+    if (!modalidadesBadges) return;
+    modalidadesBadges.innerHTML = '';
+    const opts = ['Lei 14133 (*)','Lei 13.303 (*)','D10024 (*)','D5450 (*)','Sistema S (*)'];
+    const sel = new Set(Array.isArray(selectedArr) ? selectedArr : (selectedArr ? [selectedArr] : []));
+    for (const name of opts){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip-toggle';
+      btn.textContent = name;
+      if (sel.has(name)) btn.classList.add('active');
+      modalidadesBadges.appendChild(btn);
+      btn.addEventListener('click', ()=>{
+        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+        if (!Array.isArray(it.modalidadeBadges)) it.modalidadeBadges = [];
+        const i = it.modalidadeBadges.indexOf(name);
+        if (i >= 0) {
+          it.modalidadeBadges.splice(i,1);
+          btn.classList.remove('active');
+        } else {
+          it.modalidadeBadges.push(name);
+          btn.classList.add('active');
+        }
+        persistState();
+      });
+    }
+  }
+
   function renderTokenList(container, list){
     if (!container) return;
     container.innerHTML = '';
@@ -2127,6 +2156,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function openModalidadesDrawer(){
     const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
     buildModalidadesOptions(it.modalidades);
+    buildModalidadesBadges(it.modalidadeBadges);
     buildPersonaOptions(it.personas);
     if (legalReqChk){ legalReqChk.checked = !!it.legalRequired; }
     if (legalNotesRow){ legalNotesRow.classList.toggle('hidden', !it.legalRequired); }
