@@ -269,6 +269,7 @@
     const subBack = document.getElementById('subSquadBacklogSel')?.value || '__ALL__';
     const urg = document.getElementById('urgenciaFilter2').value;
     const et = document.getElementById('esforcoTecnicoFilter2').value;
+    const tipo = document.getElementById('tipoEsforcoFilter2')?.value || 'all';
     const filtered = sortItems(state.items).filter(it=>{
       if (byIdPlaced.has(it.id)) return false;
       const iok = imp==='all' || it.impactClass===imp;
@@ -280,7 +281,8 @@
       const subOk = (subBack==='__ALL__') || (subBack==='__NONE__' ? !(it.subSquad && it.subSquad.trim()) : it.subSquad===subBack);
       const uok = urg==='all' || String((it.urgencia ?? 0)) === urg;
       const etOk = et==='all' || (et==='Sem' ? (it.effortClass==null) : (it.effortClass===et));
-      return iok && abOk && escOk && prOk && sok && subOk && uok && etOk;
+      const tipoOk = tipo==='all' || ((it.tipoEsforco || '-') === tipo);
+      return iok && abOk && escOk && prOk && sok && subOk && uok && etOk && tipoOk;
     });
     filtered.forEach(it=> bl.appendChild(card(it)));
 
@@ -405,6 +407,7 @@
         principal: document.getElementById('principalFilter2')?.value || 'all',
         urgencia: document.getElementById('urgenciaFilter2')?.value || 'all',
         esforcoTecnico: document.getElementById('esforcoTecnicoFilter2')?.value || 'all',
+        tipoEsforco: document.getElementById('tipoEsforcoFilter2')?.value || 'all',
         squadBacklog: document.getElementById('squadBacklogSel')?.value || '__ALL__',
         subSquadBacklog: document.getElementById('subSquadBacklogSel')?.value || '__ALL__',
       };
@@ -423,6 +426,7 @@
       set('principalFilter2', vals.principal);
       set('urgenciaFilter2', vals.urgencia);
       set('esforcoTecnicoFilter2', vals.esforcoTecnico);
+      set('tipoEsforcoFilter2', vals.tipoEsforco);
       set('squadBacklogSel', vals.squadBacklog);
       set('subSquadBacklogSel', vals.subSquadBacklog);
     } catch(e){ /* noop */ }
@@ -462,12 +466,12 @@
     });
 
     const bind = (id)=>{ const el=document.getElementById(id); if (el) el.addEventListener('change', ()=>{ persistFilters2(); render(); }); };
-    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2','squadBacklogSel','subSquadBacklogSel'].forEach(bind);
+    ['impactoFilter2','abordagemFilter2','escopoFilter2','principalFilter2','urgenciaFilter2','esforcoTecnicoFilter2','tipoEsforcoFilter2','squadBacklogSel','subSquadBacklogSel'].forEach(bind);
     document.getElementById('addWeekBtn').addEventListener('click', ()=>{ const sdata=getSquadData(); sdata.weeks += 1; ensureWeeks(); render(); persistGrid(); });
     document.getElementById('exportWeeksBtn').addEventListener('click', exportCsv);
     document.getElementById('resetFilters2Btn').addEventListener('click', ()=>{
       const set=(id,val)=>{ const el=document.getElementById(id); if (el) el.value=val; };
-      set('impactoFilter2','all'); set('abordagemFilter2','all'); set('escopoFilter2','all'); set('principalFilter2','all'); set('urgenciaFilter2','all'); set('esforcoTecnicoFilter2','all');
+      set('impactoFilter2','all'); set('abordagemFilter2','all'); set('escopoFilter2','all'); set('principalFilter2','all'); set('urgenciaFilter2','all'); set('esforcoTecnicoFilter2','all'); set('tipoEsforcoFilter2','all');
       persistFilters2(); render();
     });
     document.getElementById('resetPlanBtn').addEventListener('click', ()=>{
