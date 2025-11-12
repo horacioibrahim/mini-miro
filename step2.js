@@ -11,6 +11,111 @@
   const IMP_ORDER = ['Altíssimo','Alto','Médio','Baixo'];
   const ESF_ORDER = ['Baixo','Médio','Alto'];
 
+  // Helpers: GIS token + A1 and header utils for minimal Sheets updates (Ciclo/Tarefa)
+  const DEFAULT_GIS_CLIENT_ID = '1712067639-gp823soeiks0jvtabr52orb89jvn1geo.apps.googleusercontent.com';
+  let gisAccessToken = null;
+  function ensureGisLoaded(){
+    return new Promise((resolve)=>{
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true; s.defer = true;
+      s.onload = ()=> resolve();
+      document.head.appendChild(s);
+    });
+  }
+  async function getGisToken(){
+    await ensureGisLoaded();
+    const clientId = DEFAULT_GIS_CLIENT_ID;
+    return new Promise((resolve)=>{
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email',
+        callback: (resp) => { if (resp && resp.access_token) { gisAccessToken = resp.access_token; resolve(gisAccessToken); } else resolve(null); },
+      });
+      tokenClient.requestAccessToken({ prompt: '' });
+    });
+  }
+  function a1Col(index){
+    let n = index + 1; let s = '';
+    while(n>0){ const m = (n-1)%26; s = String.fromCharCode(65+m)+s; n = Math.floor((n-1)/26); }
+    return s;
+  }
+  function normKey(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+  function getItemPlacement(id){
+    for (const [squad, data] of Object.entries(state.grids||{})){
+      const grid = data?.grid || {};
+      for (const [week, slots] of Object.entries(grid)){
+        for (const [slotKey, ids] of Object.entries(slots||{})){
+          if (Array.isArray(ids) && ids.includes(id)) {
+            const m = String(week).match(/(\d+)/);
+            const num = m ? Number(m[1]) : null;
+            const slotIndex = slotKey === 't1' ? 1 : slotKey === 't2' ? 2 : slotKey === 't3' ? 3 : null;
+            return { squad, weekLabel: week, cycleNum: num, slotIndex };
+          }
+        }
+      }
+    }
+    return { squad: null, weekLabel: '', cycleNum: null, slotIndex: null };
+  }
+  async function upsertPlacementToSheets(item){
+    try {
+      if (!item) return;
+      const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (!cfgRaw) return; // não configurado
+      const cfg = JSON.parse(cfgRaw);
+      const spreadsheetId = cfg.id;
+      const sheetTitle = (cfg.sheet || 'base_classificada');
+      if (!spreadsheetId || spreadsheetId.startsWith('http')) return; // requer ID de edição
+      const token = gisAccessToken || await getGisToken();
+      if (!token) return;
+      // headers
+      let url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(sheetTitle)}!1:1`;
+      let resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) return;
+      const head = await resp.json();
+      const headers = (head.values && head.values[0]) ? head.values[0] : [];
+      const nkeys = headers.map(h => normKey(h));
+      // localizar linha pela coluna Demanda
+      const demandCol = nkeys.findIndex(k => k === 'demanda');
+      if (demandCol < 0) return;
+      const colA1 = a1Col(demandCol);
+      url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(sheetTitle)}!${colA1}2:${colA1}`;
+      resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) return;
+      const colData = await resp.json();
+      const vals = (colData.values||[]).map(r => (r&&r[0])? String(r[0]) : '');
+      const rowIdx = vals.findIndex(v => v === (item.demanda||'')); // 0-based within slice
+      if (rowIdx < 0) return; // item não encontrado na planilha
+      const rowNumber = rowIdx + 2; // compensar header
+      // colunas alvo (qualquer sinônimo)
+      const cicloIdx = nkeys.findIndex(k => k === 'ciclo' || k === 'ciclo_label');
+      const tarefaIdx = nkeys.findIndex(k => k === 'tarefa' || k === 'tarefa_posicao' || k === 'posicao' || k === 'slot');
+      const placement = getItemPlacement(item.id);
+      const cicloVal = placement.cycleNum != null ? String(placement.cycleNum) : '';
+      const tarefaVal = placement.slotIndex != null ? String(placement.slotIndex) : '';
+      // atualizar células individualmente se existir a coluna
+      if (cicloIdx >= 0){
+        const c = a1Col(cicloIdx);
+        const range = `${sheetTitle}!${c}${rowNumber}:${c}${rowNumber}`;
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
+          method: 'PUT',
+          headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ range, majorDimension: 'ROWS', values: [[cicloVal]] })
+        });
+      }
+      if (tarefaIdx >= 0){
+        const c = a1Col(tarefaIdx);
+        const range = `${sheetTitle}!${c}${rowNumber}:${c}${rowNumber}`;
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
+          method: 'PUT',
+          headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ range, majorDimension: 'ROWS', values: [[tarefaVal]] })
+        });
+      }
+    } catch(_){}
+  }
+
   function loadItems() {
     try {
       const raw = localStorage.getItem('priorizacao_state');
@@ -104,6 +209,8 @@
       sdata.grid[week][slot] = [id];
       render();
       persistGrid();
+      // atualiza dinamicamente Ciclo/Tarefa na planilha (se configurada)
+      upsertPlacementToSheets(item);
     });
   }
 
@@ -192,6 +299,8 @@
         removeFromAllSlots(sdata, id);
         render();
         persistGrid();
+        const item = state.items.find(x=>x.id===id);
+        if (item) upsertPlacementToSheets(item);
       });
       backlogAside._dndBound = true;
     }
