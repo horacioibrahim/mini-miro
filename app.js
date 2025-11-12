@@ -2003,7 +2003,13 @@ window.addEventListener('DOMContentLoaded', () => {
       'Pregão Lei das Estatais 13.303',
       'Pregão para Registro de Preço',
       'RCE–Regime de Contratação Estatal',
-      'Regime Diferenciado de Contratação'
+      'Regime Diferenciado de Contratação',
+      // badges de legislação específicos
+      'Lei 14133 (*)',
+      'Lei 13.303 (*)',
+      'D10024 (*)',
+      'D5450 (*)',
+      'Sistema S (*)'
     ];
     const selSet = new Set(Array.isArray(selected)? selected : (selected ? [selected] : []));
     for (const name of opts){
@@ -2156,7 +2162,6 @@ window.addEventListener('DOMContentLoaded', () => {
   function openModalidadesDrawer(){
     const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
     buildModalidadesOptions(it.modalidades);
-    buildModalidadesBadges(it.modalidadeBadges);
     buildPersonaOptions(it.personas);
     if (legalReqChk){ legalReqChk.checked = !!it.legalRequired; }
     if (legalNotesRow){ legalNotesRow.classList.toggle('hidden', !it.legalRequired); }
