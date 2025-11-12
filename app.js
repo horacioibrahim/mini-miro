@@ -430,6 +430,7 @@ function openVoteOverlay() {
         ev.stopPropagation();
         item.urgencia = n;
         try { persistState(); } catch(_){ }
+        try { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } catch(_){}
         // update active state + badge text
         menu.querySelectorAll('.vote-urg-btn').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
@@ -467,6 +468,7 @@ function openVoteOverlay() {
         ev.stopPropagation();
         item.boraImpact = v;
         try { persistState(); } catch(_){ }
+        try { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } catch(_){}
         bora.querySelectorAll('.vote-bora-btn').forEach(x=>x.classList.remove('active'));
         bb.classList.add('active');
       });
@@ -2031,7 +2033,20 @@ window.addEventListener('DOMContentLoaded', () => {
   function buildPersonaOptions(selectedArr){
     if (!personaList) return;
     personaList.innerHTML='';
-    const opts = ['Comprador','Fornecedor','Pregoeiro','Apoio','Administrador','Outro'];
+    const opts = [
+      // existentes
+      'Comprador','Fornecedor','Pregoeiro','Apoio','Administrador','Outro',
+      // novos solicitados
+      'Agente de contratação',
+      'Leiloeiro',
+      'Operador de Compra direta',
+      'Operador de dispensa',
+      'Operador de inexigibildiade',
+      'Operador Mod. Contrato',
+      'Autoridade competente',
+      'Comissão de Licitação Perm.',
+      'Comissão de Lititação Especial'
+    ];
     const selSet = new Set(selectedArr||[]);
     for (const name of opts){
       const id = 'per_'+name.replace(/\W+/g,'_');
