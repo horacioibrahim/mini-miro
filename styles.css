@@ -1063,6 +1063,15 @@ button:hover {
   display: none;
 }
 
+#relSearch {
+  width: 100%;
+  display: block;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px;
+}
+
 .rel-list {
   border: 1px solid var(--border);
   border-radius: 8px;
