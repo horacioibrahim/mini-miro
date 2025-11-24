@@ -144,6 +144,16 @@ body {
   align-items: flex-start;
 }
 
+.control-group label {
+  font-size: 12px;
+}
+
+.control-group select,
+.control-group input,
+.control-group button {
+  font-size: 12px;
+}
+
 label {
   font-size: 14px;
   color: var(--muted);
