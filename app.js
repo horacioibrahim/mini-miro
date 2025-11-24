@@ -41,7 +41,7 @@ function loadFiltersStep1() {
     if (!parsed) return;
     state.filters = { ...state.filters, ...parsed };
     // apply to UI controls if present
-    const setVal = (id, val)=>{ const el=document.getElementById(id); if (el && typeof val!== 'undefined') el.value = val; };
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && typeof val !== 'undefined') el.value = val; };
     setVal('abordagemFilter', state.filters.abordagem);
     setVal('escopoFilter', state.filters.escopo);
     setVal('principalFilter', state.filters.principal);
@@ -56,7 +56,7 @@ function loadFiltersStep1() {
     const gb = document.getElementById('groupDropdownBtn'); if (gb) {
       // trigger label update via render()->summary, or rebuild list when opened
     }
-  } catch(e){ /* noop */ }
+  } catch (e) { /* noop */ }
 }
 
 // Column header names (exact CSV headers expected)
@@ -91,8 +91,8 @@ function normalizeString(value) {
 }
 
 // Header normalization for CSV column comparisons (aggressive: remove non-alphanum)
-function normalizeHeaderKey(value){
-  return normalizeString(value).replace(/[^a-z0-9]+/g,'');
+function normalizeHeaderKey(value) {
+  return normalizeString(value).replace(/[^a-z0-9]+/g, '');
 }
 
 function classifyEffort(esforcoRaw) {
@@ -150,7 +150,7 @@ function parseProgresso(raw) {
   if (raw == null) return 0;
   const s = String(raw).trim();
   // Remove símbolo de % se houver
-  const noPct = s.replace('%','').trim();
+  const noPct = s.replace('%', '').trim();
   const n = Number(noPct);
   if (!Number.isFinite(n)) return 0;
   // Se valor vier entre 0 e 1 (Sheets com formato decimal), converte para %
@@ -312,7 +312,7 @@ function render() {
     const gname = (item.grupo || '').trim();
     const groupOk = groupsSel.length === 0 || groupsSel.includes(gname || '__NONE__');
     const ss = (item.subSquad || '').trim();
-    const subOk = (subSquadSel.length===0) || subSquadSel.includes(ss || '__NONE__');
+    const subOk = (subSquadSel.length === 0) || subSquadSel.includes(ss || '__NONE__');
     const textOk = !textFilter
       || normalizeString(item.demanda).includes(textFilter)
       || normalizeString(item.demandaDescricao || '').includes(textFilter);
@@ -323,7 +323,7 @@ function render() {
   let visibleCount = 0;
   try {
     visibleCount = state.items.reduce((acc, it) => acc + (passFilters(it) ? 1 : 0), 0);
-  } catch (_) {}
+  } catch (_) { }
   const vc = document.getElementById('visibleCountStep1');
   if (vc) vc.textContent = String(visibleCount);
   const gs = document.getElementById('groupSummary');
@@ -361,18 +361,18 @@ function render() {
 }
 
 // Populate SubSquad filter options dynamically
-function populateSubSquadFilter(){
+function populateSubSquadFilter() {
   const sel = document.getElementById('subSquadFilter');
   if (!sel) return;
   const keep = sel.value;
   const set = new Set();
-  for (const it of state.items){ const v=(it.subSquad||'').trim(); if (v) set.add(v); }
+  for (const it of state.items) { const v = (it.subSquad || '').trim(); if (v) set.add(v); }
   const values = Array.from(set).sort();
   sel.innerHTML = '';
-  const mk=(val,txt)=>{ const o=document.createElement('option'); o.value=val; o.textContent=txt; return o; };
-  sel.appendChild(mk('all','Todas'));
-  sel.appendChild(mk('__NONE__','Sem subSquad'));
-  values.forEach(v=> sel.appendChild(mk(v, v)));
+  const mk = (val, txt) => { const o = document.createElement('option'); o.value = val; o.textContent = txt; return o; };
+  sel.appendChild(mk('all', 'Todas'));
+  sel.appendChild(mk('__NONE__', 'Sem subSquad'));
+  values.forEach(v => sel.appendChild(mk(v, v)));
   if (keep) sel.value = keep;
 }
 
@@ -423,29 +423,29 @@ function openVoteOverlay() {
     const c = document.createElement('div'); c.className = 'vote-card'; c.setAttribute('data-id', String(item.id));
     // urgency quick menu will go in footer
     const menu = document.createElement('div'); menu.className = 'vote-urg-menu';
-    for (let n=0;n<=5;n++){
-      const b = document.createElement('button'); b.type='button'; b.className = 'vote-urg-btn'; b.textContent = String(n);
+    for (let n = 0; n <= 5; n++) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'vote-urg-btn'; b.textContent = String(n);
       if (Number(item.urgencia ?? 0) === n) b.classList.add('active');
-      b.addEventListener('click', (ev)=>{
+      b.addEventListener('click', (ev) => {
         ev.stopPropagation();
         item.urgencia = n;
-        try { persistState(); } catch(_){ }
-        try { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } catch(_){}
+        try { persistState(); } catch (_) { }
+        try { if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } catch (_) { }
         // update active state + badge text
-        menu.querySelectorAll('.vote-urg-btn').forEach(x=>x.classList.remove('active'));
+        menu.querySelectorAll('.vote-urg-btn').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
         const ub = c.querySelector('.badge-Urg'); if (ub) ub.textContent = `Urgência: ${n}`;
       });
       menu.appendChild(b);
     }
     // title
-    const title = document.createElement('div'); title.className='vote-card-title'; title.textContent = item.demanda || '(sem título)'; c.appendChild(title);
+    const title = document.createElement('div'); title.className = 'vote-card-title'; title.textContent = item.demanda || '(sem título)'; c.appendChild(title);
     // desc
-    const desc = document.createElement('div'); desc.className='vote-card-desc'; desc.textContent = item.demandaDescricao || ''; c.appendChild(desc);
+    const desc = document.createElement('div'); desc.className = 'vote-card-desc'; desc.textContent = item.demandaDescricao || ''; c.appendChild(desc);
     // badges
-    const badges = document.createElement('div'); badges.className='vote-badges';
+    const badges = document.createElement('div'); badges.className = 'vote-badges';
     // tipo esforço
-    const tipo = document.createElement('span'); tipo.className='badge';
+    const tipo = document.createElement('span'); tipo.className = 'badge';
     const tl = item.tipoEsforco || '-';
     if (tl === 'Tarefa') tipo.classList.add('badge--tarefa');
     else if (tl === 'Iniciativa') tipo.classList.add('badge--iniciativa');
@@ -453,23 +453,23 @@ function openVoteOverlay() {
     else if (tl === 'Follow-up') tipo.classList.add('badge--follow');
     tipo.textContent = `tipo esf.: ${tl}`;
     badges.appendChild(tipo);
-    const urg = document.createElement('span'); urg.className='badge badge-Urg'; urg.textContent = `Urgência: ${item.urgencia ?? 0}`; badges.appendChild(urg);
+    const urg = document.createElement('span'); urg.className = 'badge badge-Urg'; urg.textContent = `Urgência: ${item.urgencia ?? 0}`; badges.appendChild(urg);
     c.appendChild(badges);
     // footer with urgency + bora buttons
-    const footer = document.createElement('div'); footer.className='vote-card-footer';
+    const footer = document.createElement('div'); footer.className = 'vote-card-footer';
     footer.appendChild(menu);
     // Bora buttons
     const bora = document.createElement('div'); bora.className = 'vote-bora-menu';
-    const boraVals = ['0.25','0.5','1','2','3'];
-    for (const v of boraVals){
-      const bb = document.createElement('button'); bb.type='button'; bb.className='vote-bora-btn'; bb.textContent = v;
+    const boraVals = ['0.25', '0.5', '1', '2', '3'];
+    for (const v of boraVals) {
+      const bb = document.createElement('button'); bb.type = 'button'; bb.className = 'vote-bora-btn'; bb.textContent = v;
       if ((item.boraImpact || '') === v) bb.classList.add('active');
-      bb.addEventListener('click', (ev)=>{
+      bb.addEventListener('click', (ev) => {
         ev.stopPropagation();
         item.boraImpact = v;
-        try { persistState(); } catch(_){ }
-        try { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } catch(_){}
-        bora.querySelectorAll('.vote-bora-btn').forEach(x=>x.classList.remove('active'));
+        try { persistState(); } catch (_) { }
+        try { if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } catch (_) { }
+        bora.querySelectorAll('.vote-bora-btn').forEach(x => x.classList.remove('active'));
         bb.classList.add('active');
       });
       bora.appendChild(bb);
@@ -479,7 +479,7 @@ function openVoteOverlay() {
     grid.appendChild(c);
 
     // highlight selection
-    c.addEventListener('click', ()=>{
+    c.addEventListener('click', () => {
       const isSel = c.classList.toggle('selected');
       if (isSel) overlay.classList.add('has-selection');
       else {
@@ -487,7 +487,7 @@ function openVoteOverlay() {
       }
     });
     // prevent button clicks from toggling selection
-    footer.addEventListener('click',(ev)=>{
+    footer.addEventListener('click', (ev) => {
       if (ev.target.closest('.vote-urg-btn') || ev.target.closest('.vote-bora-btn')) {
         ev.stopPropagation();
       }
@@ -516,11 +516,11 @@ function applyVoteCols() {
   grid.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
 }
 
-function persistVoteCols(){
+function persistVoteCols() {
   try {
     const sel = document.getElementById('voteColsSel');
     if (sel) localStorage.setItem('priorizacao_vote_cols', sel.value);
-  } catch(_){}
+  } catch (_) { }
 }
 
 // Draw dashed curved lines between related items, using closest edge centers
@@ -547,9 +547,9 @@ function drawRelations() {
 
   function edgeCenters(r) {
     return {
-      left:   { x: r.left - contRect.left,          y: r.top - contRect.top + r.height / 2 },
-      right:  { x: r.right - contRect.left,         y: r.top - contRect.top + r.height / 2 },
-      top:    { x: r.left - contRect.left + r.width / 2, y: r.top - contRect.top },
+      left: { x: r.left - contRect.left, y: r.top - contRect.top + r.height / 2 },
+      right: { x: r.right - contRect.left, y: r.top - contRect.top + r.height / 2 },
+      top: { x: r.left - contRect.left + r.width / 2, y: r.top - contRect.top },
       bottom: { x: r.left - contRect.left + r.width / 2, y: r.bottom - contRect.top },
     };
   }
@@ -567,7 +567,7 @@ function drawRelations() {
     let bestD2 = Infinity;
     for (const [s, t] of candidates) {
       const dx = t.x - s.x, dy = t.y - s.y;
-      const d2 = dx*dx + dy*dy;
+      const d2 = dx * dx + dy * dy;
       if (d2 < bestD2) { bestD2 = d2; best = [s, t]; }
     }
     return best; // [sourcePoint, targetPoint]
@@ -687,13 +687,13 @@ function renderCard(item) {
   badgesRow.appendChild(principalBadge);
   badgesRow.appendChild(tipoBadge);
   if ((item.grupo || '').trim()) {
-    const gBadge = el('span','badge'); gBadge.textContent = `Grupo: ${(item.grupo||'').trim()}`; badgesRow.appendChild(gBadge);
+    const gBadge = el('span', 'badge'); gBadge.textContent = `Grupo: ${(item.grupo || '').trim()}`; badgesRow.appendChild(gBadge);
   }
   if ((item.subSquad || '').trim()) {
-    const sBadge = el('span','badge'); sBadge.textContent = `SubSquad: ${(item.subSquad||'').trim()}`; badgesRow.appendChild(sBadge);
+    const sBadge = el('span', 'badge'); sBadge.textContent = `SubSquad: ${(item.subSquad || '').trim()}`; badgesRow.appendChild(sBadge);
   }
   if ((item.boraImpact || '') !== '') {
-    const bBadge = el('span','badge'); bBadge.textContent = `Bora: ${item.boraImpact}`; badgesRow.appendChild(bBadge);
+    const bBadge = el('span', 'badge'); bBadge.textContent = `Bora: ${item.boraImpact}`; badgesRow.appendChild(bBadge);
   }
   const urgBadge = el('span', 'badge');
   urgBadge.textContent = `Urgência: ${item.urgencia ?? 0}`;
@@ -771,7 +771,7 @@ function setupDropTargets() {
       } else {
         triggerSheetsUpsert(item);
       }
-    } catch (_){}
+    } catch (_) { }
   }));
 
   attachDropEvents(backlog, (item) => {
@@ -784,7 +784,7 @@ function setupDropTargets() {
       } else {
         triggerSheetsUpsert(item);
       }
-    } catch (_){}
+    } catch (_) { }
   });
 }
 
@@ -834,7 +834,7 @@ async function handleFile(file, merge = true) {
     const andamento = parseAndamento(andamentoRaw);
     const progresso = parseProgresso(progressoRaw);
     const tipoEsforco = classifyTipoEsforco(tipoEsforcoRaw);
-    const urgencia = (()=>{ const n = parseInt(String(urgenciaRaw||'').match(/\d+/)?.[0]||'',10); return (n>=0 && n<=5)? (Number.isNaN(n)? 0 : n) : 0; })();
+    const urgencia = (() => { const n = parseInt(String(urgenciaRaw || '').match(/\d+/)?.[0] || '', 10); return (n >= 0 && n <= 5) ? (Number.isNaN(n) ? 0 : n) : 0; })();
     // baseline from CSV
     const base = {
       id: idx + 1,
@@ -897,7 +897,7 @@ async function handleFile(file, merge = true) {
 }
 
 // Import from classified CSV (our own export format)
-async function handleClassifiedFile(file, merge = true){
+async function handleClassifiedFile(file, merge = true) {
   const text = await file.text();
   const rows = parseCsv(text);
   const objs = rowsToObjects(rows);
@@ -916,49 +916,49 @@ async function handleClassifiedFile(file, merge = true){
           }
         }
       }
-    } catch(_){}
+    } catch (_) { }
   }
 
-  const items = objs.map((o, idx)=>{
+  const items = objs.map((o, idx) => {
     const demanda = valueByPossibleKeys(o, [HEADERS.DEMANDA, 'Demanda']);
     const demandDesc = valueByPossibleKeys(o, [HEADERS.DEMANDA_DESC, 'Demanda descrição']);
     const squad = valueByPossibleKeys(o, [HEADERS.SQUAD, 'Squad']);
     let grupo = o['Grupo'] ?? '';
     const subSquad = o['SubSquad'] ?? '';
     const urgRaw = String(o['Urgencia'] ?? o['Urgência'] ?? '');
-    let urgencia = (()=>{ const n = parseInt(urgRaw.replace(/\D+/g,''),10); return Number.isFinite(n)? Math.max(0, Math.min(5, n)) : 0; })();
+    let urgencia = (() => { const n = parseInt(urgRaw.replace(/\D+/g, ''), 10); return Number.isFinite(n) ? Math.max(0, Math.min(5, n)) : 0; })();
     // Heurística de correção para CSVs antigos onde Urgencia/Grupo estavam trocados
     const grupoLooksNumber = /^\s*[0-5]\s*$/.test(String(o['Grupo'] ?? ''));
-    const urgLooksName = !/^\s*[0-5]\s*$/.test(urgRaw) && String(urgRaw).trim().length>0;
-    if ((urgencia===0 && grupoLooksNumber) || (urgLooksName && grupoLooksNumber)) {
-      urgencia = parseInt(String(o['Grupo']).trim(),10);
+    const urgLooksName = !/^\s*[0-5]\s*$/.test(urgRaw) && String(urgRaw).trim().length > 0;
+    if ((urgencia === 0 && grupoLooksNumber) || (urgLooksName && grupoLooksNumber)) {
+      urgencia = parseInt(String(o['Grupo']).trim(), 10);
       grupo = urgRaw; // o que estava em Urgencia vira grupo
     }
     const tipoEsforco = o['TipoEsforco'] ?? o['Tipo esforço'] ?? o['Tipo Esforço'] ?? o['Tipo de esforço'] ?? '';
-    const andamento = String(o['Andamento']||'').trim().toLowerCase().startsWith('s');
+    const andamento = String(o['Andamento'] || '').trim().toLowerCase().startsWith('s');
     const progRaw = o['Progresso'] ?? o['Progresso (%)'] ?? o['progresso'] ?? o['progresso (%)'] ?? '';
     const progresso = parseProgresso(progRaw);
     const boraImpact = o['Bora_Impact'] ?? '';
     const modalidade = o['Modalidade'] || '';
-    const modalidades = String(o['Modalidades']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const modalidades = String(o['Modalidades'] || '').split(';').map(s => s.trim()).filter(Boolean);
     const observation = o['Observacao_Complementar'] ?? '';
-    const personas = String(o['Persona']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const personas = String(o['Persona'] || '').split(';').map(s => s.trim()).filter(Boolean);
     const hipoteses = o['Hipoteses'] || '';
     const proposta = o['Proposta'] || '';
-    const tecnologias = String(o['Tecnologias']||'').split(';').map(s=>s.trim()).filter(Boolean);
-    const servicos = String(o['Servicos']||'').split(';').map(s=>s.trim()).filter(Boolean);
-    const tiposAlteracao = String(o['TiposAlteracao']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const tecnologias = String(o['Tecnologias'] || '').split(';').map(s => s.trim()).filter(Boolean);
+    const servicos = String(o['Servicos'] || '').split(';').map(s => s.trim()).filter(Boolean);
+    const tiposAlteracao = String(o['TiposAlteracao'] || '').split(';').map(s => s.trim()).filter(Boolean);
     const complexidade = o['Complexidade'] || '';
-    const horasEstimadas = (()=>{ const n = parseInt(o['HorasEstimadas'],10); return Number.isFinite(n)? n : null; })();
-    const legalRequired = String(o['RequerJuridico']||'').trim().toLowerCase().startsWith('s');
+    const horasEstimadas = (() => { const n = parseInt(o['HorasEstimadas'], 10); return Number.isFinite(n) ? n : null; })();
+    const legalRequired = String(o['RequerJuridico'] || '').trim().toLowerCase().startsWith('s');
     const legalNotes = o['QuestoesJuridicas'] || '';
-    const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o,[HEADERS.ESFORCO]));
-    const impactClass = o['Impacto_Class'] ?? classifyImpact(valueByPossibleKeys(o,[HEADERS.IMPACTO]));
-    const abordagemClass = o['Abordagem_Class'] ?? classifyAbordagem(valueByPossibleKeys(o,[HEADERS.ABORDAGEM]));
-    const escopoClass = o['Escopo_Class'] ?? classifyEscopo(valueByPossibleKeys(o,[HEADERS.ESCOPO]));
-    const principalImpactClass = o['PrincipalImpacto_Class'] ?? classifyPrincipalImpact(valueByPossibleKeys(o,[HEADERS.PRINCIPAL_IMPACTO]));
-    const parentName = (o['Pai']||'').trim();
-    const relatedNames = String(o['Relacionamentos']||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const effortClass = o['Esforco_Class'] ?? classifyEffort(valueByPossibleKeys(o, [HEADERS.ESFORCO]));
+    const impactClass = o['Impacto_Class'] ?? classifyImpact(valueByPossibleKeys(o, [HEADERS.IMPACTO]));
+    const abordagemClass = o['Abordagem_Class'] ?? classifyAbordagem(valueByPossibleKeys(o, [HEADERS.ABORDAGEM]));
+    const escopoClass = o['Escopo_Class'] ?? classifyEscopo(valueByPossibleKeys(o, [HEADERS.ESCOPO]));
+    const principalImpactClass = o['PrincipalImpacto_Class'] ?? classifyPrincipalImpact(valueByPossibleKeys(o, [HEADERS.PRINCIPAL_IMPACTO]));
+    const parentName = (o['Pai'] || '').trim();
+    const relatedNames = String(o['Relacionamentos'] || '').split(';').map(s => s.trim()).filter(Boolean);
 
     const base = {
       id: idx + 1,
@@ -997,25 +997,25 @@ async function handleClassifiedFile(file, merge = true){
       _relatedNames: relatedNames,
     };
 
-  const p = persistedMap.get(normalizeString(demanda||''));
-  if (p) {
-    // On classified import, prefer CSV values (backup) and only carry over ID and links if missing
-    base.id = p.id ?? base.id;
-    if (base.parentId == null) base.parentId = p.parentId ?? null;
-    if (!Array.isArray(base.relatedIds) || base.relatedIds.length===0) base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : [];
-  }
+    const p = persistedMap.get(normalizeString(demanda || ''));
+    if (p) {
+      // On classified import, prefer CSV values (backup) and only carry over ID and links if missing
+      base.id = p.id ?? base.id;
+      if (base.parentId == null) base.parentId = p.parentId ?? null;
+      if (!Array.isArray(base.relatedIds) || base.relatedIds.length === 0) base.relatedIds = Array.isArray(p.relatedIds) ? p.relatedIds.slice() : [];
+    }
     return base;
   });
 
   // Resolve Pai e Relacionamentos por nome
   const nameToId = new Map();
-  for (const it of items) { const k = normalizeString(it.demanda||''); if (k && !nameToId.has(k)) nameToId.set(k, it.id); }
+  for (const it of items) { const k = normalizeString(it.demanda || ''); if (k && !nameToId.has(k)) nameToId.set(k, it.id); }
   for (const it of items) {
     if (it.parentId == null && it._parentName) {
       const pid = nameToId.get(normalizeString(it._parentName)); if (pid) it.parentId = pid;
     }
-    if ((!it.relatedIds || it.relatedIds.length===0) && Array.isArray(it._relatedNames)) {
-      it.relatedIds = it._relatedNames.map(n=> nameToId.get(normalizeString(n))).filter(Boolean);
+    if ((!it.relatedIds || it.relatedIds.length === 0) && Array.isArray(it._relatedNames)) {
+      it.relatedIds = it._relatedNames.map(n => nameToId.get(normalizeString(n))).filter(Boolean);
     }
     delete it._parentName; delete it._relatedNames;
   }
@@ -1091,7 +1091,7 @@ function exportCsv() {
   const originalHeadersRaw = Object.keys(state.items[0]._original);
   const seenKeys = new Set();
   const originalHeaders = [];
-  for (const h of originalHeadersRaw){
+  for (const h of originalHeadersRaw) {
     const k = normalizeHeaderKey(h);
     if (seenKeys.has(k)) continue;
     seenKeys.add(k);
@@ -1099,36 +1099,36 @@ function exportCsv() {
   }
   const originalCI = new Set(originalHeaders.map(h => normalizeHeaderKey(h)));
   const extraDefsAll = [
-    { name: 'Esforco_Class', get: (it)=> it.effortClass },
-    { name: 'Impacto_Class', get: (it)=> it.impactClass },
-    { name: 'Abordagem_Class', get: (it)=> it.abordagemClass },
-    { name: 'Escopo_Class', get: (it)=> it.escopoClass },
-    { name: 'PrincipalImpacto_Class', get: (it)=> it.principalImpactClass },
-    { name: 'Bora_Impact', get: (it)=> it.boraImpact || '' },
-    { name: 'Andamento', get: (it)=> it.andamento ? 'Sim' : 'Não' },
-    { name: 'Progresso', get: (it)=> `${it.progresso ?? 0}%` },
-    { name: 'TipoEsforco', get: (it)=> it.tipoEsforco || '' },
-    { name: 'SubSquad', get: (it)=> it.subSquad || '' },
-    { name: 'Urgencia', get: (it)=> it.urgencia ?? '' },
-    { name: 'Grupo', get: (it)=> it.grupo || '' },
-    { name: 'Pai', get: (it)=> { const p = state.items.find(x=>x.id===it.parentId); return p?.demanda || ''; } },
-    { name: 'Relacionamentos', get: (it)=> (it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; ') },
-    { name: 'Observacao_Complementar', get: (it)=> it.observation },
-    { name: 'Modalidade', get: (it)=> (it.modalidade || (Array.isArray(it.modalidades) && it.modalidades[0]) || '') },
-    { name: 'Modalidades', get: (it)=> (it.modalidades||[]).join('; ') },
-    { name: 'Persona', get: (it)=> (it.personas||[]).join('; ') },
-    { name: 'Hipoteses', get: (it)=> it.hipoteses || '' },
-    { name: 'Proposta', get: (it)=> it.proposta || '' },
-    { name: 'Tecnologias', get: (it)=> (it.tecnologias||[]).join('; ') },
-    { name: 'Servicos', get: (it)=> (it.servicos||[]).join('; ') },
-    { name: 'TiposAlteracao', get: (it)=> (it.tiposAlteracao||[]).join('; ') },
-    { name: 'Complexidade', get: (it)=> it.complexidade || '' },
-    { name: 'HorasEstimadas', get: (it)=> it.horasEstimadas ?? '' },
-    { name: 'RequerJuridico', get: (it)=> it.legalRequired ? 'Sim' : 'Não' },
-    { name: 'QuestoesJuridicas', get: (it)=> it.legalNotes || '' },
+    { name: 'Esforco_Class', get: (it) => it.effortClass },
+    { name: 'Impacto_Class', get: (it) => it.impactClass },
+    { name: 'Abordagem_Class', get: (it) => it.abordagemClass },
+    { name: 'Escopo_Class', get: (it) => it.escopoClass },
+    { name: 'PrincipalImpacto_Class', get: (it) => it.principalImpactClass },
+    { name: 'Bora_Impact', get: (it) => it.boraImpact || '' },
+    { name: 'Andamento', get: (it) => it.andamento ? 'Sim' : 'Não' },
+    { name: 'Progresso', get: (it) => `${it.progresso ?? 0}%` },
+    { name: 'TipoEsforco', get: (it) => it.tipoEsforco || '' },
+    { name: 'SubSquad', get: (it) => it.subSquad || '' },
+    { name: 'Urgencia', get: (it) => it.urgencia ?? '' },
+    { name: 'Grupo', get: (it) => it.grupo || '' },
+    { name: 'Pai', get: (it) => { const p = state.items.find(x => x.id === it.parentId); return p?.demanda || ''; } },
+    { name: 'Relacionamentos', get: (it) => (it.relatedIds || []).map(id => { const o = state.items.find(x => x.id === id); return o?.demanda || `#${id}`; }).join('; ') },
+    { name: 'Observacao_Complementar', get: (it) => it.observation },
+    { name: 'Modalidade', get: (it) => (it.modalidade || (Array.isArray(it.modalidades) && it.modalidades[0]) || '') },
+    { name: 'Modalidades', get: (it) => (it.modalidades || []).join('; ') },
+    { name: 'Persona', get: (it) => (it.personas || []).join('; ') },
+    { name: 'Hipoteses', get: (it) => it.hipoteses || '' },
+    { name: 'Proposta', get: (it) => it.proposta || '' },
+    { name: 'Tecnologias', get: (it) => (it.tecnologias || []).join('; ') },
+    { name: 'Servicos', get: (it) => (it.servicos || []).join('; ') },
+    { name: 'TiposAlteracao', get: (it) => (it.tiposAlteracao || []).join('; ') },
+    { name: 'Complexidade', get: (it) => it.complexidade || '' },
+    { name: 'HorasEstimadas', get: (it) => it.horasEstimadas ?? '' },
+    { name: 'RequerJuridico', get: (it) => it.legalRequired ? 'Sim' : 'Não' },
+    { name: 'QuestoesJuridicas', get: (it) => it.legalNotes || '' },
   ];
   const includedDefs = extraDefsAll.filter(def => !originalCI.has(normalizeHeaderKey(def.name)));
-  const headers = [...originalHeaders, ...includedDefs.map(d=>d.name)];
+  const headers = [...originalHeaders, ...includedDefs.map(d => d.name)];
 
   const lines = [];
   const esc = (v) => {
@@ -1158,8 +1158,8 @@ function exportCsv() {
       if (hk === 'tipoesforco') return esc(it.tipoEsforco || (it._original[h] ?? ''));
       if (hk.startsWith('progresso')) return esc(`${it.progresso ?? 0}%`);
       if (hk === 'andamento') return esc(it.andamento ? 'Sim' : 'Não');
-      if (hk === 'pai') { const p = state.items.find(x=>x.id===it.parentId); return esc(p?.demanda || ''); }
-      if (hk === 'relacionamentos') { const rel=(it.relatedIds||[]).map(id=>{ const o=state.items.find(x=>x.id===id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
+      if (hk === 'pai') { const p = state.items.find(x => x.id === it.parentId); return esc(p?.demanda || ''); }
+      if (hk === 'relacionamentos') { const rel = (it.relatedIds || []).map(id => { const o = state.items.find(x => x.id === id); return o?.demanda || `#${id}`; }).join('; '); return esc(rel); }
       if (hk === 'observacaocomplementar') return esc(it.observation || '');
       if (hk === 'modalidade') return esc(it.modalidade || '');
       if (hk === 'hacasesespeciais') return esc(it.hasCaseSpecial ? 'Sim' : 'Não');
@@ -1213,30 +1213,30 @@ function setupFilters() {
   const subBtn = document.getElementById('subSquadDropdownBtn');
   const subPanel = document.getElementById('subSquadDropdownPanel');
   const subList = document.getElementById('subSquadDropdownList');
-  function updateSubBtn(){
+  function updateSubBtn() {
     const sel = state.filters.subSquad || [];
     if (!subBtn) return;
     if (sel.length === 0) subBtn.textContent = 'SubSquad: Todos';
-    else if (sel.length <= 2) subBtn.textContent = `SubSquad: ${sel.map(v=> v==='__NONE__' ? 'Sem subSquad' : v).join(', ')}`;
+    else if (sel.length <= 2) subBtn.textContent = `SubSquad: ${sel.map(v => v === '__NONE__' ? 'Sem subSquad' : v).join(', ')}`;
     else subBtn.textContent = `SubSquad: ${sel.length} selecionadas`;
   }
-  function rebuildSubList(){
+  function rebuildSubList() {
     if (!subList) return;
-    subList.innerHTML='';
+    subList.innerHTML = '';
     const counts = new Map();
-    for (const it of state.items){ const k=(it.subSquad||'').trim() || '__NONE__'; counts.set(k,(counts.get(k)||0)+1); }
-    const names = Array.from(counts.keys()).filter(k=>k!=='__NONE__').sort(); if (counts.has('__NONE__')) names.push('__NONE__');
-    for (const name of names){
-      const label = document.createElement('label'); label.className='dropdown-option';
-      const cb = document.createElement('input'); cb.type='checkbox'; cb.value=name; cb.checked=(state.filters.subSquad||[]).includes(name);
-      const span = document.createElement('span'); span.textContent = `${name==='__NONE__'?'Sem subSquad':name} (${counts.get(name)||0})`;
+    for (const it of state.items) { const k = (it.subSquad || '').trim() || '__NONE__'; counts.set(k, (counts.get(k) || 0) + 1); }
+    const names = Array.from(counts.keys()).filter(k => k !== '__NONE__').sort(); if (counts.has('__NONE__')) names.push('__NONE__');
+    for (const name of names) {
+      const label = document.createElement('label'); label.className = 'dropdown-option';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = name; cb.checked = (state.filters.subSquad || []).includes(name);
+      const span = document.createElement('span'); span.textContent = `${name === '__NONE__' ? 'Sem subSquad' : name} (${counts.get(name) || 0})`;
       label.appendChild(cb); label.appendChild(span); subList.appendChild(label);
     }
   }
-  if (subBtn && subPanel){
-    subBtn.addEventListener('click',(e)=>{ e.stopPropagation(); rebuildSubList(); subPanel.classList.toggle('hidden'); });
-    document.addEventListener('click',(e)=>{ if (!subPanel.classList.contains('hidden')){ const dd=document.getElementById('subSquadDropdown'); if (dd && !dd.contains(e.target)) subPanel.classList.add('hidden'); }});
-    subList?.addEventListener('change',()=>{ const cbs = Array.from(subList.querySelectorAll('input[type="checkbox"]')); state.filters.subSquad = cbs.filter(cb=>cb.checked).map(cb=>cb.value); updateSubBtn(); persistFiltersStep1(); render(); });
+  if (subBtn && subPanel) {
+    subBtn.addEventListener('click', (e) => { e.stopPropagation(); rebuildSubList(); subPanel.classList.toggle('hidden'); });
+    document.addEventListener('click', (e) => { if (!subPanel.classList.contains('hidden')) { const dd = document.getElementById('subSquadDropdown'); if (dd && !dd.contains(e.target)) subPanel.classList.add('hidden'); } });
+    subList?.addEventListener('change', () => { const cbs = Array.from(subList.querySelectorAll('input[type="checkbox"]')); state.filters.subSquad = cbs.filter(cb => cb.checked).map(cb => cb.value); updateSubBtn(); persistFiltersStep1(); render(); });
     updateSubBtn();
   }
   if (tipoSel) {
@@ -1288,7 +1288,7 @@ function setupFilters() {
     const sel = state.filters.groups || [];
     if (!groupBtn) return;
     if (sel.length === 0) groupBtn.textContent = 'Grupos: Todos';
-    else if (sel.length <= 2) groupBtn.textContent = `Grupos: ${sel.map(v=> v==='__NONE__' ? 'Sem grupo' : v).join(', ')}`;
+    else if (sel.length <= 2) groupBtn.textContent = `Grupos: ${sel.map(v => v === '__NONE__' ? 'Sem grupo' : v).join(', ')}`;
     else groupBtn.textContent = `Grupos: ${sel.length} selecionados`;
   }
   function rebuildGroupList() {
@@ -1298,24 +1298,24 @@ function setupFilters() {
     for (const it of state.items) {
       const g = (it.grupo || '').trim();
       const key = g || '__NONE__';
-      counts.set(key, (counts.get(key)||0)+1);
+      counts.set(key, (counts.get(key) || 0) + 1);
     }
     // Ensure stable order: non-empty names then '__NONE__'
-    const names = Array.from(counts.keys()).filter(k=>k!=='__NONE__').sort();
+    const names = Array.from(counts.keys()).filter(k => k !== '__NONE__').sort();
     if (counts.has('__NONE__')) names.push('__NONE__');
     for (const name of names) {
-      const label = document.createElement('label'); label.className='dropdown-option';
-      const cb = document.createElement('input'); cb.type='checkbox'; cb.value=name; cb.checked=(state.filters.groups||[]).includes(name);
-      const span = document.createElement('span'); span.textContent = `${name==='__NONE__'?'Sem grupo':name} (${counts.get(name)||0})`;
+      const label = document.createElement('label'); label.className = 'dropdown-option';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = name; cb.checked = (state.filters.groups || []).includes(name);
+      const span = document.createElement('span'); span.textContent = `${name === '__NONE__' ? 'Sem grupo' : name} (${counts.get(name) || 0})`;
       label.appendChild(cb); label.appendChild(span); groupList.appendChild(label);
     }
   }
   if (groupBtn && groupPanel) {
-    groupBtn.addEventListener('click', (e)=>{ e.stopPropagation(); rebuildGroupList(); groupPanel.classList.toggle('hidden'); });
-    document.addEventListener('click', (e)=>{ if (!groupPanel.classList.contains('hidden')) { const dd=document.getElementById('groupDropdown'); if (dd && !dd.contains(e.target)) groupPanel.classList.add('hidden'); } });
-    groupList?.addEventListener('change', ()=>{
+    groupBtn.addEventListener('click', (e) => { e.stopPropagation(); rebuildGroupList(); groupPanel.classList.toggle('hidden'); });
+    document.addEventListener('click', (e) => { if (!groupPanel.classList.contains('hidden')) { const dd = document.getElementById('groupDropdown'); if (dd && !dd.contains(e.target)) groupPanel.classList.add('hidden'); } });
+    groupList?.addEventListener('change', () => {
       const cbs = Array.from(groupList.querySelectorAll('input[type="checkbox"]'));
-      state.filters.groups = cbs.filter(cb=>cb.checked).map(cb=>cb.value);
+      state.filters.groups = cbs.filter(cb => cb.checked).map(cb => cb.value);
       updateGroupBtn(); persistFiltersStep1(); render();
     });
     updateGroupBtn();
@@ -1330,15 +1330,15 @@ function setupFilters() {
   // Sheet SubSquad live save
   const sheetSubInput = document.getElementById('sheetSubSquadInput');
   if (sheetSubInput) {
-    sheetSubInput.addEventListener('input', ()=>{
-      const id = state.ui.selectedId; const item = state.items.find(it=>it.id===id);
-      if (!item) return; item.subSquad = String(sheetSubInput.value||''); persistState();
+    sheetSubInput.addEventListener('input', () => {
+      const id = state.ui.selectedId; const item = state.items.find(it => it.id === id);
+      if (!item) return; item.subSquad = String(sheetSubInput.value || ''); persistState();
     });
   }
   const sheetBoraSel2 = document.getElementById('sheetBoraSel');
   if (sheetBoraSel2) {
-    sheetBoraSel2.addEventListener('change', ()=>{
-      const id = state.ui.selectedId; const item = state.items.find(it=>it.id===id);
+    sheetBoraSel2.addEventListener('change', () => {
+      const id = state.ui.selectedId; const item = state.items.find(it => it.id === id);
       if (!item) return; item.boraImpact = sheetBoraSel2.value || '';
       persistState();
       render();
@@ -1355,7 +1355,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // File input
   const fileInput = document.getElementById('csvFile');
   const csvOpenBtn = document.getElementById('csvOpenBtn');
-  if (csvOpenBtn && fileInput) csvOpenBtn.addEventListener('click', ()=> fileInput.click());
+  if (csvOpenBtn && fileInput) csvOpenBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (ev) => {
     const f = ev.target.files?.[0];
     if (f) {
@@ -1373,8 +1373,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // File input (base classificada)
   const classInput = document.getElementById('csvClassFile');
   const classOpenBtn = document.getElementById('csvClassOpenBtn');
-  if (classOpenBtn && classInput) classOpenBtn.addEventListener('click', ()=> classInput.click());
-  classInput?.addEventListener('change', (ev)=>{
+  if (classOpenBtn && classInput) classOpenBtn.addEventListener('click', () => classInput.click());
+  classInput?.addEventListener('change', (ev) => {
     const f = ev.target.files?.[0];
     if (f) {
       let merge = true;
@@ -1383,7 +1383,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (raw) {
           merge = window.confirm('Importar base classificada. OK = MERGE com estado salvo, Cancelar = ZERAR e usar somente o CSV.');
         }
-      } catch(e){}
+      } catch (e) { }
       handleClassifiedFile(f, merge);
     }
   });
@@ -1422,7 +1422,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const closeVoteBtn = document.getElementById('closeVoteOverlayBtn');
   if (openVoteBtn) openVoteBtn.addEventListener('click', openVoteOverlay);
   if (closeVoteBtn) closeVoteBtn.addEventListener('click', closeVoteOverlay);
-  document.addEventListener('keydown', (e)=>{
+  document.addEventListener('keydown', (e) => {
     const overlay = document.getElementById('voteOverlay');
     if (e.key === 'Escape' && overlay && !overlay.classList.contains('hidden')) closeVoteOverlay();
   });
@@ -1431,20 +1431,20 @@ window.addEventListener('DOMContentLoaded', () => {
   const voteColsSel = document.getElementById('voteColsSel');
   if (voteColsSel) {
     // load persisted
-    try { const v = localStorage.getItem('priorizacao_vote_cols'); if (v) voteColsSel.value = v; } catch(_){}
-    voteColsSel.addEventListener('change', ()=>{ persistVoteCols(); applyVoteCols(); });
+    try { const v = localStorage.getItem('priorizacao_vote_cols'); if (v) voteColsSel.value = v; } catch (_) { }
+    voteColsSel.addEventListener('change', () => { persistVoteCols(); applyVoteCols(); });
   }
 
   // Reset filters
   const resetBtn = document.getElementById('resetFiltersBtn');
   if (resetBtn) {
-    resetBtn.addEventListener('click', ()=>{
+    resetBtn.addEventListener('click', () => {
       state.filters = { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', subSquad: 'all', squad: [], groups: [], text: '', showRelations: false };
       // reset UI controls
-      const setVal = (id,val)=>{ const el=document.getElementById(id); if (el) el.value=val; };
-      setVal('abordagemFilter','all'); setVal('escopoFilter','all'); setVal('principalFilter','all'); setVal('tipoEsforcoFilter','all'); setVal('urgenciaFilter','all'); setVal('esforcoTecnicoFilter','all'); setVal('subSquadFilter','all');
-      const tf=document.getElementById('textFilter'); if (tf) tf.value='';
-      const rt=document.getElementById('relationsToggle'); if (rt) rt.checked=false;
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('abordagemFilter', 'all'); setVal('escopoFilter', 'all'); setVal('principalFilter', 'all'); setVal('tipoEsforcoFilter', 'all'); setVal('urgenciaFilter', 'all'); setVal('esforcoTecnicoFilter', 'all'); setVal('subSquadFilter', 'all');
+      const tf = document.getElementById('textFilter'); if (tf) tf.value = '';
+      const rt = document.getElementById('relationsToggle'); if (rt) rt.checked = false;
       populateSquadFilter();
       updateSquadButtonLabel && updateSquadButtonLabel();
       // group label updates via render()
@@ -1529,37 +1529,37 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (noteGroupInput) {
-    function buildGroupSuggestions(filter=''){
+    function buildGroupSuggestions(filter = '') {
       if (!noteGroupList) return;
-      noteGroupList.innerHTML='';
-      const norm = normalizeString(filter||'');
+      noteGroupList.innerHTML = '';
+      const norm = normalizeString(filter || '');
       const set = new Set();
-      for (const it of state.items){ const g=(it.grupo||'').trim(); if (g) set.add(g); }
-      const names = Array.from(set).filter(n=> !norm || normalizeString(n).includes(norm)).sort();
-      names.forEach(name=>{
-        const opt=document.createElement('div'); opt.className='dropdown-option'; opt.textContent=name;
-        opt.addEventListener('mousedown', (e)=>{ // mousedown to run before input blur
-          e.preventDefault(); noteGroupInput.value=name; apply(name);
+      for (const it of state.items) { const g = (it.grupo || '').trim(); if (g) set.add(g); }
+      const names = Array.from(set).filter(n => !norm || normalizeString(n).includes(norm)).sort();
+      names.forEach(name => {
+        const opt = document.createElement('div'); opt.className = 'dropdown-option'; opt.textContent = name;
+        opt.addEventListener('mousedown', (e) => { // mousedown to run before input blur
+          e.preventDefault(); noteGroupInput.value = name; apply(name);
           noteGroupPanel?.classList.add('hidden');
         });
         noteGroupList.appendChild(opt);
       });
     }
-    function apply(val){
+    function apply(val) {
       const id = state.ui.selectedId; if (id == null) return;
       const item = state.items.find(it => it.id === id); if (!item) return;
-      const v = String(val || '').slice(0,60).trim();
+      const v = String(val || '').slice(0, 60).trim();
       item.grupo = v;
       persistState();
       render();
     }
-    noteGroupInput.addEventListener('input', ()=>{
+    noteGroupInput.addEventListener('input', () => {
       noteGroupPanel?.classList.remove('hidden');
       buildGroupSuggestions(noteGroupInput.value);
       apply(noteGroupInput.value);
     });
-    noteGroupInput.addEventListener('focus', ()=>{ buildGroupSuggestions(noteGroupInput.value); noteGroupPanel?.classList.remove('hidden'); });
-    document.addEventListener('click', (e)=>{ if (noteGroupDropdown && !noteGroupDropdown.contains(e.target)) noteGroupPanel?.classList.add('hidden'); });
+    noteGroupInput.addEventListener('focus', () => { buildGroupSuggestions(noteGroupInput.value); noteGroupPanel?.classList.remove('hidden'); });
+    document.addEventListener('click', (e) => { if (noteGroupDropdown && !noteGroupDropdown.contains(e.target)) noteGroupPanel?.classList.add('hidden'); });
   }
 
   // Obs adicionais modal
@@ -1587,8 +1587,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let gisAccessToken = null;
   const DEFAULT_GIS_CLIENT_ID = '1712067639-gp823soeiks0jvtabr52orb89jvn1geo.apps.googleusercontent.com';
 
-  function parseSheetIdOrDirectUrl(s){
-    const val = String(s||'').trim().replace(/^['"]|['"]$/g,'');
+  function parseSheetIdOrDirectUrl(s) {
+    const val = String(s || '').trim().replace(/^['"]|['"]$/g, '');
     // Caso 1: URL publicada (/d/e/.../pub?output=csv) -> usar diretamente (apenas leitura)
     if (/^https?:\/\/docs\.google\.com\/spreadsheets\/d\/e\//.test(val) && /(?:output=csv|format=csv)/.test(val)) {
       return { direct: val };
@@ -1597,7 +1597,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const m = val.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     if (m) return { id: m[1] };
     // Caso 3: links do tipo open?id=
-    const u = (()=>{ try{ return new URL(val); } catch(_){ return null; } })();
+    const u = (() => { try { return new URL(val); } catch (_) { return null; } })();
     if (u) {
       const idParam = u.searchParams.get('id');
       if (idParam) return { id: idParam };
@@ -1607,8 +1607,8 @@ window.addEventListener('DOMContentLoaded', () => {
     return { id: '' };
   }
   // Alias para compatibilidade com versões antigas que chamavam parseSheetId
-  try { if (typeof window !== 'undefined' && !window.parseSheetId) { window.parseSheetId = parseSheetIdOrDirectUrl; } } catch(_) {}
-  function buildPublishedCsvUrl(cfg){
+  try { if (typeof window !== 'undefined' && !window.parseSheetId) { window.parseSheetId = parseSheetIdOrDirectUrl; } } catch (_) { }
+  function buildPublishedCsvUrl(cfg) {
     // Se veio um endpoint direto publicado, devolve como está
     if (cfg.direct) return cfg.direct;
     const id = cfg.id;
@@ -1616,14 +1616,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const sheet = encodeURIComponent(cfg.sheet || 'base_classificada');
     return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
   }
-  async function importFromPublishedCsv(merge){
+  async function importFromPublishedCsv(merge) {
     try {
       const raw = localStorage.getItem('priorizacao_sheets_cfg');
       if (!raw) { alert('Configure a planilha primeiro.'); return; }
       const cfg = JSON.parse(raw);
       const url = buildPublishedCsvUrl(cfg);
       const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const text = await resp.text();
       const file = new File([text], 'sheet.csv', { type: 'text/csv' });
       await handleClassifiedFile(file, merge);
@@ -1634,34 +1634,34 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function openSheetsCfg(){
+  function openSheetsCfg() {
     try {
       const raw = localStorage.getItem('priorizacao_sheets_cfg');
       if (raw) {
         const cfg = JSON.parse(raw);
         if (sheetsUrlInput) sheetsUrlInput.value = cfg.id || '';
         if (sheetsNameInput) sheetsNameInput.value = cfg.sheet || 'base_classificada';
-        
+
       } else {
         if (sheetsNameInput) sheetsNameInput.value = 'base_classificada';
       }
       // Client ID é hardcoded; nenhum input necessário
-    } catch(_){ if (sheetsNameInput) sheetsNameInput.value = 'base_classificada'; }
-    try { const em = localStorage.getItem('priorizacao_gis_email'); if (em && sheetsAuthStatus) sheetsAuthStatus.textContent = `Autenticado: ${em}`; } catch(_){}
+    } catch (_) { if (sheetsNameInput) sheetsNameInput.value = 'base_classificada'; }
+    try { const em = localStorage.getItem('priorizacao_gis_email'); if (em && sheetsAuthStatus) sheetsAuthStatus.textContent = `Autenticado: ${em}`; } catch (_) { }
     sheetsCfgModal?.classList.remove('hidden');
   }
-  function closeSheetsCfg(){ sheetsCfgModal?.classList.add('hidden'); }
+  function closeSheetsCfg() { sheetsCfgModal?.classList.add('hidden'); }
 
   sheetsCfgBtn?.addEventListener('click', openSheetsCfg);
   sheetsCfgCloseBtn?.addEventListener('click', closeSheetsCfg);
   sheetsCfgCancelBtn?.addEventListener('click', closeSheetsCfg);
-  sheetsCfgSaveBtn?.addEventListener('click', ()=>{
+  sheetsCfgSaveBtn?.addEventListener('click', () => {
     const parsed = parseSheetIdOrDirectUrl(sheetsUrlInput?.value || '');
     const sheet = (sheetsNameInput?.value || 'base_classificada').trim() || 'base_classificada';
     localStorage.setItem('priorizacao_sheets_cfg', JSON.stringify({ ...parsed, sheet }));
     closeSheetsCfg();
   });
-  sheetsTestBtn?.addEventListener('click', ()=>{
+  sheetsTestBtn?.addEventListener('click', () => {
     const merge = (sheetsImportMode?.value || 'merge') === 'merge';
     // salva temporariamente antes de testar
     const parsed = parseSheetIdOrDirectUrl(sheetsUrlInput?.value || '');
@@ -1671,26 +1671,47 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // OAuth (GIS) helpers
-  function ensureGisLoaded(){
-    return new Promise((resolve)=>{
+  function ensureGisLoaded() {
+    return new Promise((resolve) => {
       if (window.google && window.google.accounts && window.google.accounts.oauth2) return resolve();
       const s = document.createElement('script');
       s.src = 'https://accounts.google.com/gsi/client';
       s.async = true; s.defer = true;
-      s.onload = ()=> resolve();
+      s.onload = () => resolve();
       document.head.appendChild(s);
     });
   }
-  async function getGisToken(){
+  async function getGisToken() {
+    // Check localStorage first
+    try {
+      const stored = localStorage.getItem('priorizacao_gis_token');
+      const ts = localStorage.getItem('priorizacao_gis_token_ts');
+      if (stored && ts) {
+        const age = Date.now() - parseInt(ts, 10);
+        // 50 minutes expiration (safe margin for 1h token)
+        if (age < 50 * 60 * 1000) {
+          gisAccessToken = stored;
+          updateUserInfoEmail(gisAccessToken);
+          return gisAccessToken;
+        }
+      }
+    } catch (_) { }
+
     await ensureGisLoaded();
     const clientId = DEFAULT_GIS_CLIENT_ID;
-    return new Promise((resolve)=>{
+    return new Promise((resolve) => {
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.readonly',
         callback: (resp) => {
           if (resp && resp.access_token) {
             gisAccessToken = resp.access_token;
+            // Save to localStorage
+            try {
+              localStorage.setItem('priorizacao_gis_token', gisAccessToken);
+              localStorage.setItem('priorizacao_gis_token_ts', Date.now().toString());
+            } catch (_) { }
+
             // fetch email
             updateUserInfoEmail(gisAccessToken);
             resolve(gisAccessToken);
@@ -1703,14 +1724,14 @@ window.addEventListener('DOMContentLoaded', () => {
       tokenClient.requestAccessToken({ prompt: '' }); // mostra consent se necessário
     });
   }
-  async function updateUserInfoEmail(token){
+  async function updateUserInfoEmail(token) {
     try {
       const resp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${token}` } });
       if (resp.ok) {
         const data = await resp.json();
         const email = data && data.email ? String(data.email) : '';
         if (email) {
-          try { localStorage.setItem('priorizacao_gis_email', email); } catch(_){ }
+          try { localStorage.setItem('priorizacao_gis_email', email); } catch (_) { }
           if (sheetsAuthStatus) sheetsAuthStatus.textContent = `Autenticado: ${email}`;
         } else {
           if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Autenticado';
@@ -1718,37 +1739,37 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Autenticado';
       }
-    } catch(_) {
+    } catch (_) {
       if (sheetsAuthStatus) sheetsAuthStatus.textContent = 'Autenticado';
     }
   }
-  function valuesToCsv(values){
-    const enc = (v)=> {
-      const s = v==null ? '' : String(v);
-      if (/[\",\\n]/.test(s)) return '\"' + s.replace(/\"/g,'\"\"') + '\"';
+  function valuesToCsv(values) {
+    const enc = (v) => {
+      const s = v == null ? '' : String(v);
+      if (/[\",\\n]/.test(s)) return '\"' + s.replace(/\"/g, '\"\"') + '\"';
       return s;
     };
-    return (values||[]).map(row => (row||[]).map(enc).join(',')).join('\\n');
+    return (values || []).map(row => (row || []).map(enc).join(',')).join('\\n');
   }
-  function a1Col(index){
+  function a1Col(index) {
     let n = index + 1; let s = '';
-    while(n>0){ const m = (n-1)%26; s = String.fromCharCode(65+m)+s; n = Math.floor((n-1)/26); }
+    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
     return s;
   }
-  function normKey(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
-  function valueForHeader(key, item){
-    switch(key){
+  function normKey(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); }
+  function valueForHeader(key, item) {
+    switch (key) {
       case 'demanda': return item.demanda || '';
       case 'demanda_descricao': return item.demandaDescricao || '';
       case 'squad': return item.squad || '';
-      case 'subsquad': return Array.isArray(item.subSquad)? item.subSquad.join('; ') : (item.subSquad||'');
+      case 'subsquad': return Array.isArray(item.subSquad) ? item.subSquad.join('; ') : (item.subSquad || '');
       case 'grupo': return item.grupo || '';
       case 'tipoesforco':
       case 'tipo_esforco':
         return item.tipoEsforco || '';
-      case 'urgencia': return Number(item.urgencia||0);
+      case 'urgencia': return Number(item.urgencia || 0);
       case 'andamento': return item.andamento ? 'Sim' : 'Não';
-      case 'progresso': return Math.max(0, Math.min(1, Number(item.progresso||0) / 100));
+      case 'progresso': return Math.max(0, Math.min(1, Number(item.progresso || 0) / 100));
       case 'esforco_class': return item.effortClass || '';
       case 'impacto_class': return item.impactClass || '';
       case 'abordagem_class': return item.abordagemClass || '';
@@ -1757,25 +1778,25 @@ window.addEventListener('DOMContentLoaded', () => {
       case 'bora_impact': return item.boraImpact || '';
       case 'observacao_complementar': return item.observation || '';
       case 'modalidade': return item.modalidade || (Array.isArray(item.modalidades) && item.modalidades[0]) || '';
-      case 'modalidades': return (item.modalidades||[]).join('; ');
-      case 'persona': return (item.personas||[]).join('; ');
+      case 'modalidades': return (item.modalidades || []).join('; ');
+      case 'persona': return (item.personas || []).join('; ');
       case 'requerjuridico': return item.legalRequired ? 'Sim' : 'Não';
       case 'questoesjuridicas': return item.legalNotes || '';
-      case 'tecnologias': return (item.tecnologias||[]).join('; ');
-      case 'servicos': return (item.servicos||[]).join('; ');
-      case 'tiposalteracao': return (item.tiposAlteracao||[]).join('; ');
+      case 'tecnologias': return (item.tecnologias || []).join('; ');
+      case 'servicos': return (item.servicos || []).join('; ');
+      case 'tiposalteracao': return (item.tiposAlteracao || []).join('; ');
       case 'complexidade': return item.complexidade || '';
       case 'horasestimadas': return item.horasEstimadas ?? '';
       case 'pai': {
-        const p = state.items.find(x=> x.id === item.parentId); return p? (p.demanda||'') : '';
+        const p = state.items.find(x => x.id === item.parentId); return p ? (p.demanda || '') : '';
       }
       case 'relacionamentos': {
-        const ids = Array.isArray(item.relatedIds)? item.relatedIds : []; const names = ids.map(id=>{ const it=state.items.find(x=>x.id===id); return it? it.demanda:''; }).filter(Boolean); return names.join('; ');
+        const ids = Array.isArray(item.relatedIds) ? item.relatedIds : []; const names = ids.map(id => { const it = state.items.find(x => x.id === id); return it ? it.demanda : ''; }).filter(Boolean); return names.join('; ');
       }
       default: return '';
     }
   }
-  async function upsertItemToSheets(itemOrId){
+  async function upsertItemToSheets(itemOrId) {
     try {
       // Resolve item: accepts object, id, or uses currently selected item
       let item = itemOrId;
@@ -1795,56 +1816,56 @@ window.addEventListener('DOMContentLoaded', () => {
       // 1) headers
       let url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!1:1`;
       let resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!resp.ok) { const body = await resp.text(); throw new Error('Falha ao ler cabeçalho: '+resp.status+' - '+body); }
+      if (!resp.ok) { const body = await resp.text(); throw new Error('Falha ao ler cabeçalho: ' + resp.status + ' - ' + body); }
       const headData = await resp.json();
       const headers = (headData.values && headData.values[0]) ? headData.values[0] : [];
-      const nkeys = headers.map(h=> normKey(h));
+      const nkeys = headers.map(h => normKey(h));
       // 2) localizar linha pela coluna Demanda
-      const demandCol = nkeys.findIndex(k=> k === 'demanda');
+      const demandCol = nkeys.findIndex(k => k === 'demanda');
       let rowIndex = -1;
-      if (demandCol >= 0){
+      if (demandCol >= 0) {
         console.log('[Sheets] upsert:demandCol', demandCol);
         const colA1 = a1Col(demandCol);
         url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!${colA1}2:${colA1}`;
         resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (resp.ok){
+        if (resp.ok) {
           const colData = await resp.json();
-          const vals = (colData.values||[]).map(r => (r&&r[0])? String(r[0]) : '');
-          const idx = vals.findIndex(v => v === (item.demanda||''));
+          const vals = (colData.values || []).map(r => (r && r[0]) ? String(r[0]) : '');
+          const idx = vals.findIndex(v => v === (item.demanda || ''));
           if (idx >= 0) rowIndex = idx + 2;
         }
       }
       // 3) construir linha
       const width = headers.length;
       const row = new Array(width).fill('');
-      for (let i=0;i<width;i++) row[i] = valueForHeader(nkeys[i], item);
+      for (let i = 0; i < width; i++) row[i] = valueForHeader(nkeys[i], item);
       // 4) update/append
-      if (rowIndex > 0){
-        const lastCol = a1Col(width-1);
+      if (rowIndex > 0) {
+        const lastCol = a1Col(width - 1);
         const range = `${title}!A${rowIndex}:${lastCol}${rowIndex}`;
         const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
         console.log('[Sheets] upsert:PUT', range);
-        await fetch(putUrl, { method: 'PUT', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ range, majorDimension: 'ROWS', values: [row] }) });
+        await fetch(putUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ range, majorDimension: 'ROWS', values: [row] }) });
       } else {
         const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
         console.log('[Sheets] upsert:APPEND');
-        await fetch(appendUrl, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ values: [row] }) });
+        await fetch(appendUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ values: [row] }) });
       }
       console.log('[Sheets] upsert:done');
-    } catch(e){ console.error('Sheets upsert error', e); }
+    } catch (e) { console.error('Sheets upsert error', e); }
   }
   // Mark as used for static analyzers and allow manual triggering in console if needed
-  try { if (typeof window !== 'undefined') { window.__upsertItemToSheets = upsertItemToSheets; } } catch(_){ }
-  function triggerSheetsUpsert(itemOrId){
+  try { if (typeof window !== 'undefined') { window.__upsertItemToSheets = upsertItemToSheets; } } catch (_) { }
+  function triggerSheetsUpsert(itemOrId) {
     try {
       const fn = (typeof upsertItemToSheets === 'function') ? upsertItemToSheets : (typeof window !== 'undefined' ? window.__upsertItemToSheets : null);
       if (typeof fn === 'function') return fn(itemOrId);
       console.warn('[Sheets] upsert: função indisponível');
-    } catch(e){ console.error('[Sheets] upsert wrapper error', e); }
+    } catch (e) { console.error('[Sheets] upsert wrapper error', e); }
   }
-  try { if (typeof window !== 'undefined') { window.demands = window.demands || {}; window.demands.triggerSheetsUpsert = triggerSheetsUpsert; window.demands.upsertItemToSheets = upsertItemToSheets; } } catch(_){ }
+  try { if (typeof window !== 'undefined') { window.demands = window.demands || {}; window.demands.triggerSheetsUpsert = triggerSheetsUpsert; window.demands.upsertItemToSheets = upsertItemToSheets; } } catch (_) { }
   // gid → título não é mais necessário (sem GID)
-  async function importFromSheetsOAuth(merge){
+  async function importFromSheetsOAuth(merge) {
     try {
       const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
       if (!cfgRaw) { alert('Configure a planilha primeiro.'); return; }
@@ -1857,7 +1878,7 @@ window.addEventListener('DOMContentLoaded', () => {
       let title = cfg.sheet || 'base_classificada';
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(title)}?majorDimension=ROWS`;
       const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!resp.ok) { const body = await resp.text(); throw new Error('HTTP '+resp.status+' - '+body); }
+      if (!resp.ok) { const body = await resp.text(); throw new Error('HTTP ' + resp.status + ' - ' + body); }
       const data = await resp.json();
       const csv = valuesToCsv(data.values || []);
       const file = new File([csv], 'sheet.csv', { type: 'text/csv' });
@@ -1868,13 +1889,13 @@ window.addEventListener('DOMContentLoaded', () => {
       alert('Falhou ao ler via OAuth. Verifique permissões (você precisa ter acesso à planilha).');
     }
   }
-  sheetsOAuthBtn?.addEventListener('click', async ()=>{
+  sheetsOAuthBtn?.addEventListener('click', async () => {
     // Persist current config before authenticating, so import doesn't complain
     try {
       const parsed = parseSheetIdOrDirectUrl(sheetsUrlInput?.value || '');
       const sheet = (sheetsNameInput?.value || 'base_classificada').trim() || 'base_classificada';
       localStorage.setItem('priorizacao_sheets_cfg', JSON.stringify({ ...parsed, sheet }));
-    } catch(_){}
+    } catch (_) { }
     const token = await getGisToken();
     if (!token) return;
     const merge = (sheetsImportMode?.value || 'merge') === 'merge';
@@ -1946,7 +1967,7 @@ window.addEventListener('DOMContentLoaded', () => {
     applyToSelected((it) => { it.effortClass = sheetEsforcoSel.value; });
     render();
     persistState();
-    try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
+    try { const it = state.items.find(x => x.id === state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch (_) { }
   });
   if (sheetUrgSel) {
     sheetUrgSel.addEventListener('change', () => {
@@ -1958,30 +1979,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Diagnóstico fields
   if (sheetModalidadeSel) {
-    sheetModalidadeSel.addEventListener('change', (e)=>{
-      applyToSelected((it)=>{ it.modalidade = e.target.value; });
+    sheetModalidadeSel.addEventListener('change', (e) => {
+      applyToSelected((it) => { it.modalidade = e.target.value; });
       persistState();
     });
   }
   if (sheetHasCaseChk) {
-    sheetHasCaseChk.addEventListener('change', ()=>{
+    sheetHasCaseChk.addEventListener('change', () => {
       const checked = !!sheetHasCaseChk.checked;
       if (sheetCaseRow) sheetCaseRow.classList.toggle('hidden', !checked);
-      applyToSelected((it)=>{ it.hasCaseSpecial = checked; });
+      applyToSelected((it) => { it.hasCaseSpecial = checked; });
       persistState();
     });
   }
   if (sheetCaseText) {
-    sheetCaseText.addEventListener('input', ()=>{
-      applyToSelected((it)=>{ it.caseSpecial = sheetCaseText.value; });
+    sheetCaseText.addEventListener('input', () => {
+      applyToSelected((it) => { it.caseSpecial = sheetCaseText.value; });
       persistState();
     });
   }
 
   // Modalidades drawer logic
-  function buildModalidadesOptions(selected){
+  function buildModalidadesOptions(selected) {
     if (!modalidadesList) return;
-    modalidadesList.innerHTML='';
+    modalidadesList.innerHTML = '';
     const opts = [
       'Chamada Pública da Agricultura Familiar',
       'Chamamento Público - 13.019',
@@ -2011,19 +2032,19 @@ window.addEventListener('DOMContentLoaded', () => {
       'D5450 (*)',
       'Sistema S (*)'
     ];
-    const selSet = new Set(Array.isArray(selected)? selected : (selected ? [selected] : []));
-    for (const name of opts){
-      const label=document.createElement('label');
+    const selSet = new Set(Array.isArray(selected) ? selected : (selected ? [selected] : []));
+    for (const name of opts) {
+      const label = document.createElement('label');
       label.textContent = name;
       if (selSet.has(name)) label.classList.add('selected');
       modalidadesList.appendChild(label);
-      label.addEventListener('click',()=>{
-        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+      label.addEventListener('click', () => {
+        const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
         if (!Array.isArray(it.modalidades)) it.modalidades = [];
         const idx = it.modalidades.indexOf(name);
         if (idx >= 0) {
           // deselect
-          it.modalidades.splice(idx,1);
+          it.modalidades.splice(idx, 1);
           label.classList.remove('selected');
         } else {
           // select
@@ -2035,14 +2056,14 @@ window.addEventListener('DOMContentLoaded', () => {
         persistState();
       });
     }
-}
+  }
 
-  function buildPersonaOptions(selectedArr){
+  function buildPersonaOptions(selectedArr) {
     if (!personaList) return;
-    personaList.innerHTML='';
+    personaList.innerHTML = '';
     const opts = [
       // existentes
-      'Comprador','Fornecedor','Pregoeiro','Apoio','Administrador','Outro',
+      'Comprador', 'Fornecedor', 'Pregoeiro', 'Apoio', 'Administrador', 'Outro',
       // novos solicitados
       'Agente de contratação',
       'Leiloeiro',
@@ -2054,41 +2075,41 @@ window.addEventListener('DOMContentLoaded', () => {
       'Comissão de Licitação Perm.',
       'Comissão de Lititação Especial'
     ];
-    const selSet = new Set(selectedArr||[]);
-    for (const name of opts){
-      const id = 'per_'+name.replace(/\W+/g,'_');
-      const label=document.createElement('label');
-      const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=selSet.has(name);
-      const span=document.createElement('span'); span.textContent=name;
+    const selSet = new Set(selectedArr || []);
+    for (const name of opts) {
+      const id = 'per_' + name.replace(/\W+/g, '_');
+      const label = document.createElement('label');
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = id; cb.checked = selSet.has(name);
+      const span = document.createElement('span'); span.textContent = name;
       label.appendChild(cb); label.appendChild(span);
       personaList.appendChild(label);
-      cb.addEventListener('change',()=>{
-        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; if(!Array.isArray(it.personas)) it.personas=[];
-        if (cb.checked){ if(!it.personas.includes(name)) it.personas.push(name); }
-        else { const i=it.personas.indexOf(name); if(i>-1) it.personas.splice(i,1); }
+      cb.addEventListener('change', () => {
+        const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; if (!Array.isArray(it.personas)) it.personas = [];
+        if (cb.checked) { if (!it.personas.includes(name)) it.personas.push(name); }
+        else { const i = it.personas.indexOf(name); if (i > -1) it.personas.splice(i, 1); }
         persistState();
       });
     }
   }
 
-  function buildModalidadesBadges(selectedArr){
+  function buildModalidadesBadges(selectedArr) {
     if (!modalidadesBadges) return;
     modalidadesBadges.innerHTML = '';
-    const opts = ['Lei 14133 (*)','Lei 13.303 (*)','D10024 (*)','D5450 (*)','Sistema S (*)'];
+    const opts = ['Lei 14133 (*)', 'Lei 13.303 (*)', 'D10024 (*)', 'D5450 (*)', 'Sistema S (*)'];
     const sel = new Set(Array.isArray(selectedArr) ? selectedArr : (selectedArr ? [selectedArr] : []));
-    for (const name of opts){
+    for (const name of opts) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'chip-toggle';
       btn.textContent = name;
       if (sel.has(name)) btn.classList.add('active');
       modalidadesBadges.appendChild(btn);
-      btn.addEventListener('click', ()=>{
-        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+      btn.addEventListener('click', () => {
+        const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
         if (!Array.isArray(it.modalidadeBadges)) it.modalidadeBadges = [];
         const i = it.modalidadeBadges.indexOf(name);
         if (i >= 0) {
-          it.modalidadeBadges.splice(i,1);
+          it.modalidadeBadges.splice(i, 1);
           btn.classList.remove('active');
         } else {
           it.modalidadeBadges.push(name);
@@ -2099,73 +2120,73 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderTokenList(container, list){
+  function renderTokenList(container, list) {
     if (!container) return;
     container.innerHTML = '';
-    (list||[]).forEach((value)=>{
+    (list || []).forEach((value) => {
       const chip = document.createElement('span');
       chip.className = 'token';
       const text = document.createElement('span'); text.textContent = value;
-      const btn = document.createElement('button'); btn.type='button'; btn.textContent='×';
+      const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = '×';
       chip.appendChild(text); chip.appendChild(btn);
       container.appendChild(chip);
-      btn.addEventListener('click',()=>{
-        const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
-        const arr = (container===diagTechList) ? (it.tecnologias||[]) : (it.servicos||[]);
+      btn.addEventListener('click', () => {
+        const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
+        const arr = (container === diagTechList) ? (it.tecnologias || []) : (it.servicos || []);
         const idx = arr.indexOf(value);
-        if (idx>=0) arr.splice(idx,1);
-        if (container===diagTechList) it.tecnologias = arr; else it.servicos = arr;
+        if (idx >= 0) arr.splice(idx, 1);
+        if (container === diagTechList) it.tecnologias = arr; else it.servicos = arr;
         renderTokenList(container, arr);
         persistState();
       });
     });
   }
 
-  function bindToken(inputEl, addBtn, container, getter){
+  function bindToken(inputEl, addBtn, container, getter) {
     if (!inputEl || !addBtn || !container) return;
-    addBtn.addEventListener('click',()=>{
-      const v = (inputEl.value||'').trim();
+    addBtn.addEventListener('click', () => {
+      const v = (inputEl.value || '').trim();
       if (!v) return;
-      const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+      const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
       const arr = getter(it);
       if (!arr.includes(v)) arr.push(v);
       renderTokenList(container, arr);
-      inputEl.value='';
+      inputEl.value = '';
       persistState();
     });
-    inputEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); addBtn.click(); }});
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); } });
   }
 
-  function gatherSuggestions(kind){
+  function gatherSuggestions(kind) {
     const set = new Set();
-    for (const it of state.items){
-      if (kind==='tech'){ (it.tecnologias||[]).forEach(v=>{ if(v) set.add(v); }); }
-      else { (it.servicos||[]).forEach(v=>{ if(v) set.add(v); }); }
+    for (const it of state.items) {
+      if (kind === 'tech') { (it.tecnologias || []).forEach(v => { if (v) set.add(v); }); }
+      else { (it.servicos || []).forEach(v => { if (v) set.add(v); }); }
     }
-    return Array.from(set).sort((a,b)=> a.localeCompare(b));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
-  function showSuggestions(panel, inputEl, options, onPick){
+  function showSuggestions(panel, inputEl, options, onPick) {
     if (!panel || !inputEl) return;
-    const q = (inputEl.value||'').toLowerCase();
-    const filtered = options.filter(o=> !q || o.toLowerCase().includes(q)).slice(0, 30);
+    const q = (inputEl.value || '').toLowerCase();
+    const filtered = options.filter(o => !q || o.toLowerCase().includes(q)).slice(0, 30);
     panel.innerHTML = '';
-    for (const opt of filtered){
+    for (const opt of filtered) {
       const div = document.createElement('div');
       div.className = 'suggest-option';
       div.textContent = opt;
       panel.appendChild(div);
-      div.addEventListener('mousedown', (e)=>{ e.preventDefault(); onPick(opt); panel.classList.add('hidden'); });
+      div.addEventListener('mousedown', (e) => { e.preventDefault(); onPick(opt); panel.classList.add('hidden'); });
     }
-    panel.classList.toggle('hidden', filtered.length===0);
+    panel.classList.toggle('hidden', filtered.length === 0);
   }
 
-  function openModalidadesDrawer(){
-    const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
+  function openModalidadesDrawer() {
+    const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
     buildModalidadesOptions(it.modalidades);
     buildPersonaOptions(it.personas);
-    if (legalReqChk){ legalReqChk.checked = !!it.legalRequired; }
-    if (legalNotesRow){ legalNotesRow.classList.toggle('hidden', !it.legalRequired); }
-    if (legalNotesText){ legalNotesText.value = it.legalNotes || ''; }
+    if (legalReqChk) { legalReqChk.checked = !!it.legalRequired; }
+    if (legalNotesRow) { legalNotesRow.classList.toggle('hidden', !it.legalRequired); }
+    if (legalNotesText) { legalNotesText.value = it.legalNotes || ''; }
     // tokens lists
     if (!Array.isArray(it.tecnologias)) it.tecnologias = [];
     if (!Array.isArray(it.servicos)) it.servicos = [];
@@ -2173,8 +2194,8 @@ window.addEventListener('DOMContentLoaded', () => {
     renderTokenList(diagServList, it.servicos);
     // tipos alteração
     if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao = [];
-    if (diagTypesArea){
-      diagTypesArea.querySelectorAll('.chip-toggle').forEach(btn=>{
+    if (diagTypesArea) {
+      diagTypesArea.querySelectorAll('.chip-toggle').forEach(btn => {
         const tipo = btn.getAttribute('data-tipo');
         if (it.tiposAlteracao.includes(tipo)) btn.classList.add('active'); else btn.classList.remove('active');
       });
@@ -2182,16 +2203,16 @@ window.addEventListener('DOMContentLoaded', () => {
     // complexidade e horas
     if (diagComplexSel) diagComplexSel.value = it.complexidade || '';
     if (diagHoursInput) diagHoursInput.value = (it.horasEstimadas ?? '').toString();
-    if (drawer){
+    if (drawer) {
       drawer.classList.remove('hidden');
       // allow transition
-      requestAnimationFrame(()=> drawer.classList.add('open'));
+      requestAnimationFrame(() => drawer.classList.add('open'));
     }
   }
-  function closeModalidadesDrawer(){
+  function closeModalidadesDrawer() {
     if (!drawer) return;
     drawer.classList.remove('open');
-    const handler=()=>{ drawer.classList.add('hidden'); drawer.removeEventListener('transitionend', handler); };
+    const handler = () => { drawer.classList.add('hidden'); drawer.removeEventListener('transitionend', handler); };
     drawer.addEventListener('transitionend', handler);
   }
 
@@ -2199,59 +2220,59 @@ window.addEventListener('DOMContentLoaded', () => {
   drawerBackBtn?.addEventListener('click', closeModalidadesDrawer);
 
   // legal requirement events
-  if (legalReqChk){
-    legalReqChk.addEventListener('change', ()=>{
-      const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.legalRequired = !!legalReqChk.checked; persistState();
+  if (legalReqChk) {
+    legalReqChk.addEventListener('change', () => {
+      const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; it.legalRequired = !!legalReqChk.checked; persistState();
       if (legalNotesRow) legalNotesRow.classList.toggle(true, false); // force reflow
       if (legalNotesRow) legalNotesRow.classList.toggle('hidden', !legalReqChk.checked);
     });
   }
-  if (legalNotesText){
-    legalNotesText.addEventListener('input', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.legalNotes = legalNotesText.value; persistState(); });
+  if (legalNotesText) {
+    legalNotesText.addEventListener('input', () => { const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; it.legalNotes = legalNotesText.value; persistState(); });
   }
 
   // bind tokens
-  bindToken(diagTechInput, diagAddTechBtn, diagTechList, (it)=>{ if(!Array.isArray(it.tecnologias)) it.tecnologias=[]; return it.tecnologias; });
-  bindToken(diagServInput, diagAddServBtn, diagServList, (it)=>{ if(!Array.isArray(it.servicos)) it.servicos=[]; return it.servicos; });
+  bindToken(diagTechInput, diagAddTechBtn, diagTechList, (it) => { if (!Array.isArray(it.tecnologias)) it.tecnologias = []; return it.tecnologias; });
+  bindToken(diagServInput, diagAddServBtn, diagServList, (it) => { if (!Array.isArray(it.servicos)) it.servicos = []; return it.servicos; });
 
   // autocomplete for tokens
-  if (diagTechInput && diagTechSuggest){
-    const pick = (val)=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; if(!Array.isArray(it.tecnologias)) it.tecnologias=[]; if(!it.tecnologias.includes(val)) it.tecnologias.push(val); renderTokenList(diagTechList, it.tecnologias); diagTechInput.value=''; persistState(); };
-    const refresh = ()=> showSuggestions(diagTechSuggest, diagTechInput, gatherSuggestions('tech'), pick);
+  if (diagTechInput && diagTechSuggest) {
+    const pick = (val) => { const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; if (!Array.isArray(it.tecnologias)) it.tecnologias = []; if (!it.tecnologias.includes(val)) it.tecnologias.push(val); renderTokenList(diagTechList, it.tecnologias); diagTechInput.value = ''; persistState(); };
+    const refresh = () => showSuggestions(diagTechSuggest, diagTechInput, gatherSuggestions('tech'), pick);
     diagTechInput.addEventListener('input', refresh);
     diagTechInput.addEventListener('focus', refresh);
   }
-  if (diagServInput && diagServSuggest){
-    const pick = (val)=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; if(!Array.isArray(it.servicos)) it.servicos=[]; if(!it.servicos.includes(val)) it.servicos.push(val); renderTokenList(diagServList, it.servicos); diagServInput.value=''; persistState(); };
-    const refresh = ()=> showSuggestions(diagServSuggest, diagServInput, gatherSuggestions('serv'), pick);
+  if (diagServInput && diagServSuggest) {
+    const pick = (val) => { const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; if (!Array.isArray(it.servicos)) it.servicos = []; if (!it.servicos.includes(val)) it.servicos.push(val); renderTokenList(diagServList, it.servicos); diagServInput.value = ''; persistState(); };
+    const refresh = () => showSuggestions(diagServSuggest, diagServInput, gatherSuggestions('serv'), pick);
     diagServInput.addEventListener('input', refresh);
     diagServInput.addEventListener('focus', refresh);
   }
-  document.addEventListener('click', (e)=>{
-    if (diagTechSuggest && !diagTechSuggest.contains(e.target) && e.target!==diagTechInput) diagTechSuggest.classList.add('hidden');
-    if (diagServSuggest && !diagServSuggest.contains(e.target) && e.target!==diagServInput) diagServSuggest.classList.add('hidden');
+  document.addEventListener('click', (e) => {
+    if (diagTechSuggest && !diagTechSuggest.contains(e.target) && e.target !== diagTechInput) diagTechSuggest.classList.add('hidden');
+    if (diagServSuggest && !diagServSuggest.contains(e.target) && e.target !== diagServInput) diagServSuggest.classList.add('hidden');
   });
 
   // tipos alteração
-  if (diagTypesArea){
-    diagTypesArea.addEventListener('click', (e)=>{
-      const btn = e.target.closest('.chip-toggle'); if(!btn) return;
-      const tipo = btn.getAttribute('data-tipo'); if(!tipo) return;
-      const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return;
-      if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao=[];
+  if (diagTypesArea) {
+    diagTypesArea.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-toggle'); if (!btn) return;
+      const tipo = btn.getAttribute('data-tipo'); if (!tipo) return;
+      const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
+      if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao = [];
       const i = it.tiposAlteracao.indexOf(tipo);
-      if (i>=0) { it.tiposAlteracao.splice(i,1); btn.classList.remove('active'); }
+      if (i >= 0) { it.tiposAlteracao.splice(i, 1); btn.classList.remove('active'); }
       else { it.tiposAlteracao.push(tipo); btn.classList.add('active'); }
       persistState();
     });
   }
 
   // complexidade / horas
-  if (diagComplexSel){
-    diagComplexSel.addEventListener('change', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; it.complexidade = diagComplexSel.value || ''; persistState(); });
+  if (diagComplexSel) {
+    diagComplexSel.addEventListener('change', () => { const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; it.complexidade = diagComplexSel.value || ''; persistState(); });
   }
-  if (diagHoursInput){
-    diagHoursInput.addEventListener('input', ()=>{ const it=state.items.find(x=>x.id===state.ui.selectedId); if(!it) return; const n=parseInt(diagHoursInput.value,10); it.horasEstimadas = Number.isFinite(n)? n : null; persistState(); });
+  if (diagHoursInput) {
+    diagHoursInput.addEventListener('input', () => { const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return; const n = parseInt(diagHoursInput.value, 10); it.horasEstimadas = Number.isFinite(n) ? n : null; persistState(); });
   }
   sheetObservation.addEventListener('input', () => {
     applyToSelected((it) => { it.observation = sheetObservation.value; });
@@ -2269,14 +2290,14 @@ window.addEventListener('DOMContentLoaded', () => {
     applyToSelected((it) => { it.progresso = v; });
     render();
     persistState();
-    try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
+    try { const it = state.items.find(x => x.id === state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch (_) { }
   });
   sheetTipoSel.addEventListener('change', () => {
     // Tipo de esforço (Tarefa, Iniciativa, Ideia, Follow-up)
     applyToSelected((it) => { it.tipoEsforco = sheetTipoSel.value; });
     render();
     persistState();
-    try { const it = state.items.find(x=>x.id===state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch(_){ }
+    try { const it = state.items.find(x => x.id === state.ui.selectedId); if (it) { if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(it); else triggerSheetsUpsert(it); } } catch (_) { }
   });
   if (relSearch && relList) {
     relSearch.addEventListener('input', () => {
@@ -2322,7 +2343,7 @@ function openNoteModal(itemId) {
   textarea.value = item?.observation || '';
   if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
   if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
-  if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0,60);
+  if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0, 60);
   if (noteSubSquadInput) noteSubSquadInput.value = String(item?.subSquad || '');
   if (noteImpactSel && item) noteImpactSel.value = item.impactClass || 'Baixo';
   if (noteEsforcoSel && item) noteEsforcoSel.value = item.effortClass || 'Baixo';
@@ -2353,23 +2374,23 @@ function saveNoteModal() {
     const noteBoraSel = document.getElementById('noteBoraSel');
     if (item && noteTipoSel) item.tipoEsforco = noteTipoSel.value;
     if (item && noteUrgSel) item.urgencia = Number(noteUrgSel.value);
-    if (item && noteGroupInput) item.grupo = String(noteGroupInput.value||'').slice(0,60);
-    if (item && noteSubSquadInput) item.subSquad = String(noteSubSquadInput.value||'');
+    if (item && noteGroupInput) item.grupo = String(noteGroupInput.value || '').slice(0, 60);
+    if (item && noteSubSquadInput) item.subSquad = String(noteSubSquadInput.value || '');
     if (item && noteImpactSel) item.impactClass = noteImpactSel.value;
     if (item && noteEsforcoSel) item.effortClass = noteEsforcoSel.value;
-    if (item && noteBoraSel) item.boraImpact = String(noteBoraSel.value||'');
+    if (item && noteBoraSel) item.boraImpact = String(noteBoraSel.value || '');
   }
   // persist all edits including tipoEsforco possibly changed via dropdown
   persistState();
   console.log('[Sheets] saveNoteModal:persistState');
   console.log(state.ui.selectedId);
-  try { 
-      const item = state.items.find(it=> it.id===state.ui.selectedId); 
-      if (item && window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); 
-      else if (item) triggerSheetsUpsert(item);
-    } catch(_){
-      console.log('[Sheets] saveNoteModal:upsertItemToSheets:error', _);
-    }
+  try {
+    const item = state.items.find(it => it.id === state.ui.selectedId);
+    if (item && window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item);
+    else if (item) triggerSheetsUpsert(item);
+  } catch (_) {
+    console.log('[Sheets] saveNoteModal:upsertItemToSheets:error', _);
+  }
   closeNoteModal();
   render();
 }
@@ -2434,7 +2455,7 @@ function openDetailSheet(itemId) {
   if (backdrop) {
     backdrop.classList.remove('hidden');
     // close on click outside
-    const onClick = ()=>{ closeDetailSheet(); };
+    const onClick = () => { closeDetailSheet(); };
     backdrop.addEventListener('click', onClick, { once: true });
   }
 }
@@ -2529,7 +2550,7 @@ function buildParentDropdownList(item, container, query = '') {
 }
 
 function closeDetailSheet() {
-  try { const item = state.items.find(it=> it.id===state.ui.selectedId); if (item) { persistState(); if (window.demands && typeof window.demands.triggerSheetsUpsert==='function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } } catch(_){}
+  try { const item = state.items.find(it => it.id === state.ui.selectedId); if (item) { persistState(); if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } } catch (_) { }
   document.getElementById('detailSheet').addEventListener;
   document.getElementById('detailSheet').classList.add('hidden');
   const backdrop = document.getElementById('sheetBackdrop');
