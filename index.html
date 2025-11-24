@@ -1,500 +1,616 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mini Miro - Priorização Esforço x Impacto</title>
-    <link rel="stylesheet" href="./styles.css">
-  </head>
-  <body>
-    <header class="app-header">
-      <div class="groupbar">Grupo: <span id="groupSummary">nenhum</span></div>
-      <h1>Mini Miro - Priorização Esforço x Impacto <span id="visibleCountStep1" class="count-badge">0</span></h1>
-      <div class="legend" aria-label="Legenda de estilos dos cards">
-        <div class="legend-item"><span class="legend-dot legend--operacao legend--problema"></span><span>Operação + Problema</span></div>
-        <div class="legend-item"><span class="legend-dot legend--operacao legend--oportunidade"></span><span>Operação + Oportunidade</span></div>
-        <div class="legend-item"><span class="legend-dot legend--inovacao legend--problema"></span><span>Inovação + Problema</span></div>
-        <div class="legend-item"><span class="legend-dot legend--inovacao legend--oportunidade"></span><span>Inovação + Oportunidade</span></div>
-        <div class="legend-item"><span class="legend-dot legend--outros legend--problema"></span><span>Outros + Problema</span></div>
-        <div class="legend-item"><span class="legend-dot legend--outros legend--oportunidade"></span><span>Outros + Oportunidade</span></div>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Miro - Priorização Esforço x Impacto</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="groupbar">Grupo: <span id="groupSummary">nenhum</span></div>
+    <h1>Mini Miro - Priorização Esforço x Impacto <span id="visibleCountStep1" class="count-badge">0</span></h1>
+    <div class="legend" aria-label="Legenda de estilos dos cards">
+      <div class="legend-item"><span class="legend-dot legend--operacao legend--problema"></span><span>Operação +
+          Problema</span></div>
+      <div class="legend-item"><span class="legend-dot legend--operacao legend--oportunidade"></span><span>Operação +
+          Oportunidade</span></div>
+      <div class="legend-item"><span class="legend-dot legend--inovacao legend--problema"></span><span>Inovação +
+          Problema</span></div>
+      <div class="legend-item"><span class="legend-dot legend--inovacao legend--oportunidade"></span><span>Inovação +
+          Oportunidade</span></div>
+      <div class="legend-item"><span class="legend-dot legend--outros legend--problema"></span><span>Outros +
+          Problema</span></div>
+      <div class="legend-item"><span class="legend-dot legend--outros legend--oportunidade"></span><span>Outros +
+          Oportunidade</span></div>
+    </div>
+    <div class="header-actions">
+      <button id="openVoteOverlayBtn" type="button">Modo votação (urgência)</button>
+    </div>
+  </header>
+
+  <section class="controls">
+    <div class="controls-row">
+      <div class="control-group">
+        <input type="file" id="csvFile" accept=".csv" style="display:none" />
+        <button id="csvOpenBtn" type="button" class="ctrl-icon-btn" title="Carregar base.csv">↓</button>
       </div>
-      <div class="header-actions">
-        <button id="openVoteOverlayBtn" type="button">Modo votação (urgência)</button>
+
+      <div class="control-group">
+        <input type="file" id="csvClassFile" accept=".csv" style="display:none" />
+        <button id="csvClassOpenBtn" type="button" class="ctrl-icon-btn"
+          title="Importar base classificada (backup)">↓C</button>
       </div>
-    </header>
 
-    <section class="controls">
-      <div class="controls-row">
-        <div class="control-group">
-          <input type="file" id="csvFile" accept=".csv" style="display:none" />
-          <button id="csvOpenBtn" type="button" class="ctrl-icon-btn" title="Carregar base.csv">↓</button>
+      <div class="control-group">
+        <button id="exportCsvBtn" type="button" class="ctrl-icon-btn" title="Exportar CSV">↑</button>
+      </div>
+
+      <div class="control-group">
+        <button id="goStep2Btn" type="button" class="ctrl-icon-btn" title="Ir para Etapa 2">→</button>
+      </div>
+
+      <div class="control-group">
+        <button id="resetFiltersBtn" type="button" class="ctrl-icon-btn" title="Resetar filtros">R</button>
+      </div>
+
+      <div class="control-group">
+        <button id="sheetsCfgBtn" type="button" class="ctrl-icon-btn" title="Configurar Google Sheets">⚙︎</button>
+      </div>
+
+      <div class="control-group">
+        <label for="textFilter">Buscar</label>
+        <input type="text" id="textFilter" placeholder="Filtrar Demanda e descrição..." />
+      </div>
+
+      <div class="control-group">
+        <label>Squad</label>
+        <div class="dropdown" id="squadDropdown">
+          <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
+          <div id="squadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar squads"></div>
         </div>
+      </div>
+    </div>
 
-        <div class="control-group">
-          <input type="file" id="csvClassFile" accept=".csv" style="display:none" />
-          <button id="csvClassOpenBtn" type="button" class="ctrl-icon-btn" title="Importar base classificada (backup)">↓C</button>
-        </div>
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="abordagemFilter">Abordagem</label>
+        <select id="abordagemFilter">
+          <option value="all">Todas</option>
+          <option value="Oportunidade">Oportunidade</option>
+          <option value="Problema">Problema</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <button id="exportCsvBtn" type="button" class="ctrl-icon-btn" title="Exportar CSV">↑</button>
-        </div>
+      <div class="control-group">
+        <label for="escopoFilter">Escopo</label>
+        <select id="escopoFilter">
+          <option value="all">Todos</option>
+          <option value="Inovação">Inovação</option>
+          <option value="Operação">Operação</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <button id="goStep2Btn" type="button" class="ctrl-icon-btn" title="Ir para Etapa 2">→</button>
-        </div>
+      <div class="control-group">
+        <label for="tipoEsforcoFilter">Tipo de esforço</label>
+        <select id="tipoEsforcoFilter">
+          <option value="all">Todos</option>
+          <option value="-">-</option>
+          <option value="Tarefa">Tarefa</option>
+          <option value="Iniciativa">Iniciativa</option>
+          <option value="Ideia">Ideia</option>
+          <option value="Follow-up">Follow-up</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <button id="resetFiltersBtn" type="button" class="ctrl-icon-btn" title="Resetar filtros">R</button>
-        </div>
+      <div class="control-group">
+        <label for="principalFilter">Influência</label>
+        <select id="principalFilter">
+          <option value="all">Todos</option>
+          <option value="Experiência">Experiência</option>
+          <option value="Mercado">Mercado</option>
+          <option value="Plataforma">Plataforma</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <button id="sheetsCfgBtn" type="button" class="ctrl-icon-btn" title="Configurar Google Sheets">⚙︎</button>
-        </div>
+      <div class="control-group">
+        <label for="esforcoTecnicoFilter">Esforço técnico</label>
+        <select id="esforcoTecnicoFilter">
+          <option value="all">Todos</option>
+          <option value="Baixo">Baixo</option>
+          <option value="Médio">Médio</option>
+          <option value="Alto">Alto</option>
+          <option value="Sem">Sem classificação</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <label for="textFilter">Buscar</label>
-          <input type="text" id="textFilter" placeholder="Filtrar Demanda e descrição..." />
-        </div>
+      <div class="control-group">
+        <label for="urgenciaFilter">Urgência</label>
+        <select id="urgenciaFilter">
+          <option value="all">Todas</option>
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <label>Squad</label>
-          <div class="dropdown" id="squadDropdown">
-            <button id="squadDropdownBtn" type="button" class="dropdown-btn">Squad: Todos</button>
-            <div id="squadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar squads"></div>
+      <div class="control-group">
+        <label>Grupos</label>
+        <div class="dropdown" id="groupDropdown">
+          <button id="groupDropdownBtn" type="button" class="dropdown-btn">Grupos: Todos</button>
+          <div id="groupDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupos">
+            <div id="groupDropdownList"></div>
           </div>
         </div>
       </div>
 
-      <div class="controls-row">
-        <div class="control-group">
-          <label for="abordagemFilter">Abordagem</label>
-          <select id="abordagemFilter">
-            <option value="all">Todas</option>
-            <option value="Oportunidade">Oportunidade</option>
-            <option value="Problema">Problema</option>
-            <option value="Outros">Outros</option>
-          </select>
+      <div class="control-group">
+        <label>SubSquads</label>
+        <div class="dropdown" id="subSquadDropdown">
+          <button id="subSquadDropdownBtn" type="button" class="dropdown-btn">SubSquad: Todos</button>
+          <div id="subSquadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar subSquads">
+            <div id="subSquadDropdownList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="relationsToggle">Ver relacionamentos</label>
+        <input type="checkbox" id="relationsToggle" />
+      </div>
+    </div>
+  </section>
+
+  <main class="board-wrapper">
+    <svg id="relationsOverlay" class="relations-overlay" aria-hidden="true"></svg>
+    <section class="board" id="board">
+      <!-- Column headers moved to bottom -->
+
+      <!-- Row: Altíssimo impacto (top row) -->
+      <div class="y-label">Altíssimo<div class="hint">+5MM</div>
+      </div>
+      <div class="cell" data-impact="Altíssimo" data-effort="Baixo"></div>
+      <div class="cell" data-impact="Altíssimo" data-effort="Médio"></div>
+      <div class="cell" data-impact="Altíssimo" data-effort="Alto"></div>
+
+      <!-- Row: Alto impacto -->
+      <div class="y-label">Alto<div class="hint">+1MM</div>
+      </div>
+      <div class="cell" data-impact="Alto" data-effort="Baixo"></div>
+      <div class="cell" data-impact="Alto" data-effort="Médio"></div>
+      <div class="cell" data-impact="Alto" data-effort="Alto"></div>
+
+      <!-- Row: Médio impacto -->
+      <div class="y-label">Médio<div class="hint">~500k a 1MM</div>
+      </div>
+      <div class="cell" data-impact="Médio" data-effort="Baixo"></div>
+      <div class="cell" data-impact="Médio" data-effort="Médio"></div>
+      <div class="cell" data-impact="Médio" data-effort="Alto"></div>
+
+      <!-- Row: Baixo impacto -->
+      <div class="y-label">Baixo<div class="hint">~100k</div>
+      </div>
+      <div class="cell" data-impact="Baixo" data-effort="Baixo"></div>
+      <div class="cell" data-impact="Baixo" data-effort="Médio"></div>
+      <div class="cell" data-impact="Baixo" data-effort="Alto"></div>
+
+      <!-- Column headers (bottom) -->
+      <div class="y-label empty"></div>
+      <div class="x-header">Baixo<div class="hint">~15 a 30 dias</div>
+      </div>
+      <div class="x-header">Médio<div class="hint">~31 a 90 dias</div>
+      </div>
+      <div class="x-header">Alto<div class="hint">+100 dias</div>
+      </div>
+    </section>
+
+    <aside class="backlog" id="backlog" aria-label="Backlog (não classificados)">
+      <div class="backlog-header">
+        <h2>Backlog (não classificados)</h2>
+        <p>Arraste para um quadrante para classificar</p>
+      </div>
+      <div class="backlog-list" id="backlogList"></div>
+    </aside>
+
+    <!-- Backdrop for Sheet -->
+    <div id="sheetBackdrop" class="backdrop hidden" aria-hidden="true"></div>
+
+    <!-- Drawer: Modalidades -->
+    <aside id="modalidadesDrawer" class="drawer hidden" aria-label="Diagnóstico">
+      <div class="drawer-header">
+        <button id="drawerBackBtn" class="btn-back" aria-label="Voltar">‹</button>
+        <strong>Diagnóstico</strong>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-section">
+          <div class="drawer-subtitle">Modalidade</div>
+          <div id="modalidadesList" class="modalidade-list"></div>
+          <div id="modalidadesBadges" class="badge-list" style="margin-top:8px;"></div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-subtitle">Persona afetado</div>
+          <div id="personaList" class="persona-list"></div>
+        </div>
+        <div class="drawer-section">
+          <label class="drawer-checkbox"><input type="checkbox" id="legalReqChk" /> Requer jurídico?</label>
+          <div id="legalNotesRow" class="drawer-notes hidden">
+            <textarea id="legalNotesText" rows="3" placeholder="Quais questões jurídicas?"></textarea>
+          </div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-subtitle">Tecnologias</div>
+          <div class="token-input"><input id="diagTechInput" type="text" placeholder="Ex.: React, Node.js" /><button
+              id="diagAddTechBtn" class="btn-icon" title="Adicionar">＋</button>
+            <div id="diagTechSuggest" class="suggest-panel hidden"></div>
+          </div>
+          <div id="diagTechList" class="token-list"></div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-subtitle">Serviços</div>
+          <div class="token-input"><input id="diagServInput" type="text"
+              placeholder="Ex.: service-api-01, keycloak..." /><button id="diagAddServBtn" class="btn-icon"
+              title="Adicionar">＋</button>
+            <div id="diagServSuggest" class="suggest-panel hidden"></div>
+          </div>
+          <div id="diagServList" class="token-list"></div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-subtitle">Tipos de Alteração</div>
+          <div id="diagTypesArea" class="types-area">
+            <button type="button" class="chip-toggle" data-tipo="Nova Tabela">Nova Tabela</button>
+            <button type="button" class="chip-toggle" data-tipo="Nova Coluna">Nova Coluna</button>
+            <button type="button" class="chip-toggle" data-tipo="Novo Join">Novo Join</button>
+            <button type="button" class="chip-toggle" data-tipo="Migração">Migração</button>
+            <button type="button" class="chip-toggle" data-tipo="Script Produção">Script Produção</button>
+            <button type="button" class="chip-toggle" data-tipo="Novo Endpoint">Novo Endpoint</button>
+            <button type="button" class="chip-toggle" data-tipo="Alteração Lógica">Alteração Lógica</button>
+            <button type="button" class="chip-toggle" data-tipo="Refatoração">Refatoração</button>
+            <button type="button" class="chip-toggle" data-tipo="Outro">Outro</button>
+          </div>
+        </div>
+        <div class="drawer-section">
+          <div class="form-two">
+            <div class="field">
+              <label class="field-label">Complexidade</label>
+              <select id="diagComplexSel">
+                <option value=""></option>
+                <option>Baixa</option>
+                <option>Média</option>
+                <option>Alta</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Horas Estimadas</label>
+              <input id="diagHoursInput" type="number" min="0" step="1" placeholder="0" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="app-footer">
+    <small>Arraste os cards para classificar por Esforço (colunas) e Impacto (linhas).</small>
+  </footer>
+
+  <!-- Modal de Observação Complementar -->
+  <div id="noteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="noteModalTitle">Observação complementar</h3>
+        <button id="noteCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-item-title" id="noteItemTitle"></div>
+        <div class="modal-grid-two">
+          <div class="modal-field">
+            <label class="modal-label">Pai</label>
+            <div class="dropdown" id="parentDropdown">
+              <button id="parentDropdownBtn" type="button" class="dropdown-btn">Selecionar pai</button>
+              <div id="parentDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar pai">
+                <input id="parentDropdownSearch" type="text" class="dropdown-search" placeholder="Buscar demanda..." />
+                <div id="parentDropdownList" class="dropdown-list"></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="noteTipoSel">Tipo de esforço</label>
+            <select id="noteTipoSel">
+              <option>Tarefa</option>
+              <option>Iniciativa</option>
+              <option>Ideia</option>
+              <option>Follow-up</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-grid-three">
+          <div class="modal-field">
+            <label class="modal-label" for="noteUrgSel">Urgência</label>
+            <select id="noteUrgSel">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="noteGroupInput">Grupo</label>
+            <div class="dropdown" id="noteGroupDropdown">
+              <input id="noteGroupInput" type="text" maxlength="60" placeholder="Nome do grupo (até 60 chars)" />
+              <div id="noteGroupPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupo">
+                <div id="noteGroupList" class="dropdown-list"></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="noteSubSquadInput">SubSquad</label>
+            <input id="noteSubSquadInput" type="text" placeholder="Nome da subSquad" />
+          </div>
         </div>
 
-        <div class="control-group">
-          <label for="escopoFilter">Escopo</label>
-          <select id="escopoFilter">
-            <option value="all">Todos</option>
-            <option value="Inovação">Inovação</option>
-            <option value="Operação">Operação</option>
-            <option value="Outros">Outros</option>
-          </select>
+        <div class="modal-grid-three">
+          <div class="modal-field">
+            <label class="modal-label" for="noteImpactSel">Impacto</label>
+            <select id="noteImpactSel">
+              <option>Baixo</option>
+              <option>Médio</option>
+              <option>Alto</option>
+              <option>Altíssimo</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="noteEsforcoSel">Esforço</label>
+            <select id="noteEsforcoSel">
+              <option>Baixo</option>
+              <option>Médio</option>
+              <option>Alto</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="noteBoraSel">Bora_Impact</label>
+            <select id="noteBoraSel">
+              <option value=""></option>
+              <option value="0.25">0.25</option>
+              <option value="0.5">0.5</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
         </div>
+        <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="noteCancelBtn" type="button">Cancelar</button>
+        <button id="noteSaveBtn" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-        <div class="control-group">
-          <label for="tipoEsforcoFilter">Tipo de esforço</label>
-          <select id="tipoEsforcoFilter">
-            <option value="all">Todos</option>
-            <option value="-">-</option>
-            <option value="Tarefa">Tarefa</option>
-            <option value="Iniciativa">Iniciativa</option>
-            <option value="Ideia">Ideia</option>
-            <option value="Follow-up">Follow-up</option>
-          </select>
+  <!-- Modal de Observações adicionais (somente leitura) -->
+  <div id="obsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="obsModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="obsModalTitle">Observações adicionais</h3>
+        <button id="obsCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-item-title" id="obsItemTitle"></div>
+        <div id="obsContent" class="obs-content"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="obsOkBtn" type="button">Ok</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Configuração do Google Sheets -->
+  <div id="sheetsCfgModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sheetsCfgTitle">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="sheetsCfgTitle">Integração com Google Sheets</h3>
+        <button id="sheetsCfgCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label" for="sheetsUrlInput">URL ou ID da planilha</label>
+          <input id="sheetsUrlInput" type="text"
+            placeholder="https://docs.google.com/spreadsheets/d/ID... ou apenas o ID" />
         </div>
-
-        <div class="control-group">
-          <label for="principalFilter">Principal</label>
-          <select id="principalFilter">
-            <option value="all">Todos</option>
-            <option value="Experiência">Experiência</option>
-            <option value="Mercado">Mercado</option>
-            <option value="Plataforma">Plataforma</option>
-            <option value="Outros">Outros</option>
-          </select>
+        <div class="modal-grid-two">
+          <div class="modal-field">
+            <label class="modal-label" for="sheetsNameInput">Nome da aba</label>
+            <input id="sheetsNameInput" type="text" placeholder="base_classificada" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="sheetsGidInput">GID (opcional)</label>
+            <input id="sheetsGidInput" type="text" placeholder="ex.: 0" />
+          </div>
         </div>
-
-        <div class="control-group">
-          <label for="esforcoTecnicoFilter">Esforço técnico (CSV)</label>
-          <select id="esforcoTecnicoFilter">
-            <option value="all">Todos</option>
-            <option value="Baixo">Baixo</option>
-            <option value="Médio">Médio</option>
-            <option value="Alto">Alto</option>
-            <option value="Sem">Sem classificação</option>
-          </select>
+        <div class="modal-grid-two">
+          <div class="modal-field">
+            <label class="modal-label" for="sheetsImportMode">Importação</label>
+            <select id="sheetsImportMode">
+              <option value="merge">Merge (mesclar com estado)</option>
+              <option value="zerar">Zerar (apenas da planilha)</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Publicação</label>
+            <div class="hint">Para leitura sem login: Arquivo → Publicar na Web → aba escolhida.</div>
+          </div>
         </div>
+        <div class="modal-grid-two">
+          <div class="modal-field">
+            <label class="modal-label">Autenticação</label>
+            <div style="display:flex; gap:8px;">
+              <button id="sheetsOAuthBtn" type="button" class="btn-google">Entrar com Google</button>
+            </div>
+            <div id="sheetsAuthStatus" class="hint"></div>
+          </div>
+          <div class="modal-field"></div>
+        </div>
+        <div style="margin-top:6px; display:flex; gap:8px;">
+          <button id="sheetsTestBtn" type="button">Baixar demandas</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="sheetsCfgCancelBtn" type="button">Cancelar</button>
+        <button id="sheetsCfgSaveBtn" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-        <div class="control-group">
-          <label for="urgenciaFilter">Urgência</label>
-          <select id="urgenciaFilter">
-            <option value="all">Todas</option>
+  <!-- Sheet lateral de detalhes -->
+  <aside id="detailSheet" class="sheet hidden" aria-label="Detalhes da demanda">
+    <div class="sheet-header">
+      <strong id="sheetTitle">Detalhes</strong>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="openModalidadesDrawerBtn" class="btn-icon" title="Modalidades">›</button>
+        <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-row stack">
+        <div class="sheet-label">Demanda descrição</div>
+        <div class="sheet-value" id="sheetDemandaDesc"></div>
+      </div>
+      <div class="sheet-row stack">
+        <div class="sheet-label">Observações adicionais</div>
+        <div class="sheet-value" id="sheetObsAdd"></div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Escopo</div>
+        <div class="sheet-value"><select id="sheetEscopoSel">
+            <option>Operação</option>
+            <option>Inovação</option>
+            <option>Outros</option>
+          </select>
+          <div class="hint">Ex.: Inovação ou Operação</div>
+        </div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Abordagem</div>
+        <div class="sheet-value"><select id="sheetAbordagemSel">
+            <option>Oportunidade</option>
+            <option>Problema</option>
+            <option>Outros</option>
+          </select>
+          <div class="hint">Ex.: Oportunidade ou Problema</div>
+        </div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Impacto (R$)</div>
+        <div class="sheet-value"><select id="sheetImpactoSel">
+            <option>Baixo</option>
+            <option>Médio</option>
+            <option>Alto</option>
+            <option>Altíssimo</option>
+          </select></div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Esforço</div>
+        <div class="sheet-value"><select id="sheetEsforcoSel">
+            <option>Baixo</option>
+            <option>Médio</option>
+            <option>Alto</option>
+          </select></div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Andamento</div>
+        <div class="sheet-value"><select id="sheetAndamentoSel">
+            <option>Sim</option>
+            <option>Não</option>
+          </select></div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Progresso (%)</div>
+        <div class="sheet-value"><input id="sheetProgressoInput" type="number" min="0" max="100" step="1"
+            placeholder="0 a 100" /></div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Tipo de esforço</div>
+        <div class="sheet-value"><select id="sheetTipoSel">
+            <option>Tarefa</option>
+            <option>Iniciativa</option>
+            <option>Ideia</option>
+            <option>Follow-up</option>
+          </select></div>
+      </div>
+      <div class="sheet-row">
+        <div class="sheet-label">Urgência</div>
+        <div class="sheet-value"><select id="sheetUrgSel">
             <option value="0">0</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
             <option value="4">4</option>
             <option value="5">5</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <label>Grupos</label>
-          <div class="dropdown" id="groupDropdown">
-            <button id="groupDropdownBtn" type="button" class="dropdown-btn">Grupos: Todos</button>
-            <div id="groupDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupos">
-              <div id="groupDropdownList"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label>SubSquads</label>
-          <div class="dropdown" id="subSquadDropdown">
-            <button id="subSquadDropdownBtn" type="button" class="dropdown-btn">SubSquad: Todos</button>
-            <div id="subSquadDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar subSquads">
-              <div id="subSquadDropdownList"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label for="relationsToggle">Ver relacionamentos</label>
-          <input type="checkbox" id="relationsToggle" />
-        </div>
+          </select></div>
       </div>
-    </section>
-
-    <main class="board-wrapper">
-      <svg id="relationsOverlay" class="relations-overlay" aria-hidden="true"></svg>
-      <section class="board" id="board">
-        <!-- Column headers moved to bottom -->
-
-        <!-- Row: Altíssimo impacto (top row) -->
-        <div class="y-label">Altíssimo<div class="hint">+5MM</div></div>
-        <div class="cell" data-impact="Altíssimo" data-effort="Baixo"></div>
-        <div class="cell" data-impact="Altíssimo" data-effort="Médio"></div>
-        <div class="cell" data-impact="Altíssimo" data-effort="Alto"></div>
-
-        <!-- Row: Alto impacto -->
-        <div class="y-label">Alto<div class="hint">+1MM</div></div>
-        <div class="cell" data-impact="Alto" data-effort="Baixo"></div>
-        <div class="cell" data-impact="Alto" data-effort="Médio"></div>
-        <div class="cell" data-impact="Alto" data-effort="Alto"></div>
-
-        <!-- Row: Médio impacto -->
-        <div class="y-label">Médio<div class="hint">~500k a 1MM</div></div>
-        <div class="cell" data-impact="Médio" data-effort="Baixo"></div>
-        <div class="cell" data-impact="Médio" data-effort="Médio"></div>
-        <div class="cell" data-impact="Médio" data-effort="Alto"></div>
-
-        <!-- Row: Baixo impacto -->
-        <div class="y-label">Baixo<div class="hint">~100k</div></div>
-        <div class="cell" data-impact="Baixo" data-effort="Baixo"></div>
-        <div class="cell" data-impact="Baixo" data-effort="Médio"></div>
-        <div class="cell" data-impact="Baixo" data-effort="Alto"></div>
-
-        <!-- Column headers (bottom) -->
-        <div class="y-label empty"></div>
-        <div class="x-header">Baixo<div class="hint">~15 a 30 dias</div></div>
-        <div class="x-header">Médio<div class="hint">~31 a 90 dias</div></div>
-        <div class="x-header">Alto<div class="hint">+100 dias</div></div>
-      </section>
-
-      <aside class="backlog" id="backlog" aria-label="Backlog (não classificados)">
-        <div class="backlog-header">
-          <h2>Backlog (não classificados)</h2>
-          <p>Arraste para um quadrante para classificar</p>
-        </div>
-        <div class="backlog-list" id="backlogList"></div>
-      </aside>
-
-      <!-- Backdrop for Sheet -->
-      <div id="sheetBackdrop" class="backdrop hidden" aria-hidden="true"></div>
-
-      <!-- Drawer: Modalidades -->
-      <aside id="modalidadesDrawer" class="drawer hidden" aria-label="Diagnóstico">
-        <div class="drawer-header">
-          <button id="drawerBackBtn" class="btn-back" aria-label="Voltar">‹</button>
-          <strong>Diagnóstico</strong>
-        </div>
-        <div class="drawer-body">
-          <div class="drawer-section">
-            <div class="drawer-subtitle">Modalidade</div>
-            <div id="modalidadesList" class="modalidade-list"></div>
-            <div id="modalidadesBadges" class="badge-list" style="margin-top:8px;"></div>
-          </div>
-          <div class="drawer-section">
-            <div class="drawer-subtitle">Persona afetado</div>
-            <div id="personaList" class="persona-list"></div>
-          </div>
-          <div class="drawer-section">
-            <label class="drawer-checkbox"><input type="checkbox" id="legalReqChk"/> Requer jurídico?</label>
-            <div id="legalNotesRow" class="drawer-notes hidden">
-              <textarea id="legalNotesText" rows="3" placeholder="Quais questões jurídicas?"></textarea>
-            </div>
-          </div>
-          <div class="drawer-section">
-            <div class="drawer-subtitle">Tecnologias</div>
-            <div class="token-input"><input id="diagTechInput" type="text" placeholder="Ex.: React, Node.js"/><button id="diagAddTechBtn" class="btn-icon" title="Adicionar">＋</button><div id="diagTechSuggest" class="suggest-panel hidden"></div></div>
-            <div id="diagTechList" class="token-list"></div>
-          </div>
-          <div class="drawer-section">
-            <div class="drawer-subtitle">Serviços</div>
-            <div class="token-input"><input id="diagServInput" type="text" placeholder="Ex.: service-api-01, keycloak..."/><button id="diagAddServBtn" class="btn-icon" title="Adicionar">＋</button><div id="diagServSuggest" class="suggest-panel hidden"></div></div>
-            <div id="diagServList" class="token-list"></div>
-          </div>
-          <div class="drawer-section">
-            <div class="drawer-subtitle">Tipos de Alteração</div>
-            <div id="diagTypesArea" class="types-area">
-              <button type="button" class="chip-toggle" data-tipo="Nova Tabela">Nova Tabela</button>
-              <button type="button" class="chip-toggle" data-tipo="Nova Coluna">Nova Coluna</button>
-              <button type="button" class="chip-toggle" data-tipo="Novo Join">Novo Join</button>
-              <button type="button" class="chip-toggle" data-tipo="Migração">Migração</button>
-              <button type="button" class="chip-toggle" data-tipo="Script Produção">Script Produção</button>
-              <button type="button" class="chip-toggle" data-tipo="Novo Endpoint">Novo Endpoint</button>
-              <button type="button" class="chip-toggle" data-tipo="Alteração Lógica">Alteração Lógica</button>
-              <button type="button" class="chip-toggle" data-tipo="Refatoração">Refatoração</button>
-              <button type="button" class="chip-toggle" data-tipo="Outro">Outro</button>
-            </div>
-          </div>
-          <div class="drawer-section">
-            <div class="form-two">
-              <div class="field">
-                <label class="field-label">Complexidade</label>
-                <select id="diagComplexSel"><option value=""></option><option>Baixa</option><option>Média</option><option>Alta</option></select>
-              </div>
-              <div class="field">
-                <label class="field-label">Horas Estimadas</label>
-                <input id="diagHoursInput" type="number" min="0" step="1" placeholder="0"/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </main>
-
-    <footer class="app-footer">
-      <small>Arraste os cards para classificar por Esforço (colunas) e Impacto (linhas).</small>
-    </footer>
-
-    <!-- Modal de Observação Complementar -->
-    <div id="noteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3 id="noteModalTitle">Observação complementar</h3>
-          <button id="noteCloseBtn" class="btn-close" aria-label="Fechar">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-item-title" id="noteItemTitle"></div>
-          <div class="modal-grid-two">
-            <div class="modal-field">
-              <label class="modal-label">Pai</label>
-              <div class="dropdown" id="parentDropdown">
-                <button id="parentDropdownBtn" type="button" class="dropdown-btn">Selecionar pai</button>
-                <div id="parentDropdownPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar pai">
-                  <input id="parentDropdownSearch" type="text" class="dropdown-search" placeholder="Buscar demanda..." />
-                  <div id="parentDropdownList" class="dropdown-list"></div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="noteTipoSel">Tipo de esforço</label>
-              <select id="noteTipoSel">
-                <option>Tarefa</option>
-                <option>Iniciativa</option>
-                <option>Ideia</option>
-                <option>Follow-up</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-grid-three">
-            <div class="modal-field">
-              <label class="modal-label" for="noteUrgSel">Urgência</label>
-              <select id="noteUrgSel">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="noteGroupInput">Grupo</label>
-              <div class="dropdown" id="noteGroupDropdown">
-                <input id="noteGroupInput" type="text" maxlength="60" placeholder="Nome do grupo (até 60 chars)" />
-                <div id="noteGroupPanel" class="dropdown-panel hidden" role="menu" aria-label="Selecionar grupo">
-                  <div id="noteGroupList" class="dropdown-list"></div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="noteSubSquadInput">SubSquad</label>
-              <input id="noteSubSquadInput" type="text" placeholder="Nome da subSquad" />
-            </div>
-          </div>
-
-          <div class="modal-grid-three">
-            <div class="modal-field">
-              <label class="modal-label" for="noteImpactSel">Impacto</label>
-              <select id="noteImpactSel">
-                <option>Baixo</option>
-                <option>Médio</option>
-                <option>Alto</option>
-                <option>Altíssimo</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="noteEsforcoSel">Esforço</label>
-              <select id="noteEsforcoSel">
-                <option>Baixo</option>
-                <option>Médio</option>
-                <option>Alto</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="noteBoraSel">Bora_Impact</label>
-              <select id="noteBoraSel">
-                <option value=""></option>
-                <option value="0.25">0.25</option>
-                <option value="0.5">0.5</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-              </select>
-            </div>
-          </div>
-          <textarea id="noteTextarea" rows="6" placeholder="Anotações do facilitador da dinâmica..."></textarea>
-        </div>
-        <div class="modal-footer">
-          <button id="noteCancelBtn" type="button">Cancelar</button>
-          <button id="noteSaveBtn" type="button">Salvar</button>
-        </div>
+      <div class="sheet-row">
+        <div class="sheet-label">SubSquad</div>
+        <div class="sheet-value"><input id="sheetSubSquadInput" type="text" placeholder="Nome da subSquad" /></div>
       </div>
-    </div>
-
-    <!-- Modal de Observações adicionais (somente leitura) -->
-    <div id="obsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="obsModalTitle">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3 id="obsModalTitle">Observações adicionais</h3>
-          <button id="obsCloseBtn" class="btn-close" aria-label="Fechar">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-item-title" id="obsItemTitle"></div>
-          <div id="obsContent" class="obs-content"></div>
-        </div>
-        <div class="modal-footer">
-          <button id="obsOkBtn" type="button">Ok</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Configuração do Google Sheets -->
-    <div id="sheetsCfgModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sheetsCfgTitle">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3 id="sheetsCfgTitle">Integração com Google Sheets</h3>
-          <button id="sheetsCfgCloseBtn" class="btn-close" aria-label="Fechar">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-field">
-            <label class="modal-label" for="sheetsUrlInput">URL ou ID da planilha</label>
-            <input id="sheetsUrlInput" type="text" placeholder="https://docs.google.com/spreadsheets/d/ID... ou apenas o ID" />
-          </div>
-          <div class="modal-grid-two">
-            <div class="modal-field">
-              <label class="modal-label" for="sheetsNameInput">Nome da aba</label>
-              <input id="sheetsNameInput" type="text" placeholder="base_classificada" />
-            </div>
-            <div class="modal-field">
-              <label class="modal-label" for="sheetsGidInput">GID (opcional)</label>
-              <input id="sheetsGidInput" type="text" placeholder="ex.: 0" />
-            </div>
-          </div>
-          <div class="modal-grid-two">
-            <div class="modal-field">
-              <label class="modal-label" for="sheetsImportMode">Importação</label>
-              <select id="sheetsImportMode">
-                <option value="merge">Merge (mesclar com estado)</option>
-                <option value="zerar">Zerar (apenas da planilha)</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">Publicação</label>
-              <div class="hint">Para leitura sem login: Arquivo → Publicar na Web → aba escolhida.</div>
-            </div>
-          </div>
-          <div class="modal-grid-two">
-            <div class="modal-field">
-              <label class="modal-label">Autenticação</label>
-              <div style="display:flex; gap:8px;">
-                <button id="sheetsOAuthBtn" type="button" class="btn-google">Entrar com Google</button>
-              </div>
-              <div id="sheetsAuthStatus" class="hint"></div>
-            </div>
-            <div class="modal-field"></div>
-          </div>
-          <div style="margin-top:6px; display:flex; gap:8px;">
-            <button id="sheetsTestBtn" type="button">Baixar demandas</button>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="sheetsCfgCancelBtn" type="button">Cancelar</button>
-          <button id="sheetsCfgSaveBtn" type="button">Salvar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sheet lateral de detalhes -->
-    <aside id="detailSheet" class="sheet hidden" aria-label="Detalhes da demanda">
-      <div class="sheet-header">
-        <strong id="sheetTitle">Detalhes</strong>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button id="openModalidadesDrawerBtn" class="btn-icon" title="Modalidades">›</button>
-          <button id="sheetCloseBtn" class="btn-close" aria-label="Fechar">×</button>
-        </div>
-      </div>
-      <div class="sheet-body">
-        <div class="sheet-row stack"><div class="sheet-label">Demanda descrição</div><div class="sheet-value" id="sheetDemandaDesc"></div></div>
-        <div class="sheet-row stack"><div class="sheet-label">Observações adicionais</div><div class="sheet-value" id="sheetObsAdd"></div></div>
-        <div class="sheet-row"><div class="sheet-label">Escopo</div><div class="sheet-value"><select id="sheetEscopoSel"><option>Operação</option><option>Inovação</option><option>Outros</option></select><div class="hint">Ex.: Inovação ou Operação</div></div></div>
-        <div class="sheet-row"><div class="sheet-label">Abordagem</div><div class="sheet-value"><select id="sheetAbordagemSel"><option>Oportunidade</option><option>Problema</option><option>Outros</option></select><div class="hint">Ex.: Oportunidade ou Problema</div></div></div>
-        <div class="sheet-row"><div class="sheet-label">Impacto (R$)</div><div class="sheet-value"><select id="sheetImpactoSel"><option>Baixo</option><option>Médio</option><option>Alto</option><option>Altíssimo</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Esforço</div><div class="sheet-value"><select id="sheetEsforcoSel"><option>Baixo</option><option>Médio</option><option>Alto</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Andamento</div><div class="sheet-value"><select id="sheetAndamentoSel"><option>Sim</option><option>Não</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Progresso (%)</div><div class="sheet-value"><input id="sheetProgressoInput" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></div></div>
-        <div class="sheet-row"><div class="sheet-label">Tipo de esforço</div><div class="sheet-value"><select id="sheetTipoSel"><option>Tarefa</option><option>Iniciativa</option><option>Ideia</option><option>Follow-up</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Urgência</div><div class="sheet-value"><select id="sheetUrgSel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">SubSquad</div><div class="sheet-value"><input id="sheetSubSquadInput" type="text" placeholder="Nome da subSquad" /></div></div>
-        <div class="sheet-row"><div class="sheet-label">Bora_Impact</div><div class="sheet-value"><select id="sheetBoraSel"><option value="">-</option><option value="0.25">0.25</option><option value="0.5">0.5</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div>
-        <div class="sheet-row"><div class="sheet-label">Camada</div><div class="sheet-value" id="sheetPrincipalImpacto"></div></div>
-        <div class="sheet-row stack"><div class="sheet-label">Relacionamentos</div>
-          <div class="sheet-value">
-            <input id="relSearch" type="text" placeholder="Buscar demanda..." />
-            <div id="relList" class="rel-list"></div>
-          </div>
-        </div>
-        <div class="sheet-row stack"><div class="sheet-label">Observação complementar</div><div class="sheet-value"><textarea id="sheetObservation" rows="4" placeholder="Anotações do facilitador da dinâmica..."></textarea></div></div>
-      </div>
-    </aside>
-
-    <!-- Overlay de votação de urgência -->
-    <div id="voteOverlay" class="vote-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="voteOverlayTitle">
-      <div class="vote-overlay-bar">
-        <h2 id="voteOverlayTitle">Votação de urgência <span id="voteCount"></span></h2>
-        <div class="vote-cols-ctrl">
-          <label for="voteColsSel">Cards por linha</label>
-          <select id="voteColsSel">
+      <div class="sheet-row">
+        <div class="sheet-label">Bora_Impact</div>
+        <div class="sheet-value"><select id="sheetBoraSel">
+            <option value="">-</option>
+            <option value="0.25">0.25</option>
+            <option value="0.5">0.5</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
             <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5" selected>5</option>
-            <option value="6">6</option>
-          </select>
-        </div>
-        <button id="closeVoteOverlayBtn" type="button">Fechar</button>
+          </select></div>
       </div>
-      <div id="voteGrid" class="vote-grid"></div>
+      <div class="sheet-row">
+        <div class="sheet-label">Camada</div>
+        <div class="sheet-value" id="sheetPrincipalImpacto"></div>
+      </div>
+      <div class="sheet-row stack">
+        <div class="sheet-label">Relacionamentos</div>
+        <div class="sheet-value">
+          <input id="relSearch" type="text" placeholder="Buscar demanda..." />
+          <div id="relList" class="rel-list"></div>
+        </div>
+      </div>
+      <div class="sheet-row stack">
+        <div class="sheet-label">Observação complementar</div>
+        <div class="sheet-value"><textarea id="sheetObservation" rows="4"
+            placeholder="Anotações do facilitador da dinâmica..."></textarea></div>
+      </div>
     </div>
+  </aside>
 
-    <script src="./app.js"></script>
-  </body>
-  </html>
+  <!-- Overlay de votação de urgência -->
+  <div id="voteOverlay" class="vote-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="voteOverlayTitle">
+    <div class="vote-overlay-bar">
+      <h2 id="voteOverlayTitle">Votação de urgência <span id="voteCount"></span></h2>
+      <div class="vote-cols-ctrl">
+        <label for="voteColsSel">Cards por linha</label>
+        <select id="voteColsSel">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5" selected>5</option>
+          <option value="6">6</option>
+        </select>
+      </div>
+      <button id="closeVoteOverlayBtn" type="button">Fechar</button>
+    </div>
+    <div id="voteGrid" class="vote-grid"></div>
+  </div>
 
+  <script src="./app.js"></script>
+</body>
 
+</html>
