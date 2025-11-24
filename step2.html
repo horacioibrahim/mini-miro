@@ -1,160 +1,163 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Etapa 2 - Planejamento por Ciclos</title>
-    <link rel="stylesheet" href="./styles.css">
-  </head>
-  <body>
-    <header class="app-header">
-      <h1>Etapa 2 - Planejamento por Ondas (Ciclos) <span id="visibleCountStep2" class="count-badge">0</span></h1>
-    </header>
 
-    <section class="controls controls-single">
-      <div class="control-group">
-        <button id="backToStep1" type="button">Voltar à Etapa 1</button>
-      </div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Etapa 2 - Planejamento por Ciclos</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
 
-      <div class="control-group">
-        <label for="impactoFilter2">Impacto</label>
-        <select id="impactoFilter2">
-          <option value="all">Todos</option>
-          <option value="Altíssimo">Altíssimo</option>
-          <option value="Alto">Alto</option>
-          <option value="Médio">Médio</option>
-          <option value="Baixo">Baixo</option>
-        </select>
-      </div>
+<body>
+  <header class="app-header">
+    <h1>Etapa 2 - Planejamento por Ondas (Ciclos) <span id="visibleCountStep2" class="count-badge">0</span></h1>
+  </header>
 
-      <div class="control-group">
-        <label for="abordagemFilter2">Abordagem</label>
-        <select id="abordagemFilter2">
-          <option value="all">Todas</option>
-          <option value="Oportunidade">Oportunidade</option>
-          <option value="Problema">Problema</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
+  <section class="controls controls-single">
+    <div class="control-group">
+      <button id="backToStep1" type="button">Voltar à Etapa 1</button>
+    </div>
 
-      <div class="control-group">
-        <label for="escopoFilter2">Escopo</label>
-        <select id="escopoFilter2">
-          <option value="all">Todos</option>
-          <option value="Operação">Operação</option>
-          <option value="Inovação">Inovação</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="impactoFilter2">Impacto</label>
+      <select id="impactoFilter2">
+        <option value="all">Todos</option>
+        <option value="Altíssimo">Altíssimo</option>
+        <option value="Alto">Alto</option>
+        <option value="Médio">Médio</option>
+        <option value="Baixo">Baixo</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="principalFilter2">Principal</label>
-        <select id="principalFilter2">
-          <option value="all">Todos</option>
-          <option value="Experiência">Experiência</option>
-          <option value="Mercado">Mercado</option>
-          <option value="Plataforma">Plataforma</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="abordagemFilter2">Abordagem</label>
+      <select id="abordagemFilter2">
+        <option value="all">Todas</option>
+        <option value="Oportunidade">Oportunidade</option>
+        <option value="Problema">Problema</option>
+        <option value="Outros">Outros</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="esforcoTecnicoFilter2">Esforço técnico (CSV)</label>
-        <select id="esforcoTecnicoFilter2">
-          <option value="all">Todos</option>
-          <option value="Baixo">Baixo</option>
-          <option value="Médio">Médio</option>
-          <option value="Alto">Alto</option>
-          <option value="Sem">Sem classificação</option>
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="escopoFilter2">Horizonte</label>
+      <select id="escopoFilter2">
+        <option value="all">Todos</option>
+        <option value="Operação">Operação</option>
+        <option value="Inovação">Inovação</option>
+        <option value="Outros">Outros</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="urgenciaFilter2">Urgência</label>
-        <select id="urgenciaFilter2">
-          <option value="all">Todas</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="principalFilter2">Influência</label>
+      <select id="principalFilter2">
+        <option value="all">Todos</option>
+        <option value="Experiência">Experiência</option>
+        <option value="Mercado">Mercado</option>
+        <option value="Plataforma">Plataforma</option>
+        <option value="Outros">Outros</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="tipoEsforcoFilter2">Tipo de esforço (Backlog)</label>
-        <select id="tipoEsforcoFilter2">
-          <option value="all">Todos</option>
-          <option value="-">-</option>
-          <option value="Tarefa">Tarefa</option>
-          <option value="Iniciativa">Iniciativa</option>
-          <option value="Ideia">Ideia</option>
-          <option value="Follow-up">Follow-up</option>
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="esforcoTecnicoFilter2">Tamanho Esforço</label>
+      <select id="esforcoTecnicoFilter2">
+        <option value="all">Todos</option>
+        <option value="Baixo">Baixo</option>
+        <option value="Médio">Médio</option>
+        <option value="Alto">Alto</option>
+        <option value="Sem">Sem classificação</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="squadPlanSel">Squad</label>
-        <select id="squadPlanSel">
-          <!-- options by JS: squads detectados -->
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="urgenciaFilter2">Urgência</label>
+      <select id="urgenciaFilter2">
+        <option value="all">Todas</option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="squadBacklogSel">Squad (Backlog)</label>
-        <select id="squadBacklogSel">
-          <!-- options by JS: squads detectados -->
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="tipoEsforcoFilter2">Tipo de esforço (Backlog)</label>
+      <select id="tipoEsforcoFilter2">
+        <option value="all">Todos</option>
+        <option value="-">-</option>
+        <option value="Tarefa">Tarefa</option>
+        <option value="Iniciativa">Iniciativa</option>
+        <option value="Ideia">Ideia</option>
+        <option value="Follow-up">Follow-up</option>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="subSquadBacklogSel">SubSquad (Backlog)</label>
-        <select id="subSquadBacklogSel">
-          <!-- options by JS: subSquads detectados -->
-        </select>
-      </div>
+    <div class="control-group">
+      <label for="squadPlanSel">Squad</label>
+      <select id="squadPlanSel">
+        <!-- options by JS: squads detectados -->
+      </select>
+    </div>
 
-      <div class="control-group">
-        <button id="resetPlanBtn" type="button">Reset organização</button>
-      </div>
+    <div class="control-group">
+      <label for="squadBacklogSel">Squad (Backlog)</label>
+      <select id="squadBacklogSel">
+        <!-- options by JS: squads detectados -->
+      </select>
+    </div>
 
-      <div class="control-group">
-        <button id="addWeekBtn" type="button">Adicionar Ciclo</button>
-      </div>
+    <div class="control-group">
+      <label for="subSquadBacklogSel">SubSquad (Backlog)</label>
+      <select id="subSquadBacklogSel">
+        <!-- options by JS: subSquads detectados -->
+      </select>
+    </div>
 
-      <div class="control-group">
-        <button id="exportWeeksBtn" type="button">Exportar CSV (Ciclos)</button>
-      </div>
+    <div class="control-group">
+      <button id="resetPlanBtn" type="button">Reset organização</button>
+    </div>
 
-      <div class="control-group">
-        <button id="resetFilters2Btn" type="button">Resetar filtros</button>
-      </div>
+    <div class="control-group">
+      <button id="addWeekBtn" type="button">Adicionar Ciclo</button>
+    </div>
+
+    <div class="control-group">
+      <button id="exportWeeksBtn" type="button">Exportar CSV (Ciclos)</button>
+    </div>
+
+    <div class="control-group">
+      <button id="resetFilters2Btn" type="button">Resetar filtros</button>
+    </div>
+  </section>
+
+  <main class="board-wrapper">
+    <section class="weeks-board" id="weeksBoard" aria-label="Planejamento por ciclos">
+      <!-- headers -->
+      <div class="y-label empty"></div>
+      <div class="x-header">Tarefa 1</div>
+      <div class="x-header">Tarefa 2</div>
+      <div class="x-header">Tarefa 3</div>
+      <!-- rows will be generated by JS (Sem 1..N) -->
     </section>
 
-    <main class="board-wrapper">
-      <section class="weeks-board" id="weeksBoard" aria-label="Planejamento por ciclos">
-        <!-- headers -->
-        <div class="y-label empty"></div>
-        <div class="x-header">Tarefa 1</div>
-        <div class="x-header">Tarefa 2</div>
-        <div class="x-header">Tarefa 3</div>
-        <!-- rows will be generated by JS (Sem 1..N) -->
-      </section>
+    <aside class="backlog" id="backlog2" aria-label="Backlog (etapa 2)">
+      <div class="backlog-header">
+        <h2>Backlog</h2>
+        <p>Arraste para um ciclo/coluna</p>
+      </div>
+      <div class="backlog-list" id="backlogList2"></div>
+    </aside>
+  </main>
 
-      <aside class="backlog" id="backlog2" aria-label="Backlog (etapa 2)">
-        <div class="backlog-header">
-          <h2>Backlog</h2>
-          <p>Arraste para um ciclo/coluna</p>
-        </div>
-        <div class="backlog-list" id="backlogList2"></div>
-      </aside>
-    </main>
+  <footer class="app-footer">
+    <small>Ordenação do backlog: Impacto alto→baixo e Esforço baixo→alto (padrão).</small>
+  </footer>
 
-    <footer class="app-footer">
-      <small>Ordenação do backlog: Impacto alto→baixo e Esforço baixo→alto (padrão).</small>
-    </footer>
+  <script src="./step2.js"></script>
+</body>
 
-    <script src="./step2.js"></script>
-  </body>
 </html>

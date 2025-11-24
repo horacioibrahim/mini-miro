@@ -596,10 +596,12 @@ button:hover {
 
 .card--problema {
   border-color: #ef4444;
+  border-width: 3px;
 }
 
 .card--oportunidade {
   border-color: #3b82f6;
+  border-width: 3px;
 }
 
 .card--operacao {
