@@ -228,6 +228,8 @@
       <div class="drawer-header">
         <button id="drawerBackBtn" class="btn-back" aria-label="Voltar">‹</button>
         <strong>Diagnóstico</strong>
+        <button id="refreshAuxBtn" class="btn-icon" style="margin-left:auto;"
+          title="Atualizar Opções (Planilha)">🔄</button>
       </div>
       <div class="drawer-body">
         <div class="drawer-section">
@@ -265,15 +267,7 @@
         <div class="drawer-section">
           <div class="drawer-subtitle">Tipos de Alteração</div>
           <div id="diagTypesArea" class="types-area">
-            <button type="button" class="chip-toggle" data-tipo="Nova Tabela">Nova Tabela</button>
-            <button type="button" class="chip-toggle" data-tipo="Nova Coluna">Nova Coluna</button>
-            <button type="button" class="chip-toggle" data-tipo="Novo Join">Novo Join</button>
-            <button type="button" class="chip-toggle" data-tipo="Migração">Migração</button>
-            <button type="button" class="chip-toggle" data-tipo="Script Produção">Script Produção</button>
-            <button type="button" class="chip-toggle" data-tipo="Novo Endpoint">Novo Endpoint</button>
-            <button type="button" class="chip-toggle" data-tipo="Alteração Lógica">Alteração Lógica</button>
-            <button type="button" class="chip-toggle" data-tipo="Refatoração">Refatoração</button>
-            <button type="button" class="chip-toggle" data-tipo="Outro">Outro</button>
+            <!-- options by JS -->
           </div>
         </div>
         <div class="drawer-section">

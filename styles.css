@@ -1327,3 +1327,13 @@ button:hover {
     grid-template-columns: 1fr;
   }
 }
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.rotating {
+  animation: spin 1s linear infinite;
+}

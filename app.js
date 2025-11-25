@@ -3,6 +3,11 @@ const state = {
   items: [], // { id, demanda, squad, observation, parentId, relatedIds: number[], effortRaw, impactRaw, abordagemRaw, escopoRaw, principalImpacto, principalImpactClass, tipoEsforco, progresso, andamento }
   filters: { abordagem: 'all', escopo: 'all', principal: 'all', tipo: 'all', urgencia: 'all', esforcoTecnico: 'all', subSquad: [], squad: [], groups: [], text: '', showRelations: false },
   ui: { isDragging: false, selectedId: null },
+  aux: {
+    modalidades: [],
+    personas: [],
+    changeTypes: []
+  }
 };
 
 // Persistence (Etapa 1): save/load full items to localStorage so both steps share state
@@ -493,7 +498,9 @@ function openVoteOverlay() {
       }
     });
   }
-  // apply columns per line
+
+
+  // --- Drag & Drop (Columns) ---
   applyVoteCols();
   overlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -1346,6 +1353,45 @@ function setupFilters() {
   }
 }
 
+
+// Global function placeholders
+let openDetailSheet = () => { };
+let closeDetailSheet = () => { };
+let openObsModal = () => { };
+let openNoteModal = () => { };
+
+async function fetchAuxiliaryData(token, spreadsheetId) {
+  if (!token || !spreadsheetId) return;
+  try {
+    console.log('[Aux] Fetching auxiliary data...');
+    const tabs = ['_modalidade', '_persona', '_changeType'];
+    const results = {};
+
+    for (const tab of tabs) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(tab)}!A:A?majorDimension=COLUMNS`;
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) {
+        if (resp.status !== 404) {
+          console.warn(`[Aux] Failed to fetch auxiliary data from tab "${tab}": HTTP ${resp.status}`);
+        }
+        continue;
+      }
+      const data = await resp.json();
+      const values = (data.values && data.values[0]) ? data.values[0] : [];
+      results[tab] = values.filter(s => s && typeof s === 'string' && s.trim().length > 0);
+    }
+
+    if (results['_modalidade']) state.aux.modalidades = results['_modalidade'];
+    if (results['_persona']) state.aux.personas = results['_persona'];
+    if (results['_changeType']) state.aux.changeTypes = results['_changeType'];
+
+    localStorage.setItem('priorizacao_aux_data', JSON.stringify(state.aux));
+    console.log('[Aux] Updated:', state.aux);
+  } catch (e) {
+    console.warn('[Aux] Failed to fetch auxiliary data', e);
+  }
+}
+
 // Init
 window.addEventListener('DOMContentLoaded', () => {
   // Setup DnD targets
@@ -1396,6 +1442,9 @@ window.addEventListener('DOMContentLoaded', () => {
   populateSquadFilter();
   populateSubSquadFilter();
   render();
+
+  // Try to fetch aux data if token is available (silent)
+  tryFetchAuxDataOnLoad();
 
   // Export button
   const exportBtn = document.getElementById('exportCsvBtn');
@@ -1724,6 +1773,24 @@ window.addEventListener('DOMContentLoaded', () => {
       tokenClient.requestAccessToken({ prompt: '' }); // mostra consent se necessário
     });
   }
+  async function tryFetchAuxDataOnLoad() {
+    try {
+      const stored = localStorage.getItem('priorizacao_gis_token');
+      const ts = localStorage.getItem('priorizacao_gis_token_ts');
+      const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (stored && ts && cfgRaw) {
+        const age = Date.now() - parseInt(ts, 10);
+        if (age < 50 * 60 * 1000) {
+          const cfg = JSON.parse(cfgRaw);
+          if (cfg.id && !cfg.id.startsWith('http')) {
+            // Valid token and config, fetch!
+            await fetchAuxiliaryData(stored, cfg.id);
+          }
+        }
+      }
+    } catch (_) { }
+  }
+
   async function updateUserInfoEmail(token) {
     try {
       const resp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${token}` } });
@@ -1854,6 +1921,60 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log('[Sheets] upsert:done');
     } catch (e) { console.error('Sheets upsert error', e); }
   }
+
+
+  // Helper to ensure an option exists in aux state and Sheet
+  async function ensureAuxOption(type, value) {
+    if (!value) return;
+    const val = String(value).trim();
+    if (!val) return;
+
+    let list = [];
+    let tab = '';
+
+    if (type === 'modalidade') {
+      list = state.aux.modalidades;
+      tab = '_modalidade';
+    } else if (type === 'persona') {
+      list = state.aux.personas;
+      tab = '_persona';
+    } else if (type === 'changeType') {
+      list = state.aux.changeTypes;
+      tab = '_changeType';
+    } else {
+      return;
+    }
+
+    // Check if already exists
+    if (list.includes(val)) return;
+
+    // Add to local state
+    list.push(val);
+    localStorage.setItem('priorizacao_aux_data', JSON.stringify(state.aux));
+    console.log(`[Aux] Added new ${type}: ${val}`);
+
+    // Append to Sheet if configured
+    try {
+      const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
+      if (!cfgRaw) return;
+      const cfg = JSON.parse(cfgRaw);
+      const id = cfg.id;
+      if (!id || id.startsWith('http')) return;
+
+      const token = gisAccessToken || await getGisToken();
+      if (!token) return;
+
+      const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${encodeURIComponent(tab)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+      await fetch(appendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ values: [[val]] })
+      });
+      console.log(`[Aux] Appended to sheet ${tab}: ${val}`);
+    } catch (e) {
+      console.warn(`[Aux] Failed to append to sheet ${tab}`, e);
+    }
+  }
   // Mark as used for static analyzers and allow manual triggering in console if needed
   try { if (typeof window !== 'undefined') { window.__upsertItemToSheets = upsertItemToSheets; } } catch (_) { }
   function triggerSheetsUpsert(itemOrId) {
@@ -1883,6 +2004,17 @@ window.addEventListener('DOMContentLoaded', () => {
       const csv = valuesToCsv(data.values || []);
       const file = new File([csv], 'sheet.csv', { type: 'text/csv' });
       await handleClassifiedFile(file, merge);
+
+      // Sync imported options to aux
+      state.items.forEach(it => {
+        if (Array.isArray(it.modalidades)) it.modalidades.forEach(m => ensureAuxOption('modalidade', m));
+        if (Array.isArray(it.personas)) it.personas.forEach(p => ensureAuxOption('persona', p));
+        if (Array.isArray(it.tiposAlteracao)) it.tiposAlteracao.forEach(t => ensureAuxOption('changeType', t));
+      });
+
+      // Fetch aux data (refresh to be sure)
+      await fetchAuxiliaryData(token, id);
+
       alert('Importado via OAuth (Sheets API) com sucesso.');
     } catch (e) {
       console.error('Sheets OAuth import error', e);
@@ -1905,11 +2037,39 @@ window.addEventListener('DOMContentLoaded', () => {
   // Sheet
   const sheet = document.getElementById('detailSheet');
   const sheetCloseBtn = document.getElementById('sheetCloseBtn');
-  sheetCloseBtn.addEventListener('click', closeDetailSheet);
+  sheetCloseBtn.addEventListener('click', () => closeDetailSheet());
   // Drawer elements
   const drawer = document.getElementById('modalidadesDrawer');
   const openDrawerBtn = document.getElementById('openModalidadesDrawerBtn');
   const drawerBackBtn = document.getElementById('drawerBackBtn');
+  const refreshAuxBtn = document.getElementById('refreshAuxBtn');
+  if (!refreshAuxBtn) console.error('refreshAuxBtn not found in DOM');
+  refreshAuxBtn?.addEventListener('click', async () => {
+    console.log('[Refresh] Clicked');
+    const token = await getGisToken();
+    console.log('[Refresh] Token obtained:', !!token);
+    if (!token) return;
+    const cfgRaw = localStorage.getItem('priorizacao_sheets_cfg');
+    if (!cfgRaw) { alert('Configure a planilha primeiro.'); return; }
+    const cfg = JSON.parse(cfgRaw);
+    if (!cfg.id) { alert('ID da planilha não encontrado.'); return; }
+
+    console.log('[Refresh] Fetching aux data for id:', cfg.id);
+    refreshAuxBtn.classList.add('rotating'); // Add css class for rotation if desired, or just wait
+    await fetchAuxiliaryData(token, cfg.id);
+    refreshAuxBtn.classList.remove('rotating');
+
+    // Re-render current drawer if open
+    if (!drawer.classList.contains('hidden')) {
+      const it = state.items.find(x => x.id === state.ui.selectedId);
+      if (it) {
+        buildModalidadesOptions(it.modalidades);
+        buildPersonaOptions(it.personas);
+        buildChangeTypeOptions(it.tiposAlteracao);
+      }
+    }
+    alert('Opções atualizadas da planilha!');
+  });
   const modalidadesList = document.getElementById('modalidadesList');
   const personaList = document.getElementById('personaList');
   const modalidadesBadges = document.getElementById('modalidadesBadges');
@@ -2003,35 +2163,17 @@ window.addEventListener('DOMContentLoaded', () => {
   function buildModalidadesOptions(selected) {
     if (!modalidadesList) return;
     modalidadesList.innerHTML = '';
-    const opts = [
-      'Chamada Pública da Agricultura Familiar',
-      'Chamamento Público - 13.019',
-      'Chamamento Público - 9.637',
-      'Concorrência',
-      'Concurso',
-      'Contratação Direta',
-      'Cotação',
-      'Credenciamento',
-      'Diálogo Competitivo',
-      'Dispensa',
-      'Dispensa - Lei das Estatais 13.303',
-      'Inexigibilidade',
-      'IRP–Intenção para Registro de Preço',
-      'Leilão',
-      'Leilão Eletrônico',
-      'Pré-Qualificação',
-      'Pregão',
-      'Pregão Lei das Estatais 13.303',
-      'Pregão para Registro de Preço',
-      'RCE–Regime de Contratação Estatal',
-      'Regime Diferenciado de Contratação',
-      // badges de legislação específicos
-      'Lei 14133 (*)',
-      'Lei 13.303 (*)',
-      'D10024 (*)',
-      'D5450 (*)',
-      'Sistema S (*)'
-    ];
+
+    let opts = [...(state.aux.modalidades || [])];
+
+    // Merge with current selection (if not already in list)
+    const currentSel = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+    currentSel.forEach(val => {
+      if (val && !opts.includes(val)) opts.push(val);
+    });
+    // Sort alphabetically
+    opts.sort((a, b) => a.localeCompare(b));
+
     const selSet = new Set(Array.isArray(selected) ? selected : (selected ? [selected] : []));
     for (const name of opts) {
       const label = document.createElement('label');
@@ -2054,6 +2196,10 @@ window.addEventListener('DOMContentLoaded', () => {
         // keep a primary 'modalidade' for backward compatibility (first selected or empty)
         it.modalidade = it.modalidades[0] || '';
         persistState();
+
+        // Ensure option exists (if it came from UI it likely does, but good practice if we allow custom input later)
+        // Actually, here we are clicking existing options. 
+        // But if we want to support "adding" via import, we need to check there.
       });
     }
   }
@@ -2061,20 +2207,16 @@ window.addEventListener('DOMContentLoaded', () => {
   function buildPersonaOptions(selectedArr) {
     if (!personaList) return;
     personaList.innerHTML = '';
-    const opts = [
-      // existentes
-      'Comprador', 'Fornecedor', 'Pregoeiro', 'Apoio', 'Administrador', 'Outro',
-      // novos solicitados
-      'Agente de contratação',
-      'Leiloeiro',
-      'Operador de Compra direta',
-      'Operador de dispensa',
-      'Operador de inexigibildiade',
-      'Operador Mod. Contrato',
-      'Autoridade competente',
-      'Comissão de Licitação Perm.',
-      'Comissão de Lititação Especial'
-    ];
+
+    let opts = [...(state.aux.personas || [])];
+
+    // Merge with current selection
+    const currentSel = selectedArr || [];
+    currentSel.forEach(val => {
+      if (val && !opts.includes(val)) opts.push(val);
+    });
+    opts.sort((a, b) => a.localeCompare(b));
+
     const selSet = new Set(selectedArr || []);
     for (const name of opts) {
       const id = 'per_' + name.replace(/\W+/g, '_');
@@ -2142,6 +2284,49 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function buildChangeTypeOptions(selectedArr) {
+    if (!diagTypesArea) return;
+    diagTypesArea.innerHTML = '';
+
+    let opts = [...(state.aux.changeTypes || [])];
+
+    // Merge with current selection
+    const currentSel = selectedArr || [];
+    currentSel.forEach(val => {
+      if (val && !opts.includes(val)) opts.push(val);
+    });
+    opts.sort((a, b) => a.localeCompare(b));
+
+    const selSet = new Set(Array.isArray(selectedArr) ? selectedArr : []);
+
+    opts.forEach(tipo => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip-toggle';
+      btn.textContent = tipo;
+      btn.setAttribute('data-tipo', tipo);
+      if (selSet.has(tipo)) btn.classList.add('active');
+
+      btn.addEventListener('click', () => {
+        const it = state.items.find(x => x.id === state.ui.selectedId);
+        if (!it) return;
+        if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao = [];
+
+        const idx = it.tiposAlteracao.indexOf(tipo);
+        if (idx >= 0) {
+          it.tiposAlteracao.splice(idx, 1);
+          btn.classList.remove('active');
+        } else {
+          it.tiposAlteracao.push(tipo);
+          btn.classList.add('active');
+        }
+        persistState();
+      });
+
+      diagTypesArea.appendChild(btn);
+    });
+  }
+
   function bindToken(inputEl, addBtn, container, getter) {
     if (!inputEl || !addBtn || !container) return;
     addBtn.addEventListener('click', () => {
@@ -2195,10 +2380,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // tipos alteração
     if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao = [];
     if (diagTypesArea) {
-      diagTypesArea.querySelectorAll('.chip-toggle').forEach(btn => {
-        const tipo = btn.getAttribute('data-tipo');
-        if (it.tiposAlteracao.includes(tipo)) btn.classList.add('active'); else btn.classList.remove('active');
-      });
+      // Rebuild options dynamically
+      buildChangeTypeOptions(it.tiposAlteracao);
     }
     // complexidade e horas
     if (diagComplexSel) diagComplexSel.value = it.complexidade || '';
@@ -2322,49 +2505,15 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-});
 
-function openNoteModal(itemId) {
-  state.ui.selectedId = itemId;
-  const item = state.items.find(it => it.id === itemId);
-  const modal = document.getElementById('noteModal');
-  const title = document.getElementById('noteItemTitle');
-  const textarea = document.getElementById('noteTextarea');
-  const parentDropdownBtn = document.getElementById('parentDropdownBtn');
-  const noteTipoSel = document.getElementById('noteTipoSel');
-  const noteUrgSel = document.getElementById('noteUrgSel');
-  const noteGroupInput = document.getElementById('noteGroupInput');
-  const noteSubSquadInput = document.getElementById('noteSubSquadInput');
-  const noteImpactSel = document.getElementById('noteImpactSel');
-  const noteEsforcoSel = document.getElementById('noteEsforcoSel');
-  const noteBoraSel = document.getElementById('noteBoraSel');
-  const noteGroupPanel = document.getElementById('noteGroupPanel');
-  title.textContent = item?.demanda || '(sem título)';
-  textarea.value = item?.observation || '';
-  if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
-  if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
-  if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0, 60);
-  if (noteSubSquadInput) noteSubSquadInput.value = String(item?.subSquad || '');
-  if (noteImpactSel && item) noteImpactSel.value = item.impactClass || 'Baixo';
-  if (noteEsforcoSel && item) noteEsforcoSel.value = item.effortClass || 'Baixo';
-  if (noteBoraSel && item) noteBoraSel.value = String(item.boraImpact || '');
-  if (noteGroupPanel) noteGroupPanel.classList.add('hidden');
-  if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
-  modal.classList.remove('hidden');
-}
 
-function closeNoteModal() {
-  const modal = document.getElementById('noteModal');
-  modal.classList.add('hidden');
-  state.ui.selectedId = null;
-}
-
-function saveNoteModal() {
-  const textarea = document.getElementById('noteTextarea');
-  const id = state.ui.selectedId;
-  if (id != null) {
-    const item = state.items.find(it => it.id === id);
-    if (item) item.observation = textarea.value;
+  openNoteModal = function (itemId) {
+    state.ui.selectedId = itemId;
+    const item = state.items.find(it => it.id === itemId);
+    const modal = document.getElementById('noteModal');
+    const title = document.getElementById('noteItemTitle');
+    const textarea = document.getElementById('noteTextarea');
+    const parentDropdownBtn = document.getElementById('parentDropdownBtn');
     const noteTipoSel = document.getElementById('noteTipoSel');
     const noteUrgSel = document.getElementById('noteUrgSel');
     const noteGroupInput = document.getElementById('noteGroupInput');
@@ -2372,195 +2521,232 @@ function saveNoteModal() {
     const noteImpactSel = document.getElementById('noteImpactSel');
     const noteEsforcoSel = document.getElementById('noteEsforcoSel');
     const noteBoraSel = document.getElementById('noteBoraSel');
-    if (item && noteTipoSel) item.tipoEsforco = noteTipoSel.value;
-    if (item && noteUrgSel) item.urgencia = Number(noteUrgSel.value);
-    if (item && noteGroupInput) item.grupo = String(noteGroupInput.value || '').slice(0, 60);
-    if (item && noteSubSquadInput) item.subSquad = String(noteSubSquadInput.value || '');
-    if (item && noteImpactSel) item.impactClass = noteImpactSel.value;
-    if (item && noteEsforcoSel) item.effortClass = noteEsforcoSel.value;
-    if (item && noteBoraSel) item.boraImpact = String(noteBoraSel.value || '');
+    const noteGroupPanel = document.getElementById('noteGroupPanel');
+    title.textContent = item?.demanda || '(sem título)';
+    textarea.value = item?.observation || '';
+    if (noteTipoSel && item) noteTipoSel.value = item.tipoEsforco || 'Tarefa';
+    if (noteUrgSel && item) noteUrgSel.value = String(item.urgencia ?? 0);
+    if (noteGroupInput) noteGroupInput.value = String((item?.grupo || '')).slice(0, 60);
+    if (noteSubSquadInput) noteSubSquadInput.value = String(item?.subSquad || '');
+    if (noteImpactSel && item) noteImpactSel.value = item.impactClass || 'Baixo';
+    if (noteEsforcoSel && item) noteEsforcoSel.value = item.effortClass || 'Baixo';
+    if (noteBoraSel && item) noteBoraSel.value = String(item.boraImpact || '');
+    if (noteGroupPanel) noteGroupPanel.classList.add('hidden');
+    if (parentDropdownBtn && item) updateParentDropdownLabel(parentDropdownBtn, item);
+    modal.classList.remove('hidden');
   }
-  // persist all edits including tipoEsforco possibly changed via dropdown
-  persistState();
-  console.log('[Sheets] saveNoteModal:persistState');
-  console.log(state.ui.selectedId);
-  try {
-    const item = state.items.find(it => it.id === state.ui.selectedId);
-    if (item && window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item);
-    else if (item) triggerSheetsUpsert(item);
-  } catch (_) {
-    console.log('[Sheets] saveNoteModal:upsertItemToSheets:error', _);
+
+  function closeNoteModal() {
+    const modal = document.getElementById('noteModal');
+    modal.classList.add('hidden');
+    state.ui.selectedId = null;
   }
-  closeNoteModal();
-  render();
-}
 
-function openObsModal(itemId) {
-  const item = state.items.find(it => it.id === itemId);
-  const modal = document.getElementById('obsModal');
-  const title = document.getElementById('obsItemTitle');
-  const content = document.getElementById('obsContent');
-  title.textContent = item?.demanda || '(sem título)';
-  content.textContent = item?.obsAdicionais || '—';
-  modal.classList.remove('hidden');
-}
-
-function closeObsModal() {
-  const modal = document.getElementById('obsModal');
-  modal.classList.add('hidden');
-}
-
-function openDetailSheet(itemId) {
-  const item = state.items.find(it => it.id === itemId);
-  if (!item) return;
-  state.ui.selectedId = itemId;
-  document.getElementById('sheetTitle').textContent = item.demanda || '(sem título)';
-  document.getElementById('sheetDemandaDesc').textContent = item.demandaDescricao || '—';
-  document.getElementById('sheetObsAdd').textContent = item.obsAdicionais || '—';
-  document.getElementById('sheetPrincipalImpacto').textContent = item.principalImpacto || '—';
-  const sheetEscopoSel = document.getElementById('sheetEscopoSel');
-  const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
-  const sheetImpactoSel = document.getElementById('sheetImpactoSel');
-  const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
-  const sheetObservation = document.getElementById('sheetObservation');
-  if (sheetEscopoSel) sheetEscopoSel.value = item.escopoClass || 'Outros';
-  if (sheetAbordagemSel) sheetAbordagemSel.value = item.abordagemClass || 'Outros';
-  if (sheetImpactoSel) sheetImpactoSel.value = item.impactClass || 'Baixo';
-  if (sheetEsforcoSel) sheetEsforcoSel.value = item.effortClass || 'Baixo';
-  if (sheetObservation) sheetObservation.value = item.observation || '';
-  const sheetModalidadeSel2 = document.getElementById('sheetModalidadeSel');
-  if (sheetModalidadeSel2) sheetModalidadeSel2.value = item.modalidade || '';
-  const sheetHasCaseChk2 = document.getElementById('sheetHasCaseChk');
-  const sheetCaseRow2 = document.getElementById('sheetCaseRow');
-  const sheetCaseText2 = document.getElementById('sheetCaseText');
-  if (sheetHasCaseChk2) sheetHasCaseChk2.checked = !!item.hasCaseSpecial;
-  if (sheetCaseRow2) sheetCaseRow2.classList.toggle('hidden', !item.hasCaseSpecial);
-  if (sheetCaseText2) sheetCaseText2.value = item.caseSpecial || '';
-  const sheetAndamentoSel = document.getElementById('sheetAndamentoSel');
-  const sheetProgressoInput = document.getElementById('sheetProgressoInput');
-  const sheetTipoSel = document.getElementById('sheetTipoSel');
-  if (sheetAndamentoSel) sheetAndamentoSel.value = item.andamento ? 'Sim' : 'Não';
-  if (sheetProgressoInput) sheetProgressoInput.value = String(item.progresso ?? 0);
-  if (sheetTipoSel) sheetTipoSel.value = item.tipoEsforco || 'Tarefa';
-  if (sheetUrgSel) sheetUrgSel.value = String(item.urgencia ?? 0);
-  const sheetSubInput = document.getElementById('sheetSubSquadInput');
-  if (sheetSubInput) sheetSubInput.value = item.subSquad || '';
-  const sheetBoraSel = document.getElementById('sheetBoraSel');
-  if (sheetBoraSel) sheetBoraSel.value = String(item.boraImpact || '');
-  const relList = document.getElementById('relList');
-  const relSearch = document.getElementById('relSearch');
-  if (relList) buildRelationsList(item, relList, relSearch?.value || '');
-  document.getElementById('detailSheet').classList.remove('hidden');
-  const backdrop = document.getElementById('sheetBackdrop');
-  if (backdrop) {
-    backdrop.classList.remove('hidden');
-    // close on click outside
-    const onClick = () => { closeDetailSheet(); };
-    backdrop.addEventListener('click', onClick, { once: true });
+  function saveNoteModal() {
+    const textarea = document.getElementById('noteTextarea');
+    const id = state.ui.selectedId;
+    if (id != null) {
+      const item = state.items.find(it => it.id === id);
+      if (item) item.observation = textarea.value;
+      const noteTipoSel = document.getElementById('noteTipoSel');
+      const noteUrgSel = document.getElementById('noteUrgSel');
+      const noteGroupInput = document.getElementById('noteGroupInput');
+      const noteSubSquadInput = document.getElementById('noteSubSquadInput');
+      const noteImpactSel = document.getElementById('noteImpactSel');
+      const noteEsforcoSel = document.getElementById('noteEsforcoSel');
+      const noteBoraSel = document.getElementById('noteBoraSel');
+      if (item && noteTipoSel) item.tipoEsforco = noteTipoSel.value;
+      if (item && noteUrgSel) item.urgencia = Number(noteUrgSel.value);
+      if (item && noteGroupInput) item.grupo = String(noteGroupInput.value || '').slice(0, 60);
+      if (item && noteSubSquadInput) item.subSquad = String(noteSubSquadInput.value || '');
+      if (item && noteImpactSel) item.impactClass = noteImpactSel.value;
+      if (item && noteEsforcoSel) item.effortClass = noteEsforcoSel.value;
+      if (item && noteBoraSel) item.boraImpact = String(noteBoraSel.value || '');
+    }
+    // persist all edits including tipoEsforco possibly changed via dropdown
+    persistState();
+    console.log('[Sheets] saveNoteModal:persistState');
+    console.log(state.ui.selectedId);
+    try {
+      const item = state.items.find(it => it.id === state.ui.selectedId);
+      if (item && window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item);
+      else if (item) triggerSheetsUpsert(item);
+    } catch (_) {
+      console.log('[Sheets] saveNoteModal:upsertItemToSheets:error', _);
+    }
+    closeNoteModal();
+    render();
   }
-}
 
-function buildRelationsList(item, container, query = '') {
-  if (!container || !item) return;
-  clearChildren(container);
-  const q = normalizeString(query || '');
-  const options = state.items.filter(it => it.id !== item.id && (
-    !q || normalizeString(it.demanda).includes(q) || normalizeString(it.demandaDescricao || '').includes(q)
-  ));
-  for (const other of options) {
-    const label = document.createElement('label');
-    label.className = 'rel-option';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.setAttribute('data-rel', String(other.id));
-    cb.checked = item.relatedIds.includes(other.id);
-    const span = document.createElement('span');
-    span.textContent = other.demanda || '(sem título)';
-    label.appendChild(cb);
-    label.appendChild(span);
-    container.appendChild(label);
+  openObsModal = function (itemId) {
+    const item = state.items.find(it => it.id === itemId);
+    const modal = document.getElementById('obsModal');
+    const title = document.getElementById('obsItemTitle');
+    const content = document.getElementById('obsContent');
+    title.textContent = item?.demanda || '(sem título)';
+    content.textContent = item?.obsAdicionais || '—';
+    modal.classList.remove('hidden');
   }
-}
 
-function buildParentList(item, container, query = '') {
-  clearChildren(container);
-  const q = normalizeString(query || '');
-  const options = state.items.filter(it => it.id !== item.id && (
-    !q || normalizeString(it.demanda).includes(q) || normalizeString(it.demandaDescricao || '').includes(q)
-  ));
-  // add 'Nenhum' option
-  const noneLabel = document.createElement('label');
-  noneLabel.className = 'rel-option';
-  const noneRadio = document.createElement('input');
-  noneRadio.type = 'radio';
-  noneRadio.name = 'parentChoice';
-  noneRadio.value = '';
-  noneRadio.checked = item.parentId == null;
-  const noneSpan = document.createElement('span');
-  noneSpan.textContent = '— Nenhum —';
-  noneLabel.appendChild(noneRadio);
-  noneLabel.appendChild(noneSpan);
-  container.appendChild(noneLabel);
-
-  for (const other of options) {
-    const label = document.createElement('label');
-    label.className = 'rel-option';
-    const rb = document.createElement('input');
-    rb.type = 'radio';
-    rb.name = 'parentChoice';
-    rb.value = String(other.id);
-    rb.checked = item.parentId === other.id;
-    const span = document.createElement('span');
-    span.textContent = other.demanda || '(sem título)';
-    label.appendChild(rb);
-    label.appendChild(span);
-    container.appendChild(label);
+  function closeObsModal() {
+    const modal = document.getElementById('obsModal');
+    modal.classList.add('hidden');
   }
-}
 
-function updateParentDropdownLabel(buttonEl, item) {
-  const label = (() => {
-    if (!item || item.parentId == null) return 'Selecionar pai';
-    const p = state.items.find(x => x.id === item.parentId);
-    return p?.demanda || 'Selecionar pai';
-  })();
-  buttonEl.textContent = label;
-  buttonEl.setAttribute('title', label);
-}
-
-function buildParentDropdownList(item, container, query = '') {
-  clearChildren(container);
-  const q = normalizeString(query || '');
-  // opção Nenhum
-  const none = document.createElement('div');
-  none.className = 'dropdown-option';
-  none.setAttribute('data-parent-id', '');
-  none.textContent = '— Nenhum —';
-  container.appendChild(none);
-  for (const other of state.items) {
-    if (other.id === item.id) continue;
-    const name = other.demanda || '';
-    if (q && !normalizeString(name).includes(q) && !normalizeString(other.demandaDescricao || '').includes(q)) continue;
-    const row = document.createElement('div');
-    row.className = 'dropdown-option';
-    row.setAttribute('data-parent-id', String(other.id));
-    row.textContent = name || '(sem título)';
-    container.appendChild(row);
+  openDetailSheet = function (itemId) {
+    const item = state.items.find(it => it.id === itemId);
+    if (!item) return;
+    state.ui.selectedId = itemId;
+    document.getElementById('sheetTitle').textContent = item.demanda || '(sem título)';
+    document.getElementById('sheetDemandaDesc').textContent = item.demandaDescricao || '—';
+    document.getElementById('sheetObsAdd').textContent = item.obsAdicionais || '—';
+    document.getElementById('sheetPrincipalImpacto').textContent = item.principalImpacto || '—';
+    const sheetEscopoSel = document.getElementById('sheetEscopoSel');
+    const sheetAbordagemSel = document.getElementById('sheetAbordagemSel');
+    const sheetImpactoSel = document.getElementById('sheetImpactoSel');
+    const sheetEsforcoSel = document.getElementById('sheetEsforcoSel');
+    const sheetObservation = document.getElementById('sheetObservation');
+    if (sheetEscopoSel) sheetEscopoSel.value = item.escopoClass || 'Outros';
+    if (sheetAbordagemSel) sheetAbordagemSel.value = item.abordagemClass || 'Outros';
+    if (sheetImpactoSel) sheetImpactoSel.value = item.impactClass || 'Baixo';
+    if (sheetEsforcoSel) sheetEsforcoSel.value = item.effortClass || 'Baixo';
+    if (sheetObservation) sheetObservation.value = item.observation || '';
+    const sheetModalidadeSel2 = document.getElementById('sheetModalidadeSel');
+    if (sheetModalidadeSel2) sheetModalidadeSel2.value = item.modalidade || '';
+    const sheetHasCaseChk2 = document.getElementById('sheetHasCaseChk');
+    const sheetCaseRow2 = document.getElementById('sheetCaseRow');
+    const sheetCaseText2 = document.getElementById('sheetCaseText');
+    if (sheetHasCaseChk2) sheetHasCaseChk2.checked = !!item.hasCaseSpecial;
+    if (sheetCaseRow2) sheetCaseRow2.classList.toggle('hidden', !item.hasCaseSpecial);
+    if (sheetCaseText2) sheetCaseText2.value = item.caseSpecial || '';
+    const sheetAndamentoSel = document.getElementById('sheetAndamentoSel');
+    const sheetProgressoInput = document.getElementById('sheetProgressoInput');
+    const sheetTipoSel = document.getElementById('sheetTipoSel');
+    if (sheetAndamentoSel) sheetAndamentoSel.value = item.andamento ? 'Sim' : 'Não';
+    if (sheetProgressoInput) sheetProgressoInput.value = String(item.progresso ?? 0);
+    if (sheetTipoSel) sheetTipoSel.value = item.tipoEsforco || 'Tarefa';
+    if (sheetUrgSel) sheetUrgSel.value = String(item.urgencia ?? 0);
+    const sheetSubInput = document.getElementById('sheetSubSquadInput');
+    if (sheetSubInput) sheetSubInput.value = item.subSquad || '';
+    const sheetBoraSel = document.getElementById('sheetBoraSel');
+    if (sheetBoraSel) sheetBoraSel.value = String(item.boraImpact || '');
+    const relList = document.getElementById('relList');
+    const relSearch = document.getElementById('relSearch');
+    if (relList) buildRelationsList(item, relList, relSearch?.value || '');
+    document.getElementById('detailSheet').classList.remove('hidden');
+    const backdrop = document.getElementById('sheetBackdrop');
+    if (backdrop) {
+      backdrop.classList.remove('hidden');
+      // close on click outside
+      const onClick = () => { closeDetailSheet(); };
+      backdrop.addEventListener('click', onClick, { once: true });
+    }
   }
-}
 
-function closeDetailSheet() {
-  try { const item = state.items.find(it => it.id === state.ui.selectedId); if (item) { persistState(); if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } } catch (_) { }
-  document.getElementById('detailSheet').addEventListener;
-  document.getElementById('detailSheet').classList.add('hidden');
-  const backdrop = document.getElementById('sheetBackdrop');
-  if (backdrop) backdrop.classList.add('hidden');
-  const drawer = document.getElementById('modalidadesDrawer');
-  if (drawer) {
-    drawer.classList.remove('open');
-    drawer.classList.add('hidden');
+  function buildRelationsList(item, container, query = '') {
+    if (!container || !item) return;
+    clearChildren(container);
+    const q = normalizeString(query || '');
+    const options = state.items.filter(it => it.id !== item.id && (
+      !q || normalizeString(it.demanda).includes(q) || normalizeString(it.demandaDescricao || '').includes(q)
+    ));
+    for (const other of options) {
+      const label = document.createElement('label');
+      label.className = 'rel-option';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.setAttribute('data-rel', String(other.id));
+      cb.checked = item.relatedIds.includes(other.id);
+      const span = document.createElement('span');
+      span.textContent = other.demanda || '(sem título)';
+      label.appendChild(cb);
+      label.appendChild(span);
+      container.appendChild(label);
+    }
   }
-  render();
-}
+
+  function buildParentList(item, container, query = '') {
+    clearChildren(container);
+    const q = normalizeString(query || '');
+    const options = state.items.filter(it => it.id !== item.id && (
+      !q || normalizeString(it.demanda).includes(q) || normalizeString(it.demandaDescricao || '').includes(q)
+    ));
+    // add 'Nenhum' option
+    const noneLabel = document.createElement('label');
+    noneLabel.className = 'rel-option';
+    const noneRadio = document.createElement('input');
+    noneRadio.type = 'radio';
+    noneRadio.name = 'parentChoice';
+    noneRadio.value = '';
+    noneRadio.checked = item.parentId == null;
+    const noneSpan = document.createElement('span');
+    noneSpan.textContent = '— Nenhum —';
+    noneLabel.appendChild(noneRadio);
+    noneLabel.appendChild(noneSpan);
+    container.appendChild(noneLabel);
+
+    for (const other of options) {
+      const label = document.createElement('label');
+      label.className = 'rel-option';
+      const rb = document.createElement('input');
+      rb.type = 'radio';
+      rb.name = 'parentChoice';
+      rb.value = String(other.id);
+      rb.checked = item.parentId === other.id;
+      const span = document.createElement('span');
+      span.textContent = other.demanda || '(sem título)';
+      label.appendChild(rb);
+      label.appendChild(span);
+      container.appendChild(label);
+    }
+  }
+
+  function updateParentDropdownLabel(buttonEl, item) {
+    const label = (() => {
+      if (!item || item.parentId == null) return 'Selecionar pai';
+      const p = state.items.find(x => x.id === item.parentId);
+      return p?.demanda || 'Selecionar pai';
+    })();
+    buttonEl.textContent = label;
+    buttonEl.setAttribute('title', label);
+  }
+
+  function buildParentDropdownList(item, container, query = '') {
+    clearChildren(container);
+    const q = normalizeString(query || '');
+    // opção Nenhum
+    const none = document.createElement('div');
+    none.className = 'dropdown-option';
+    none.setAttribute('data-parent-id', '');
+    none.textContent = '— Nenhum —';
+    container.appendChild(none);
+    for (const other of state.items) {
+      if (other.id === item.id) continue;
+      const name = other.demanda || '';
+      if (q && !normalizeString(name).includes(q) && !normalizeString(other.demandaDescricao || '').includes(q)) continue;
+      const row = document.createElement('div');
+      row.className = 'dropdown-option';
+      row.setAttribute('data-parent-id', String(other.id));
+      row.textContent = name || '(sem título)';
+      container.appendChild(row);
+    }
+  }
+
+  closeDetailSheet = function () {
+    try { const item = state.items.find(it => it.id === state.ui.selectedId); if (item) { persistState(); if (window.demands && typeof window.demands.triggerSheetsUpsert === 'function') window.demands.triggerSheetsUpsert(item); else triggerSheetsUpsert(item); } } catch (_) { }
+    document.getElementById('detailSheet').addEventListener;
+    document.getElementById('detailSheet').classList.add('hidden');
+    const backdrop = document.getElementById('sheetBackdrop');
+    if (backdrop) backdrop.classList.add('hidden');
+    const drawer = document.getElementById('modalidadesDrawer');
+    if (drawer) {
+      drawer.classList.remove('open');
+      drawer.classList.add('hidden');
+    }
+    render();
+  }
 
 
+
+
+});
