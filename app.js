@@ -1392,8 +1392,31 @@ async function fetchAuxiliaryData(token, spreadsheetId) {
   }
 }
 
+async function checkAccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hash = urlParams.get('bwr');
+  if (hash) {
+    localStorage.setItem('bwr', hash);
+    // clean url
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  const stored = localStorage.getItem('bwr');
+  if (stored !== 'bwr_rocks') {
+    const modal = document.getElementById('accessDeniedModal');
+    if (modal) modal.classList.remove('hidden');
+    // Stop execution of other things if possible, or just overlay covers it
+    throw new Error('Access Denied');
+  } else {
+    // Explicitly ensure hidden if valid
+    const modal = document.getElementById('accessDeniedModal');
+    if (modal) modal.classList.add('hidden');
+  }
+}
+
 // Init
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  try { await checkAccess(); } catch (e) { return; }
   // Setup DnD targets
   setupDropTargets();
   setupFilters();

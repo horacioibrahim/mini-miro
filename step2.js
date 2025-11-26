@@ -464,8 +464,28 @@
     } catch (e) { /* noop */ }
   }
 
+  async function checkAccess() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = urlParams.get('bwr');
+    if (hash) {
+      localStorage.setItem('bwr', hash);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    const stored = localStorage.getItem('bwr');
+    if (stored !== 'bwr_rocks') {
+      const modal = document.getElementById('accessDeniedModal');
+      if (modal) modal.classList.remove('hidden');
+      throw new Error('Access Denied');
+    } else {
+      const modal = document.getElementById('accessDeniedModal');
+      if (modal) modal.classList.add('hidden');
+    }
+  }
+
   // Init
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
+    try { await checkAccess(); } catch (e) { return; }
     loadItems();
     ensureWeeks();
     // render will be called after filters load
