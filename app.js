@@ -2459,19 +2459,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (diagServSuggest && !diagServSuggest.contains(e.target) && e.target !== diagServInput) diagServSuggest.classList.add('hidden');
   });
 
-  // tipos alteração
-  if (diagTypesArea) {
-    diagTypesArea.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-toggle'); if (!btn) return;
-      const tipo = btn.getAttribute('data-tipo'); if (!tipo) return;
-      const it = state.items.find(x => x.id === state.ui.selectedId); if (!it) return;
-      if (!Array.isArray(it.tiposAlteracao)) it.tiposAlteracao = [];
-      const i = it.tiposAlteracao.indexOf(tipo);
-      if (i >= 0) { it.tiposAlteracao.splice(i, 1); btn.classList.remove('active'); }
-      else { it.tiposAlteracao.push(tipo); btn.classList.add('active'); }
-      persistState();
-    });
-  }
+
 
   // complexidade / horas
   if (diagComplexSel) {
