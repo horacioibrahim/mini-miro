@@ -230,8 +230,10 @@
       const week = target.getAttribute('data-week');
       const slot = target.getAttribute('data-slot');
       const sdata = getSquadData();
-      // move: remove from every slot in all cycles, then set here
-      removeFromAllSlots(sdata, id);
+      // move: remove from every slot in ALL squads/grids to ensure uniqueness
+      removeIdFromAllGrids(id);
+
+      if (!sdata.grid[week]) sdata.grid[week] = { t1: [], t2: [], t3: [] };
       sdata.grid[week][slot] = [id];
       render();
       persistGrid();
@@ -240,13 +242,17 @@
     });
   }
 
-  function removeFromAllSlots(sdata, id) {
-    for (const [w, slots] of Object.entries(sdata.grid)) {
-      ['t1', 't2', 't3'].forEach(sl => {
-        const arr = slots[sl] || [];
-        const idx = arr.indexOf(id);
-        if (idx !== -1) arr.splice(idx, 1);
-      });
+  function removeIdFromAllGrids(id) {
+    for (const squadKey in state.grids) {
+      const g = state.grids[squadKey];
+      if (!g || !g.grid) continue;
+      for (const [w, slots] of Object.entries(g.grid)) {
+        ['t1', 't2', 't3'].forEach(sl => {
+          const arr = slots[sl] || [];
+          const idx = arr.indexOf(id);
+          if (idx !== -1) arr.splice(idx, 1);
+        });
+      }
     }
   }
 
