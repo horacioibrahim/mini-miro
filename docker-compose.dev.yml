@@ -7,3 +7,10 @@ services:
     volumes:
       - ./:/usr/share/nginx/html
     restart: unless-stopped
+    networks:
+      - bora-network
+
+
+networks:
+  bora-network:
+    external: true
